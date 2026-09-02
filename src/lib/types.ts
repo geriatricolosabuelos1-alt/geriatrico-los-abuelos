@@ -1,9 +1,17 @@
-export type RolUsuario = "admin" | "enfermero" | "cuidador";
+export type RolUsuario =
+  | "admin"
+  | "enfermero"
+  | "cuidador"
+  | "medico"
+  | "nutricionista"
+  | "kinesiologo"
+  | "administrativo";
 
 export interface Sucursal {
   id: string;
   nombre: string;
   direccion: string | null;
+  capacidad_camas: number | null;
 }
 
 export interface Perfil {
@@ -24,4 +32,56 @@ export interface Residente {
   telefono_familiar: string | null;
   observaciones_medicas: string | null;
   activo: boolean;
+}
+
+export interface FichaAdministrativa {
+  residente_id: string;
+  obra_social: string | null;
+  tipo_cobertura: string | null;
+  cuota_mensual: number | null;
+  notas_contrato: string | null;
+}
+
+export interface FichaMedica {
+  residente_id: string;
+  medico_emergencia: string | null;
+  telefono_emergencia_medica: string | null;
+  alergias: string | null;
+  diagnosticos: string | null;
+}
+
+export type TipoNotaEvolucion = "medica" | "enfermeria" | "nutricion" | "kinesiologia";
+
+export interface NotaEvolucion {
+  id: string;
+  residente_id: string;
+  autor_id: string;
+  tipo: TipoNotaEvolucion;
+  contenido: string;
+  fecha: string;
+}
+
+export type TipoContratacion = "monotributo" | "relacion_dependencia";
+export type FormaPago = "efectivo" | "transferencia";
+
+export interface Empleado {
+  id: string;
+  sucursal_id: string;
+  perfil_id: string | null;
+  nombre_completo: string;
+  tipo_contratacion: TipoContratacion;
+  forma_pago: FormaPago;
+  turno: string | null;
+  sueldo: number | null;
+  activo: boolean;
+}
+
+export interface Gasto {
+  id: string;
+  sucursal_id: string;
+  categoria: string;
+  monto: number;
+  mes: number;
+  anio: number;
+  descripcion: string | null;
 }
