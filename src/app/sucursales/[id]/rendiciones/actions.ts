@@ -2,18 +2,34 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import type { CategoriaInsumo } from "@/lib/types";
 
 export type CrearRendicionEstado = { error: string | null };
 
-type ItemConfirmado = { insumo_id: string; cantidad: number };
+type ItemExistente = { insumo_id: string; cantidad: number };
+type ItemNuevo = { nombre: string; categoria: CategoriaInsumo; cantidad: number };
+type ItemAEnviar = ItemExistente | ItemNuevo;
 
-export type ItemLeido = { insumo_id: string; nombre: string; cantidad: number };
+export type ItemLeido = {
+  insumo_id: string | null;
+  nombre: string;
+  cantidad: number;
+  categoriaSugerida: CategoriaInsumo;
+};
 
 export type ResultadoLecturaTicket = {
   total: number | null;
   items: ItemLeido[];
   error: string | null;
 };
+
+function normalizar(texto: string): string {
+  return texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .trim();
+}
 
 export async function leerTicketConIA(formData: FormData): Promise<ResultadoLecturaTicket> {
   const archivo = formData.get("foto");
@@ -30,28 +46,25 @@ export async function leerTicketConIA(formData: FormData): Promise<ResultadoLect
   const supabase = await createClient();
   const { data: insumos } = await supabase
     .from("insumos")
-    .select("id, nombre")
+    .select("id, nombre, categoria")
     .eq("activo", true);
 
   const catalogo = insumos ?? [];
-  if (catalogo.length === 0) {
-    return { total: null, items: [], error: null };
-  }
 
   const buffer = Buffer.from(await archivo.arrayBuffer());
   const base64 = buffer.toString("base64");
 
   const prompt = `Sos un asistente que lee tickets y facturas de compra de mercadería para un geriátrico.
 Analizá la imagen y devolvé SOLO un objeto JSON, sin texto adicional ni markdown, con este formato exacto:
-{"total": <número o null>, "items": [{"nombre": "<nombre EXACTO tomado de la lista de productos válidos>", "cantidad": <número>}]}
-
-Lista de productos válidos (usá el nombre EXACTO tal cual aparece acá, nunca inventes variantes):
-${catalogo.map((i) => i.nombre).join(", ")}
+{"total": <número o null>, "items": [{"nombre": "<nombre del producto tal como lo entendiste, normalizado y corto>", "categoria": "<general|carnes|verduras>", "cantidad": <número>}]}
 
 Reglas:
-- Incluí en "items" solo los productos de la lista que reconozcas con claridad en el ticket.
-- Si no podés determinar la cantidad de un producto, poné 1.
-- "total" es el importe TOTAL a pagar del ticket (no el subtotal). Si no lo encontrás, poné null.`;
+- Transcribí TODOS los productos/mercadería que reconozcas en el ticket, no solo algunos.
+- Usá nombres cortos y genéricos (ej: "Arroz" en vez de "ARROZ GALLO 1KG OFERTA").
+- "categoria": clasificá cada producto en general (limpieza, almacén, higiene), carnes, o verduras (incluye frutas).
+- Si no podés determinar la cantidad, poné 1.
+- "total" es el importe TOTAL a pagar del ticket (no el subtotal). Si no lo encontrás, poné null.
+- No incluyas renglones que no sean productos (descuentos, impuestos, vuelto, etc.).`;
 
   const cuerpoSolicitud = JSON.stringify({
     contents: [
@@ -86,21 +99,37 @@ Reglas:
   const cuerpo = await respuesta.json();
   const texto: string = cuerpo?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
 
-  let parseado: { total?: unknown; items?: { nombre?: unknown; cantidad?: unknown }[] };
+  let parseado: {
+    total?: unknown;
+    items?: { nombre?: unknown; categoria?: unknown; cantidad?: unknown }[];
+  };
   try {
     parseado = JSON.parse(texto);
   } catch {
     return { total: null, items: [], error: "No se pudo interpretar la lectura del ticket." };
   }
 
-  const nombreAId = new Map(catalogo.map((i) => [i.nombre, i.id]));
+  const categoriasValidas: CategoriaInsumo[] = ["general", "carnes", "verduras"];
+  const catalogoNormalizado = catalogo.map((i) => ({ ...i, norm: normalizar(i.nombre) }));
+
   const items: ItemLeido[] = (parseado.items ?? [])
-    .filter((it): it is { nombre: string; cantidad: unknown } => typeof it?.nombre === "string" && nombreAId.has(it.nombre))
-    .map((it) => ({
-      insumo_id: nombreAId.get(it.nombre)!,
-      nombre: it.nombre,
-      cantidad: Number(it.cantidad) > 0 ? Number(it.cantidad) : 1,
-    }));
+    .filter((it): it is { nombre: string; categoria?: unknown; cantidad?: unknown } => typeof it?.nombre === "string")
+    .map((it) => {
+      const norm = normalizar(it.nombre);
+      const coincidencia = catalogoNormalizado.find(
+        (c) => c.norm === norm || c.norm.includes(norm) || norm.includes(c.norm),
+      );
+      const categoria = categoriasValidas.includes(it.categoria as CategoriaInsumo)
+        ? (it.categoria as CategoriaInsumo)
+        : "general";
+
+      return {
+        insumo_id: coincidencia?.id ?? null,
+        nombre: coincidencia?.nombre ?? it.nombre,
+        cantidad: Number(it.cantidad) > 0 ? Number(it.cantidad) : 1,
+        categoriaSugerida: (coincidencia?.categoria as CategoriaInsumo) ?? categoria,
+      };
+    });
 
   const total = typeof parseado.total === "number" && parseado.total > 0 ? parseado.total : null;
 
@@ -124,7 +153,7 @@ export async function crearRendicion(
   const monto = montoRaw ? Number(montoRaw) : null;
   const itemsRaw = String(formData.get("items") ?? "[]");
 
-  let items: ItemConfirmado[] = [];
+  let items: ItemAEnviar[] = [];
   try {
     items = JSON.parse(itemsRaw);
   } catch {
@@ -158,17 +187,41 @@ export async function crearRendicion(
     return { error: errorInsert.message };
   }
 
-  const movimientosValidos = items.filter(
-    (i) => i.insumo_id && Number(i.cantidad) > 0,
-  );
+  const movimientos: { insumo_id: string; cantidad: number }[] = [];
 
-  if (movimientosValidos.length > 0) {
+  for (const item of items) {
+    if (Number(item.cantidad) <= 0) continue;
+
+    if ("insumo_id" in item) {
+      movimientos.push({ insumo_id: item.insumo_id, cantidad: item.cantidad });
+      continue;
+    }
+
+    const nombre = item.nombre.trim();
+    if (!nombre) continue;
+
+    const { data: insumoCreado, error: errorInsumo } = await supabase
+      .from("insumos")
+      .upsert({ nombre, categoria: item.categoria }, { onConflict: "nombre" })
+      .select("id")
+      .single();
+
+    if (errorInsumo || !insumoCreado) {
+      return {
+        error: `Rendición guardada, pero no se pudo agregar "${nombre}" al catálogo: ${errorInsumo?.message ?? "error desconocido"}`,
+      };
+    }
+
+    movimientos.push({ insumo_id: insumoCreado.id, cantidad: item.cantidad });
+  }
+
+  if (movimientos.length > 0) {
     const { error: errorMovimientos } = await supabase.from("movimientos_inventario").insert(
-      movimientosValidos.map((i) => ({
+      movimientos.map((m) => ({
         sucursal_id: sucursalId,
-        insumo_id: i.insumo_id,
+        insumo_id: m.insumo_id,
         tipo: "entrada" as const,
-        cantidad: i.cantidad,
+        cantidad: m.cantidad,
         registrado_por: user?.id,
       })),
     );

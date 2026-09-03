@@ -7,18 +7,50 @@ import {
   type CrearRendicionEstado,
   type ItemLeido,
 } from "@/app/sucursales/[id]/rendiciones/actions";
+import type { CategoriaInsumo } from "@/lib/types";
 
 type Props = {
   sucursalId: string;
 };
 
-type ItemRevision = ItemLeido & { incluido: boolean };
+type ItemRevision = ItemLeido & { incluido: boolean; clave: string };
 
 const ESTADO_INICIAL: CrearRendicionEstado = { error: null };
 
 const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
 const ETIQUETA = "mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft";
+
+const ETIQUETA_CATEGORIA: Record<CategoriaInsumo, string> = {
+  general: "General",
+  carnes: "Carnes",
+  verduras: "Verduras",
+};
+
+const ANCHO_MAXIMO = 1400;
+
+async function comprimirImagen(archivo: File): Promise<File> {
+  const bitmap = await createImageBitmap(archivo);
+  const escala = Math.min(1, ANCHO_MAXIMO / bitmap.width);
+  const ancho = Math.round(bitmap.width * escala);
+  const alto = Math.round(bitmap.height * escala);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = ancho;
+  canvas.height = alto;
+  const contexto = canvas.getContext("2d");
+  if (!contexto) return archivo;
+
+  contexto.drawImage(bitmap, 0, 0, ancho, alto);
+  bitmap.close();
+
+  const blob: Blob | null = await new Promise((resolve) =>
+    canvas.toBlob(resolve, "image/jpeg", 0.75),
+  );
+  if (!blob) return archivo;
+
+  return new File([blob], archivo.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" });
+}
 
 export function RendicionForm({ sucursalId }: Props) {
   const accionConSucursal = crearRendicion.bind(null, sucursalId);
@@ -42,15 +74,24 @@ export function RendicionForm({ sucursalId }: Props) {
     setMonto("");
     setMontoDetectado(false);
 
+    const archivoParaLeer =
+      archivo.type === "application/pdf" ? archivo : await comprimirImagen(archivo);
+
     const datosArchivo = new FormData();
-    datosArchivo.set("foto", archivo);
+    datosArchivo.set("foto", archivoParaLeer);
 
     const resultado = await leerTicketConIA(datosArchivo);
 
     if (resultado.error) {
       setOcrError(resultado.error);
     } else {
-      setItems(resultado.items.map((i) => ({ ...i, incluido: true })));
+      setItems(
+        resultado.items.map((i, idx) => ({
+          ...i,
+          incluido: true,
+          clave: i.insumo_id ?? `nuevo-${idx}`,
+        })),
+      );
       if (resultado.total !== null) {
         setMonto(String(resultado.total));
         setMontoDetectado(true);
@@ -61,22 +102,18 @@ export function RendicionForm({ sucursalId }: Props) {
     setOcrIntentado(true);
   }
 
-  function actualizarCantidad(insumoId: string, cantidad: number) {
-    setItems((prev) =>
-      prev.map((i) => (i.insumo_id === insumoId ? { ...i, cantidad } : i)),
-    );
-  }
-
-  function alternarIncluido(insumoId: string) {
-    setItems((prev) =>
-      prev.map((i) => (i.insumo_id === insumoId ? { ...i, incluido: !i.incluido } : i)),
-    );
+  function actualizarItem(clave: string, cambios: Partial<ItemRevision>) {
+    setItems((prev) => prev.map((i) => (i.clave === clave ? { ...i, ...cambios } : i)));
   }
 
   const itemsParaEnviar = JSON.stringify(
     items
       .filter((i) => i.incluido)
-      .map((i) => ({ insumo_id: i.insumo_id, cantidad: i.cantidad })),
+      .map((i) =>
+        i.insumo_id
+          ? { insumo_id: i.insumo_id, cantidad: i.cantidad }
+          : { nombre: i.nombre, categoria: i.categoriaSugerida, cantidad: i.cantidad },
+      ),
   );
 
   return (
@@ -114,32 +151,70 @@ export function RendicionForm({ sucursalId }: Props) {
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-soft">
                 {items.length > 0
                   ? "Productos detectados — revisá antes de sumar al stock"
-                  : "No se reconoció ningún producto del catálogo en el ticket"}
+                  : "No se reconoció ningún producto en el ticket"}
               </p>
               {items.length > 0 && (
-                <div className="space-y-1.5">
+                <div className="space-y-2">
                   {items.map((i) => (
-                    <div key={i.insumo_id} className="flex items-center gap-2.5 text-sm">
+                    <div
+                      key={i.clave}
+                      className="flex flex-wrap items-center gap-2 border-b border-edge/60 pb-2 text-sm last:border-0 last:pb-0"
+                    >
                       <input
                         type="checkbox"
                         checked={i.incluido}
-                        onChange={() => alternarIncluido(i.insumo_id)}
+                        onChange={() => actualizarItem(i.clave, { incluido: !i.incluido })}
                         className="h-4 w-4 accent-[var(--color-brass)]"
                       />
-                      <span
-                        className={
-                          i.incluido ? "flex-1 text-ink" : "flex-1 text-ink-soft line-through"
-                        }
-                      >
-                        {i.nombre}
-                      </span>
+
+                      {i.insumo_id ? (
+                        <span
+                          className={
+                            i.incluido ? "flex-1 text-ink" : "flex-1 text-ink-soft line-through"
+                          }
+                        >
+                          {i.nombre}
+                        </span>
+                      ) : (
+                        <>
+                          <input
+                            type="text"
+                            value={i.nombre}
+                            disabled={!i.incluido}
+                            onChange={(e) => actualizarItem(i.clave, { nombre: e.target.value })}
+                            className="flex-1 rounded-md border border-edge bg-card px-2 py-1 text-xs text-ink disabled:opacity-40"
+                          />
+                          <select
+                            value={i.categoriaSugerida}
+                            disabled={!i.incluido}
+                            onChange={(e) =>
+                              actualizarItem(i.clave, {
+                                categoriaSugerida: e.target.value as CategoriaInsumo,
+                              })
+                            }
+                            className="rounded-md border border-edge bg-card px-2 py-1 text-xs text-ink disabled:opacity-40"
+                          >
+                            {Object.entries(ETIQUETA_CATEGORIA).map(([valor, etiqueta]) => (
+                              <option key={valor} value={valor}>
+                                {etiqueta}
+                              </option>
+                            ))}
+                          </select>
+                          <span className="rounded-full bg-brass-soft px-2 py-0.5 text-[0.65rem] font-medium text-brass">
+                            nuevo
+                          </span>
+                        </>
+                      )}
+
                       <input
                         type="number"
                         min={1}
                         value={i.cantidad}
                         disabled={!i.incluido}
-                        onChange={(e) => actualizarCantidad(i.insumo_id, Number(e.target.value))}
-                        className="w-20 rounded-md border border-edge bg-card px-2 py-1 text-xs text-ink disabled:opacity-40"
+                        onChange={(e) =>
+                          actualizarItem(i.clave, { cantidad: Number(e.target.value) })
+                        }
+                        className="w-16 rounded-md border border-edge bg-card px-2 py-1 text-xs text-ink disabled:opacity-40"
                       />
                     </div>
                   ))}
