@@ -1,18 +1,18 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { crearRendicion, type CrearRendicionEstado } from "@/app/sucursales/[id]/rendiciones/actions";
-import { detectarItems, extraerTotal, type ItemDetectado } from "@/lib/ocrTickets";
-import { obtenerLectorTickets } from "@/lib/ocrWorker";
-import { prepararTicketParaOcr } from "@/lib/prepararTicketOcr";
-import type { Insumo } from "@/lib/types";
+import {
+  crearRendicion,
+  leerTicketConIA,
+  type CrearRendicionEstado,
+  type ItemLeido,
+} from "@/app/sucursales/[id]/rendiciones/actions";
 
 type Props = {
   sucursalId: string;
-  insumos: Insumo[];
 };
 
-type ItemRevision = ItemDetectado & { incluido: boolean };
+type ItemRevision = ItemLeido & { incluido: boolean };
 
 const ESTADO_INICIAL: CrearRendicionEstado = { error: null };
 
@@ -20,13 +20,14 @@ const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
 const ETIQUETA = "mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft";
 
-export function RendicionForm({ sucursalId, insumos }: Props) {
+export function RendicionForm({ sucursalId }: Props) {
   const accionConSucursal = crearRendicion.bind(null, sucursalId);
   const [estado, formAction, enviando] = useActionState(accionConSucursal, ESTADO_INICIAL);
 
   const [leyendo, setLeyendo] = useState(false);
   const [items, setItems] = useState<ItemRevision[]>([]);
   const [ocrIntentado, setOcrIntentado] = useState(false);
+  const [ocrError, setOcrError] = useState<string | null>(null);
   const [monto, setMonto] = useState("");
   const [montoDetectado, setMontoDetectado] = useState(false);
 
@@ -36,49 +37,46 @@ export function RendicionForm({ sucursalId, insumos }: Props) {
 
     setLeyendo(true);
     setOcrIntentado(false);
+    setOcrError(null);
     setItems([]);
     setMonto("");
     setMontoDetectado(false);
 
-    try {
-      const [lector, fuenteOcr] = await Promise.all([
-        obtenerLectorTickets(),
-        prepararTicketParaOcr(archivo),
-      ]);
-      const { data } = await lector.recognize(fuenteOcr);
+    const datosArchivo = new FormData();
+    datosArchivo.set("foto", archivo);
 
-      const detectados = detectarItems(data.text, insumos);
-      setItems(detectados.map((d) => ({ ...d, incluido: true })));
+    const resultado = await leerTicketConIA(datosArchivo);
 
-      const total = extraerTotal(data.text);
-      if (total !== null) {
-        setMonto(String(total));
+    if (resultado.error) {
+      setOcrError(resultado.error);
+    } else {
+      setItems(resultado.items.map((i) => ({ ...i, incluido: true })));
+      if (resultado.total !== null) {
+        setMonto(String(resultado.total));
         setMontoDetectado(true);
       }
-    } catch {
-      setItems([]);
-    } finally {
-      setLeyendo(false);
-      setOcrIntentado(true);
     }
+
+    setLeyendo(false);
+    setOcrIntentado(true);
   }
 
   function actualizarCantidad(insumoId: string, cantidad: number) {
     setItems((prev) =>
-      prev.map((i) => (i.insumoId === insumoId ? { ...i, cantidad } : i)),
+      prev.map((i) => (i.insumo_id === insumoId ? { ...i, cantidad } : i)),
     );
   }
 
   function alternarIncluido(insumoId: string) {
     setItems((prev) =>
-      prev.map((i) => (i.insumoId === insumoId ? { ...i, incluido: !i.incluido } : i)),
+      prev.map((i) => (i.insumo_id === insumoId ? { ...i, incluido: !i.incluido } : i)),
     );
   }
 
   const itemsParaEnviar = JSON.stringify(
     items
       .filter((i) => i.incluido)
-      .map((i) => ({ insumo_id: i.insumoId, cantidad: i.cantidad })),
+      .map((i) => ({ insumo_id: i.insumo_id, cantidad: i.cantidad })),
   );
 
   return (
@@ -109,35 +107,45 @@ export function RendicionForm({ sucursalId, insumos }: Props) {
 
       {ocrIntentado && !leyendo && (
         <div className="col-span-full rounded-lg border border-edge bg-panel-deep p-3">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-soft">
-            {items.length > 0
-              ? "Productos detectados — revisá antes de sumar al stock"
-              : "No se reconoció ningún producto del catálogo en el ticket"}
-          </p>
-          {items.length > 0 && (
-            <div className="space-y-1.5">
-              {items.map((i) => (
-                <div key={i.insumoId} className="flex items-center gap-2.5 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={i.incluido}
-                    onChange={() => alternarIncluido(i.insumoId)}
-                    className="h-4 w-4 accent-[var(--color-brass)]"
-                  />
-                  <span className={i.incluido ? "flex-1 text-ink" : "flex-1 text-ink-soft line-through"}>
-                    {i.nombre}
-                  </span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={i.cantidad}
-                    disabled={!i.incluido}
-                    onChange={(e) => actualizarCantidad(i.insumoId, Number(e.target.value))}
-                    className="w-20 rounded-md border border-edge bg-card px-2 py-1 text-xs text-ink disabled:opacity-40"
-                  />
+          {ocrError ? (
+            <p className="text-xs text-red-400">{ocrError}</p>
+          ) : (
+            <>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-soft">
+                {items.length > 0
+                  ? "Productos detectados — revisá antes de sumar al stock"
+                  : "No se reconoció ningún producto del catálogo en el ticket"}
+              </p>
+              {items.length > 0 && (
+                <div className="space-y-1.5">
+                  {items.map((i) => (
+                    <div key={i.insumo_id} className="flex items-center gap-2.5 text-sm">
+                      <input
+                        type="checkbox"
+                        checked={i.incluido}
+                        onChange={() => alternarIncluido(i.insumo_id)}
+                        className="h-4 w-4 accent-[var(--color-brass)]"
+                      />
+                      <span
+                        className={
+                          i.incluido ? "flex-1 text-ink" : "flex-1 text-ink-soft line-through"
+                        }
+                      >
+                        {i.nombre}
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        value={i.cantidad}
+                        disabled={!i.incluido}
+                        onChange={(e) => actualizarCantidad(i.insumo_id, Number(e.target.value))}
+                        className="w-20 rounded-md border border-edge bg-card px-2 py-1 text-xs text-ink disabled:opacity-40"
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       )}

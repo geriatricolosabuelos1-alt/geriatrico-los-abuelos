@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { RendicionForm } from "@/components/RendicionForm";
-import type { Insumo, Perfil, Rendicion } from "@/lib/types";
+import type { Perfil, Rendicion } from "@/lib/types";
 
 type Params = { id: string };
 
@@ -41,13 +41,6 @@ export default async function RendicionesSucursalPage({
     .order("created_at", { ascending: false })
     .returns<Rendicion[]>();
 
-  const { data: insumos } = await supabase
-    .from("insumos")
-    .select("id, nombre, categoria, unidad, activo")
-    .eq("activo", true)
-    .order("nombre")
-    .returns<Insumo[]>();
-
   const listaRendiciones = rendiciones ?? [];
 
   const rendicionesConUrl = await Promise.all(
@@ -74,7 +67,7 @@ export default async function RendicionesSucursalPage({
           <h1 className="font-display text-2xl font-bold text-ink">Rendiciones</h1>
         </div>
 
-        <RendicionForm sucursalId={id} insumos={insumos ?? []} />
+        <RendicionForm sucursalId={id} />
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {rendicionesConUrl.map((r) => (

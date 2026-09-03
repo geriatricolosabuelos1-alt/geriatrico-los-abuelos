@@ -12,10 +12,8 @@
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.114.0",
     "next": "16.3.4",
-    "pdfjs-dist": "^6.3.289",
     "react": "19.2.8",
-    "react-dom": "19.2.8",
-    "tesseract.js": "^7.0.0"
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -28,7 +26,6 @@
     "typescript": "^5"
   },
   "allowScripts": {
-    "unrs-resolver@1.12.2": true,
-    "tesseract.js@7.0.0": true
+    "unrs-resolver@1.12.2": true
   }
 }
