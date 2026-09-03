@@ -9,6 +9,8 @@ type FilaResidente = {
   nombre: string;
   apellido: string;
   fecha_nacimiento: string | null;
+  fecha_ingreso: string | null;
+  fecha_egreso: string | null;
   contacto_familiar: string | null;
   telefono_familiar: string | null;
   activo: boolean;
@@ -22,8 +24,15 @@ type Props = {
   puedeBorrar: boolean;
 };
 
+type Columna = "nombre" | "ingreso" | "egreso";
+type Direccion = "asc" | "desc";
+
 const CAMPO =
   "w-full rounded-md border border-edge bg-card px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none";
+
+function formatearFecha(fecha: string | null): string {
+  return fecha ? new Date(fecha + "T00:00:00").toLocaleDateString("es-AR") : "—";
+}
 
 function FilaEdicion({
   sucursalId,
@@ -57,7 +66,7 @@ function FilaEdicion({
 
   return (
     <tr className="border-b border-edge bg-panel-deep last:border-0">
-      <td colSpan={6} className="p-3">
+      <td colSpan={7} className="p-3">
         <form onSubmit={manejarSubmit} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <input name="nombre" defaultValue={residente.nombre} required className={CAMPO} placeholder="Nombre" />
           <input
@@ -67,12 +76,33 @@ function FilaEdicion({
             className={CAMPO}
             placeholder="Apellido"
           />
-          <input
-            type="date"
-            name="fecha_nacimiento"
-            defaultValue={residente.fecha_nacimiento ?? ""}
-            className={CAMPO}
-          />
+          <div>
+            <label className="mb-0.5 block text-[0.6rem] text-ink-soft">Nacimiento</label>
+            <input
+              type="date"
+              name="fecha_nacimiento"
+              defaultValue={residente.fecha_nacimiento ?? ""}
+              className={CAMPO}
+            />
+          </div>
+          <div>
+            <label className="mb-0.5 block text-[0.6rem] text-ink-soft">Ingreso</label>
+            <input
+              type="date"
+              name="fecha_ingreso"
+              defaultValue={residente.fecha_ingreso ?? ""}
+              className={CAMPO}
+            />
+          </div>
+          <div>
+            <label className="mb-0.5 block text-[0.6rem] text-ink-soft">Egreso</label>
+            <input
+              type="date"
+              name="fecha_egreso"
+              defaultValue={residente.fecha_egreso ?? ""}
+              className={CAMPO}
+            />
+          </div>
           <input
             name="contacto_familiar"
             defaultValue={residente.contacto_familiar ?? ""}
@@ -134,18 +164,76 @@ function FilaEdicion({
   );
 }
 
+function EncabezadoOrdenable({
+  label,
+  columna,
+  ordenActual,
+  onOrdenar,
+}: {
+  label: string;
+  columna: Columna;
+  ordenActual: { columna: Columna; direccion: Direccion };
+  onOrdenar: (columna: Columna) => void;
+}) {
+  const activo = ordenActual.columna === columna;
+  return (
+    <th className="px-4 py-3">
+      <button
+        onClick={() => onOrdenar(columna)}
+        className={`flex items-center gap-1 uppercase tracking-wide ${activo ? "text-brass" : "text-ink-soft hover:text-ink"}`}
+      >
+        {label}
+        {activo && <span>{ordenActual.direccion === "asc" ? "▲" : "▼"}</span>}
+      </button>
+    </th>
+  );
+}
+
 export function ResidentesTable({ sucursalId, residentes, puedeEditar, puedeBorrar }: Props) {
   const [busqueda, setBusqueda] = useState("");
+  const [estadoFiltro, setEstadoFiltro] = useState<"todos" | "activo" | "inactivo">("todos");
   const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [orden, setOrden] = useState<{ columna: Columna; direccion: Direccion }>({
+    columna: "nombre",
+    direccion: "asc",
+  });
+
+  function manejarOrdenar(columna: Columna) {
+    setOrden((prev) =>
+      prev.columna === columna
+        ? { columna, direccion: prev.direccion === "asc" ? "desc" : "asc" }
+        : { columna, direccion: "asc" },
+    );
+  }
 
   const filtrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
-    if (!texto) return residentes;
-    return residentes.filter(
-      (r) =>
-        r.nombre.toLowerCase().includes(texto) || r.apellido.toLowerCase().includes(texto),
-    );
-  }, [residentes, busqueda]);
+    let lista = residentes.filter((r) => {
+      const coincideTexto =
+        !texto ||
+        r.nombre.toLowerCase().includes(texto) ||
+        r.apellido.toLowerCase().includes(texto);
+      const coincideEstado =
+        estadoFiltro === "todos" ||
+        (estadoFiltro === "activo" && r.activo) ||
+        (estadoFiltro === "inactivo" && !r.activo);
+      return coincideTexto && coincideEstado;
+    });
+
+    lista = [...lista].sort((a, b) => {
+      let comparacion = 0;
+      if (orden.columna === "nombre") {
+        comparacion = `${a.apellido} ${a.nombre}`.localeCompare(`${b.apellido} ${b.nombre}`, "es");
+      } else if (orden.columna === "ingreso") {
+        comparacion = (a.fecha_ingreso ?? "").localeCompare(b.fecha_ingreso ?? "");
+      } else if (orden.columna === "egreso") {
+        comparacion = (a.fecha_egreso ?? "").localeCompare(b.fecha_egreso ?? "");
+      }
+      return orden.direccion === "asc" ? comparacion : -comparacion;
+    });
+
+    return lista;
+  }, [residentes, busqueda, estadoFiltro, orden]);
 
   async function manejarBorrar(id: string, nombre: string) {
     if (!window.confirm(`¿Eliminar a ${nombre}?`)) return;
@@ -154,23 +242,50 @@ export function ResidentesTable({ sucursalId, residentes, puedeEditar, puedeBorr
 
   return (
     <div>
-      <input
-        type="text"
-        placeholder="Buscar por nombre o apellido..."
-        value={busqueda}
-        onChange={(e) => setBusqueda(e.target.value)}
-        className="mb-3 w-64 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none"
-      />
+      <div className="mb-3 flex flex-wrap gap-3">
+        <input
+          type="text"
+          placeholder="Buscar por nombre o apellido..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          className="w-64 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none"
+        />
+        <select
+          value={estadoFiltro}
+          onChange={(e) => setEstadoFiltro(e.target.value as typeof estadoFiltro)}
+          className="rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none"
+        >
+          <option value="todos">Todos los estados</option>
+          <option value="activo">Activos</option>
+          <option value="inactivo">Inactivos</option>
+        </select>
+      </div>
 
       <div className="overflow-x-auto rounded-2xl border border-edge bg-card">
         <table className="w-full text-left text-sm">
           <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
             <tr>
-              <th className="px-4 py-3">Nombre</th>
+              <EncabezadoOrdenable
+                label="Nombre"
+                columna="nombre"
+                ordenActual={orden}
+                onOrdenar={manejarOrdenar}
+              />
+              <EncabezadoOrdenable
+                label="Ingreso"
+                columna="ingreso"
+                ordenActual={orden}
+                onOrdenar={manejarOrdenar}
+              />
+              <EncabezadoOrdenable
+                label="Egreso"
+                columna="egreso"
+                ordenActual={orden}
+                onOrdenar={manejarOrdenar}
+              />
               <th className="px-4 py-3">Obra social</th>
               <th className="px-4 py-3">Cuota</th>
               <th className="px-4 py-3">Estado</th>
-              <th className="px-4 py-3"></th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -188,6 +303,12 @@ export function ResidentesTable({ sucursalId, residentes, puedeEditar, puedeBorr
                 <tr key={r.id} className="border-b border-edge last:border-0">
                   <td className="px-4 py-3 font-medium text-ink whitespace-nowrap">
                     {r.apellido}, {r.nombre}
+                  </td>
+                  <td className="px-4 py-3 text-ink-soft whitespace-nowrap">
+                    {formatearFecha(r.fecha_ingreso)}
+                  </td>
+                  <td className="px-4 py-3 text-ink-soft whitespace-nowrap">
+                    {formatearFecha(r.fecha_egreso)}
                   </td>
                   <td className="px-4 py-3 text-ink-soft">
                     {r.ficha_administrativa?.obra_social ?? "—"}
@@ -208,15 +329,13 @@ export function ResidentesTable({ sucursalId, residentes, puedeEditar, puedeBorr
                       {r.activo ? "Activo" : "Inactivo"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
                     <Link
                       href={`/residentes/${r.id}/evolucion`}
-                      className="text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                      className="mr-3 text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
                     >
                       Evolución
                     </Link>
-                  </td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
                     {puedeEditar && (
                       <button
                         onClick={() => setEditandoId(r.id)}
@@ -239,7 +358,7 @@ export function ResidentesTable({ sucursalId, residentes, puedeEditar, puedeBorr
             )}
             {filtrados.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-ink-soft">
+                <td colSpan={7} className="px-4 py-6 text-center text-ink-soft">
                   Ningún residente coincide con el filtro.
                 </td>
               </tr>

@@ -15,6 +15,8 @@ export async function crearResidente(
   const nombre = String(formData.get("nombre") ?? "").trim();
   const apellido = String(formData.get("apellido") ?? "").trim();
   const fecha_nacimiento = String(formData.get("fecha_nacimiento") ?? "") || null;
+  const fecha_ingreso = String(formData.get("fecha_ingreso") ?? "") || null;
+  const fecha_egreso = String(formData.get("fecha_egreso") ?? "") || null;
   const contacto_familiar = String(formData.get("contacto_familiar") ?? "") || null;
   const telefono_familiar = String(formData.get("telefono_familiar") ?? "") || null;
   const obra_social = String(formData.get("obra_social") ?? "") || null;
@@ -33,6 +35,8 @@ export async function crearResidente(
       nombre,
       apellido,
       fecha_nacimiento,
+      fecha_ingreso,
+      fecha_egreso,
       contacto_familiar,
       telefono_familiar,
     })
@@ -71,6 +75,8 @@ export async function actualizarResidente(
   const nombre = String(formData.get("nombre") ?? "").trim();
   const apellido = String(formData.get("apellido") ?? "").trim();
   const fecha_nacimiento = String(formData.get("fecha_nacimiento") ?? "") || null;
+  const fecha_ingreso = String(formData.get("fecha_ingreso") ?? "") || null;
+  const fecha_egreso = String(formData.get("fecha_egreso") ?? "") || null;
   const contacto_familiar = String(formData.get("contacto_familiar") ?? "") || null;
   const telefono_familiar = String(formData.get("telefono_familiar") ?? "") || null;
   const obra_social = String(formData.get("obra_social") ?? "") || null;
@@ -85,7 +91,16 @@ export async function actualizarResidente(
 
   const { error: errorResidente } = await supabase
     .from("residentes")
-    .update({ nombre, apellido, fecha_nacimiento, contacto_familiar, telefono_familiar, activo })
+    .update({
+      nombre,
+      apellido,
+      fecha_nacimiento,
+      fecha_ingreso,
+      fecha_egreso,
+      contacto_familiar,
+      telefono_familiar,
+      activo,
+    })
     .eq("id", residenteId);
 
   if (errorResidente) {

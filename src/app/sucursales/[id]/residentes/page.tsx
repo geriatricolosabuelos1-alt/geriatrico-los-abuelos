@@ -12,6 +12,8 @@ type FilaResidente = {
   nombre: string;
   apellido: string;
   fecha_nacimiento: string | null;
+  fecha_ingreso: string | null;
+  fecha_egreso: string | null;
   contacto_familiar: string | null;
   telefono_familiar: string | null;
   activo: boolean;
@@ -53,7 +55,7 @@ export default async function ResidentesSucursalPage({
   const { data: residentes } = await supabase
     .from("residentes")
     .select(
-      "id, nombre, apellido, fecha_nacimiento, contacto_familiar, telefono_familiar, activo, ficha_administrativa(obra_social, tipo_cobertura, cuota_mensual)",
+      "id, nombre, apellido, fecha_nacimiento, fecha_ingreso, fecha_egreso, contacto_familiar, telefono_familiar, activo, ficha_administrativa(obra_social, tipo_cobertura, cuota_mensual)",
     )
     .eq("sucursal_id", id)
     .order("apellido")

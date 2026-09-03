@@ -19,6 +19,7 @@ const ETIQUETA = "mb-1 block text-xs font-medium uppercase tracking-wide text-in
 export function ResidenteForm({ sucursalId }: Props) {
   const accionConSucursal = crearResidente.bind(null, sucursalId);
   const [estado, formAction, enviando] = useActionState(accionConSucursal, ESTADO_INICIAL);
+  const hoy = new Date().toISOString().slice(0, 10);
 
   return (
     <form
@@ -42,6 +43,16 @@ export function ResidenteForm({ sucursalId }: Props) {
       <div>
         <label className={ETIQUETA}>Fecha de nacimiento</label>
         <input type="date" name="fecha_nacimiento" className={CAMPO} />
+      </div>
+
+      <div>
+        <label className={ETIQUETA}>Fecha de ingreso</label>
+        <input type="date" name="fecha_ingreso" defaultValue={hoy} className={CAMPO} />
+      </div>
+
+      <div>
+        <label className={ETIQUETA}>Fecha de egreso</label>
+        <input type="date" name="fecha_egreso" className={CAMPO} />
       </div>
 
       <div>

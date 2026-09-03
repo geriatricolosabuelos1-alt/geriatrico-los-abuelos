@@ -28,6 +28,8 @@ export interface Residente {
   nombre: string;
   apellido: string;
   fecha_nacimiento: string | null;
+  fecha_ingreso: string | null;
+  fecha_egreso: string | null;
   contacto_familiar: string | null;
   telefono_familiar: string | null;
   observaciones_medicas: string | null;
