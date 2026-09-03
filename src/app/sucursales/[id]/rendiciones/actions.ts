@@ -5,6 +5,8 @@ import { createClient } from "@/lib/supabase/server";
 
 export type CrearRendicionEstado = { error: string | null };
 
+type ItemConfirmado = { insumo_id: string; cantidad: number };
+
 export async function crearRendicion(
   sucursalId: string,
   _estado: CrearRendicionEstado,
@@ -20,6 +22,14 @@ export async function crearRendicion(
   const montoRaw = String(formData.get("monto") ?? "");
   const descripcion = String(formData.get("descripcion") ?? "") || null;
   const monto = montoRaw ? Number(montoRaw) : null;
+  const itemsRaw = String(formData.get("items") ?? "[]");
+
+  let items: ItemConfirmado[] = [];
+  try {
+    items = JSON.parse(itemsRaw);
+  } catch {
+    items = [];
+  }
 
   if (!(archivo instanceof File) || archivo.size === 0) {
     return { error: "Subí una foto del ticket." };
@@ -48,6 +58,27 @@ export async function crearRendicion(
     return { error: errorInsert.message };
   }
 
+  const movimientosValidos = items.filter(
+    (i) => i.insumo_id && Number(i.cantidad) > 0,
+  );
+
+  if (movimientosValidos.length > 0) {
+    const { error: errorMovimientos } = await supabase.from("movimientos_inventario").insert(
+      movimientosValidos.map((i) => ({
+        sucursal_id: sucursalId,
+        insumo_id: i.insumo_id,
+        tipo: "entrada" as const,
+        cantidad: i.cantidad,
+        registrado_por: user?.id,
+      })),
+    );
+
+    if (errorMovimientos) {
+      return { error: `Rendición guardada, pero falló actualizar el stock: ${errorMovimientos.message}` };
+    }
+  }
+
   revalidatePath(`/sucursales/${sucursalId}/rendiciones`);
+  revalidatePath(`/sucursales/${sucursalId}/inventario`);
   return { error: null };
 }
