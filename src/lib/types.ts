@@ -69,8 +69,11 @@ export interface Empleado {
   sucursal_id: string;
   perfil_id: string | null;
   nombre_completo: string;
-  tipo_contratacion: TipoContratacion;
-  forma_pago: FormaPago;
+  dni: string | null;
+  fecha_nacimiento: string | null;
+  direccion: string | null;
+  tipo_contratacion: TipoContratacion | null;
+  forma_pago: FormaPago | null;
   turno: string | null;
   sueldo: number | null;
   activo: boolean;

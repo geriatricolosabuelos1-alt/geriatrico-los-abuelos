@@ -44,9 +44,24 @@ export function EmpleadoForm({ sucursales }: Props) {
       </div>
 
       <div>
+        <label className={ETIQUETA}>DNI</label>
+        <input type="text" name="dni" placeholder="00.000.000" className={CAMPO} />
+      </div>
+
+      <div>
+        <label className={ETIQUETA}>Fecha de nacimiento</label>
+        <input type="date" name="fecha_nacimiento" className={CAMPO} />
+      </div>
+
+      <div className="sm:col-span-2">
+        <label className={ETIQUETA}>Domicilio</label>
+        <input type="text" name="direccion" className={CAMPO} />
+      </div>
+
+      <div>
         <label className={ETIQUETA}>Tipo de contratación</label>
-        <select name="tipo_contratacion" required className={CAMPO}>
-          <option value="">Seleccionar...</option>
+        <select name="tipo_contratacion" className={CAMPO}>
+          <option value="">Sin definir</option>
           <option value="monotributo">Monotributo</option>
           <option value="relacion_dependencia">Relación de dependencia</option>
         </select>
@@ -54,8 +69,8 @@ export function EmpleadoForm({ sucursales }: Props) {
 
       <div>
         <label className={ETIQUETA}>Forma de pago</label>
-        <select name="forma_pago" required className={CAMPO}>
-          <option value="">Seleccionar...</option>
+        <select name="forma_pago" className={CAMPO}>
+          <option value="">Sin definir</option>
           <option value="efectivo">Efectivo</option>
           <option value="transferencia">Transferencia</option>
         </select>
