@@ -4,23 +4,23 @@
   --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
 
-  --color-panel: #3d3a54;
-  --color-panel-deep: rgb(0 0 0 / 0.22);
-  --color-card: rgb(255 255 255 / 0.14);
-  --color-edge: rgb(255 255 255 / 0.18);
-  --color-ink: #ffffff;
-  --color-ink-soft: #d8d4ea;
-  --color-brass: #5eead4;
-  --color-brass-soft: rgb(94 234 212 / 0.22);
-  --color-tab: rgb(255 255 255 / 0.18);
-  --color-btn-ink: #14101f;
+  --color-panel: #0b0a14;
+  --color-panel-deep: rgb(255 255 255 / 0.04);
+  --color-card: rgb(255 255 255 / 0.05);
+  --color-edge: rgb(255 255 255 / 0.1);
+  --color-ink: #eceafc;
+  --color-ink-soft: #8783a8;
+  --color-brass: #67e8f9;
+  --color-brass-soft: rgb(103 232 249 / 0.15);
+  --color-tab: rgb(167 139 250 / 0.18);
+  --color-btn-ink: #0b0a14;
 }
 
 .bg-panel {
   background:
-    radial-gradient(ellipse 900px 600px at 15% 0%, rgb(196 181 253 / 0.4), transparent 60%),
-    radial-gradient(ellipse 750px 600px at 90% 20%, rgb(94 234 212 / 0.3), transparent 55%),
-    radial-gradient(ellipse 1000px 750px at 50% 100%, rgb(244 114 182 / 0.22), transparent 60%),
+    radial-gradient(ellipse 900px 600px at 15% 0%, rgb(124 92 255 / 0.35), transparent 60%),
+    radial-gradient(ellipse 750px 600px at 90% 20%, rgb(45 212 191 / 0.22), transparent 55%),
+    radial-gradient(ellipse 1000px 750px at 50% 100%, rgb(255 90 150 / 0.15), transparent 60%),
     var(--color-panel);
 }
 
