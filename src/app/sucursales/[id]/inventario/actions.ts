@@ -39,3 +39,17 @@ export async function registrarMovimiento(
   revalidatePath(`/sucursales/${sucursalId}/inventario`);
   return { error: null };
 }
+
+export async function actualizarUnidadInsumo(
+  insumoId: string,
+  formData: FormData,
+): Promise<void> {
+  const supabase = await createClient();
+
+  const unidad = String(formData.get("unidad") ?? "").trim();
+  if (!unidad) return;
+
+  await supabase.from("insumos").update({ unidad }).eq("id", insumoId);
+
+  revalidatePath("/sucursales/[id]/inventario", "page");
+}

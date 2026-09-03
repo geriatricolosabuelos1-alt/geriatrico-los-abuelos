@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { InventarioForm } from "@/components/InventarioForm";
+import { actualizarUnidadInsumo } from "./actions";
 import type { CategoriaInsumo, Insumo, Perfil } from "@/lib/types";
 
 type Params = { id: string };
@@ -71,6 +72,7 @@ export default async function InventarioSucursalPage({
   });
 
   const listaInsumos = insumos ?? [];
+  const esAdmin = perfil!.rol === "admin";
 
   return (
     <div className="flex min-h-screen w-full">
@@ -104,6 +106,7 @@ export default async function InventarioSucursalPage({
                     <tr>
                       <th className="px-4 py-3">Insumo</th>
                       <th className="px-4 py-3">Stock</th>
+                      <th className="px-4 py-3">Unidad</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -121,8 +124,30 @@ export default async function InventarioSucursalPage({
                               }
                             >
                               {stock}
-                            </span>{" "}
-                            {i.unidad}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-ink-soft">
+                            {esAdmin ? (
+                              <form
+                                action={actualizarUnidadInsumo.bind(null, i.id)}
+                                className="flex items-center gap-1.5"
+                              >
+                                <input
+                                  type="text"
+                                  name="unidad"
+                                  defaultValue={i.unidad}
+                                  className="w-24 rounded-md border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none"
+                                />
+                                <button
+                                  type="submit"
+                                  className="text-xs font-medium text-brass hover:text-ink"
+                                >
+                                  Guardar
+                                </button>
+                              </form>
+                            ) : (
+                              i.unidad
+                            )}
                           </td>
                         </tr>
                       );
