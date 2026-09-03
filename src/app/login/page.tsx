@@ -34,16 +34,19 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="mb-1 text-xl font-semibold text-slate-900">
-          Geriátrico Los Abuelos
+    <div className="flex min-h-screen items-center justify-center bg-panel px-4">
+      <div className="w-full max-w-sm rounded-2xl border border-edge bg-card p-8">
+        <p className="mb-1 text-[0.65rem] font-semibold uppercase tracking-widest text-brass">
+          Suite de cuidado
+        </p>
+        <h1 className="mb-1 font-display text-xl font-bold text-ink">
+          Los Abuelos
         </h1>
-        <p className="mb-6 text-sm text-slate-500">Iniciá sesión para continuar</p>
+        <p className="mb-6 text-sm text-ink-soft">Iniciá sesión para continuar</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
               Email
             </label>
             <input
@@ -51,12 +54,12 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+              className="w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none"
             />
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-slate-700">
+            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
               Contraseña
             </label>
             <input
@@ -64,16 +67,16 @@ export default function LoginPage() {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+              className="w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none"
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
 
           <button
             type="submit"
             disabled={cargando}
-            className="w-full rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+            className="w-full rounded-lg bg-brass px-3 py-2 text-sm font-semibold text-panel-deep hover:bg-brass/90 disabled:opacity-50"
           >
             {cargando ? "Ingresando..." : "Ingresar"}
           </button>

@@ -1,6 +1,21 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-karla), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+
+  --color-panel: #1c1730;
+  --color-panel-deep: #150f26;
+  --color-card: #241d3d;
+  --color-edge: #332a56;
+  --color-ink: #e8e4f2;
+  --color-ink-soft: #8b83ab;
+  --color-brass: #d4a24c;
+  --color-brass-soft: rgb(212 162 76 / 0.18);
+  --color-tab: #2c2447;
+}
+
+body {
+  background: var(--color-panel);
+  color: var(--color-ink);
 }

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { NavBar } from "@/components/NavBar";
+import { Sidebar } from "@/components/Sidebar";
 import { EmpleadoForm } from "@/components/EmpleadoForm";
 import type { Perfil, Sucursal } from "@/lib/types";
 
@@ -52,20 +52,21 @@ export default async function EmpleadosPage() {
     .returns<FilaEmpleado[]>();
 
   return (
-    <>
-      <NavBar
+    <div className="flex min-h-screen w-full">
+      <Sidebar
         nombre={perfil?.nombre_completo ?? user?.email ?? ""}
         rol={perfil?.rol ?? ""}
+        activo="empleados"
       />
 
-      <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-8">
-        <h1 className="text-2xl font-semibold text-slate-900">Empleados</h1>
+      <main className="flex-1 space-y-6 px-9 py-8">
+        <h1 className="font-display text-2xl font-bold text-ink">Empleados</h1>
 
         <EmpleadoForm sucursales={sucursales ?? []} />
 
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="overflow-hidden rounded-2xl border border-edge bg-card">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+            <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
               <tr>
                 <th className="px-4 py-3">Nombre</th>
                 <th className="px-4 py-3">Sucursal</th>
@@ -77,28 +78,28 @@ export default async function EmpleadosPage() {
             </thead>
             <tbody>
               {(empleados ?? []).map((e) => (
-                <tr key={e.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-4 py-3 font-medium text-slate-900">
+                <tr key={e.id} className="border-b border-edge last:border-0">
+                  <td className="px-4 py-3 font-medium text-ink">
                     {e.nombre_completo}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-ink-soft">
                     {e.sucursales?.nombre ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-ink-soft">
                     {ETIQUETA_CONTRATACION[e.tipo_contratacion] ?? e.tipo_contratacion}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-ink-soft">
                     {ETIQUETA_PAGO[e.forma_pago] ?? e.forma_pago}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{e.turno ?? "—"}</td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-ink-soft">{e.turno ?? "—"}</td>
+                  <td className="px-4 py-3 text-ink-soft">
                     {e.sueldo != null ? `$${e.sueldo}` : "—"}
                   </td>
                 </tr>
               ))}
               {(empleados ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
+                  <td colSpan={6} className="px-4 py-6 text-center text-ink-soft">
                     Todavía no hay empleados cargados.
                   </td>
                 </tr>
@@ -107,6 +108,6 @@ export default async function EmpleadosPage() {
           </table>
         </div>
       </main>
-    </>
+    </div>
   );
 }

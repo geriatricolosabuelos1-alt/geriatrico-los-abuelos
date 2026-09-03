@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { NavBar } from "@/components/NavBar";
+import { Sidebar } from "@/components/Sidebar";
 import type { Perfil, Sucursal } from "@/lib/types";
 
 type ResumenSucursal = {
@@ -25,7 +25,7 @@ export default async function DashboardPage() {
 
   const { data: sucursales } = await supabase
     .from("sucursales")
-    .select("id, nombre, direccion")
+    .select("id, nombre, direccion, capacidad_camas")
     .order("nombre")
     .returns<Sucursal[]>();
 
@@ -63,32 +63,37 @@ export default async function DashboardPage() {
   );
 
   return (
-    <>
-      <NavBar
+    <div className="flex min-h-screen w-full">
+      <Sidebar
         nombre={perfil?.nombre_completo ?? user?.email ?? ""}
         rol={perfil?.rol ?? ""}
+        activo="dashboard"
       />
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
-        <h1 className="mb-6 text-2xl font-semibold text-slate-900">
+      <main className="flex-1 px-9 py-8">
+        <h1 className="mb-6 font-display text-2xl font-bold text-ink">
           Dashboard
         </h1>
 
         {esAdmin && (
-          <section className="mb-8">
-            <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
+          <section className="mb-7">
+            <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-soft">
               Totales combinados
             </h2>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-2">
-              <div className="rounded-xl border border-slate-200 bg-white p-5">
-                <p className="text-xs text-slate-500">Residentes activos</p>
-                <p className="text-3xl font-semibold text-slate-900">
+            <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-2">
+              <div className="relative overflow-hidden rounded-2xl border border-edge bg-card p-5">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  Residentes activos
+                </p>
+                <p className="font-display text-3xl font-bold text-ink">
                   {totalResidentesGlobal}
                 </p>
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white p-5">
-                <p className="text-xs text-slate-500">Pagos pendientes</p>
-                <p className="text-3xl font-semibold text-slate-900">
+              <div className="relative overflow-hidden rounded-2xl border border-edge bg-card p-5">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  Pagos pendientes
+                </p>
+                <p className="font-display text-3xl font-bold text-ink">
                   {totalPagosPendientesGlobal}
                 </p>
               </div>
@@ -97,10 +102,10 @@ export default async function DashboardPage() {
         )}
 
         <section>
-          <h2 className="mb-3 text-sm font-medium uppercase tracking-wide text-slate-500">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-soft">
             {esAdmin ? "Por sucursal" : "Tu sucursal"}
           </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
             {resumenes
               .filter(
                 (r) => esAdmin || r.sucursal.id === perfil?.sucursal_id,
@@ -108,23 +113,25 @@ export default async function DashboardPage() {
               .map((r) => (
                 <div
                   key={r.sucursal.id}
-                  className="rounded-xl border border-slate-200 bg-white p-5"
+                  className="rounded-2xl border border-edge bg-card p-5"
                 >
-                  <p className="mb-3 font-medium text-slate-900">
+                  <p className="mb-3 font-display font-semibold text-ink">
                     {r.sucursal.nombre}
                   </p>
-                  <div className="flex gap-6">
+                  <div className="flex gap-7">
                     <div>
-                      <p className="text-xs text-slate-500">Residentes</p>
-                      <p className="text-xl font-semibold text-slate-900">
+                      <p className="text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
+                        Residentes
+                      </p>
+                      <p className="font-display text-xl font-bold text-brass">
                         {r.totalResidentes}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
                         Pagos pendientes
                       </p>
-                      <p className="text-xl font-semibold text-slate-900">
+                      <p className="font-display text-xl font-bold text-brass">
                         {r.pagosPendientes}
                       </p>
                     </div>
@@ -134,6 +141,6 @@ export default async function DashboardPage() {
           </div>
         </section>
       </main>
-    </>
+    </div>
   );
 }

@@ -10,22 +10,20 @@ type Props = {
 
 const ESTADO_INICIAL: CrearNotaEstado = { error: null };
 
+const CAMPO =
+  "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
+const ETIQUETA = "mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft";
+
 export function NotaEvolucionForm({ residenteId, mostrarSelectorTipo }: Props) {
   const accionConId = crearNotaEvolucion.bind(null, residenteId);
   const [estado, formAction, enviando] = useActionState(accionConId, ESTADO_INICIAL);
 
   return (
-    <form action={formAction} className="space-y-3 rounded-xl border border-slate-200 bg-white p-5">
+    <form action={formAction} className="space-y-3 rounded-2xl border border-edge bg-card p-5">
       {mostrarSelectorTipo && (
         <div>
-          <label className="mb-1 block text-sm font-medium text-slate-700">
-            Tipo de nota
-          </label>
-          <select
-            name="tipo"
-            required
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          >
+          <label className={ETIQUETA}>Tipo de nota</label>
+          <select name="tipo" required className={CAMPO}>
             <option value="">Seleccionar...</option>
             <option value="medica">Médica</option>
             <option value="enfermeria">Enfermería</option>
@@ -36,23 +34,16 @@ export function NotaEvolucionForm({ residenteId, mostrarSelectorTipo }: Props) {
       )}
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">
-          Nota
-        </label>
-        <textarea
-          name="contenido"
-          required
-          rows={3}
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-        />
+        <label className={ETIQUETA}>Nota</label>
+        <textarea name="contenido" required rows={3} className={CAMPO} />
       </div>
 
-      {estado.error && <p className="text-sm text-red-600">{estado.error}</p>}
+      {estado.error && <p className="text-sm text-red-400">{estado.error}</p>}
 
       <button
         type="submit"
         disabled={enviando}
-        className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+        className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-panel-deep hover:bg-brass/90 disabled:opacity-50"
       >
         {enviando ? "Guardando..." : "Agregar nota"}
       </button>

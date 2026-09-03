@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { NavBar } from "@/components/NavBar";
+import { Sidebar } from "@/components/Sidebar";
 import { NotaEvolucionForm } from "@/components/NotaEvolucionForm";
 import type { Perfil } from "@/lib/types";
 
@@ -57,16 +57,19 @@ export default async function EvolucionResidentePage({
     .returns<FilaNota[]>();
 
   return (
-    <>
-      <NavBar
+    <div className="flex min-h-screen w-full">
+      <Sidebar
         nombre={perfil?.nombre_completo ?? user?.email ?? ""}
         rol={perfil?.rol ?? ""}
+        activo="residentes"
       />
 
-      <main className="mx-auto w-full max-w-3xl flex-1 space-y-6 px-4 py-8">
+      <main className="mx-auto w-full max-w-2xl flex-1 space-y-6 px-9 py-8">
         <div>
-          <p className="text-sm text-slate-500">Evolución</p>
-          <h1 className="text-2xl font-semibold text-slate-900">
+          <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft">
+            Evolución
+          </p>
+          <h1 className="font-display text-2xl font-bold text-ink">
             {residente.apellido}, {residente.nombre}
           </h1>
         </div>
@@ -78,9 +81,9 @@ export default async function EvolucionResidentePage({
 
         <div className="space-y-3">
           {(notas ?? []).map((n) => (
-            <div key={n.id} className="rounded-xl border border-slate-200 bg-white p-4">
-              <div className="mb-1 flex items-center justify-between text-xs text-slate-500">
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 font-medium text-slate-600">
+            <div key={n.id} className="rounded-2xl border border-edge bg-card p-4">
+              <div className="mb-1.5 flex items-center justify-between text-xs text-ink-soft">
+                <span className="rounded-full bg-brass-soft px-2 py-0.5 font-medium text-brass">
                   {ETIQUETA_TIPO[n.tipo] ?? n.tipo}
                 </span>
                 <span>
@@ -88,16 +91,16 @@ export default async function EvolucionResidentePage({
                   {new Date(n.fecha).toLocaleString("es-AR")}
                 </span>
               </div>
-              <p className="text-sm text-slate-800">{n.contenido}</p>
+              <p className="text-sm text-ink">{n.contenido}</p>
             </div>
           ))}
           {(notas ?? []).length === 0 && (
-            <p className="text-center text-sm text-slate-400">
+            <p className="text-center text-sm text-ink-soft">
               Todavía no hay notas cargadas para este residente.
             </p>
           )}
         </div>
       </main>
-    </>
+    </div>
   );
 }

@@ -10,27 +10,25 @@ type Props = {
 
 const ESTADO_INICIAL: CrearEmpleadoEstado = { error: null };
 
+const CAMPO =
+  "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
+const ETIQUETA = "mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft";
+
 export function EmpleadoForm({ sucursales }: Props) {
   const [estado, formAction, enviando] = useActionState(crearEmpleado, ESTADO_INICIAL);
 
   return (
     <form
       action={formAction}
-      className="grid grid-cols-1 gap-4 rounded-xl border border-slate-200 bg-white p-5 sm:grid-cols-2"
+      className="grid grid-cols-1 gap-4 rounded-2xl border border-edge bg-card p-5 sm:grid-cols-2"
     >
-      <h2 className="col-span-full text-sm font-semibold text-slate-900">
+      <h2 className="col-span-full font-display text-sm font-semibold text-ink">
         Nuevo empleado
       </h2>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">
-          Sucursal
-        </label>
-        <select
-          name="sucursal_id"
-          required
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-        >
+        <label className={ETIQUETA}>Sucursal</label>
+        <select name="sucursal_id" required className={CAMPO}>
           <option value="">Seleccionar...</option>
           {sucursales.map((s) => (
             <option key={s.id} value={s.id}>
@@ -41,26 +39,13 @@ export function EmpleadoForm({ sucursales }: Props) {
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">
-          Nombre completo
-        </label>
-        <input
-          type="text"
-          name="nombre_completo"
-          required
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-        />
+        <label className={ETIQUETA}>Nombre completo</label>
+        <input type="text" name="nombre_completo" required className={CAMPO} />
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">
-          Tipo de contratación
-        </label>
-        <select
-          name="tipo_contratacion"
-          required
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-        >
+        <label className={ETIQUETA}>Tipo de contratación</label>
+        <select name="tipo_contratacion" required className={CAMPO}>
           <option value="">Seleccionar...</option>
           <option value="monotributo">Monotributo</option>
           <option value="relacion_dependencia">Relación de dependencia</option>
@@ -68,14 +53,8 @@ export function EmpleadoForm({ sucursales }: Props) {
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">
-          Forma de pago
-        </label>
-        <select
-          name="forma_pago"
-          required
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-        >
+        <label className={ETIQUETA}>Forma de pago</label>
+        <select name="forma_pago" required className={CAMPO}>
           <option value="">Seleccionar...</option>
           <option value="efectivo">Efectivo</option>
           <option value="transferencia">Transferencia</option>
@@ -83,38 +62,29 @@ export function EmpleadoForm({ sucursales }: Props) {
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">
-          Turno
-        </label>
+        <label className={ETIQUETA}>Turno</label>
         <input
           type="text"
           name="turno"
           placeholder="12x2, fijo mañana..."
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className={CAMPO}
         />
       </div>
 
       <div>
-        <label className="mb-1 block text-sm font-medium text-slate-700">
-          Sueldo
-        </label>
-        <input
-          type="number"
-          step="0.01"
-          name="sueldo"
-          className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-        />
+        <label className={ETIQUETA}>Sueldo</label>
+        <input type="number" step="0.01" name="sueldo" className={CAMPO} />
       </div>
 
       {estado.error && (
-        <p className="col-span-full text-sm text-red-600">{estado.error}</p>
+        <p className="col-span-full text-sm text-red-400">{estado.error}</p>
       )}
 
       <div className="col-span-full">
         <button
           type="submit"
           disabled={enviando}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+          className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-panel-deep hover:bg-brass/90 disabled:opacity-50"
         >
           {enviando ? "Guardando..." : "Guardar empleado"}
         </button>

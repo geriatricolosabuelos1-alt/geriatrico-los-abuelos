@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { NavBar } from "@/components/NavBar";
+import { Sidebar } from "@/components/Sidebar";
 import { ResidenteForm } from "@/components/ResidenteForm";
 import type { Perfil, Sucursal } from "@/lib/types";
 
@@ -46,20 +46,21 @@ export default async function ResidentesPage() {
     .returns<FilaResidente[]>();
 
   return (
-    <>
-      <NavBar
+    <div className="flex min-h-screen w-full">
+      <Sidebar
         nombre={perfil?.nombre_completo ?? user?.email ?? ""}
         rol={perfil?.rol ?? ""}
+        activo="residentes"
       />
 
-      <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-8">
-        <h1 className="text-2xl font-semibold text-slate-900">Residentes</h1>
+      <main className="flex-1 space-y-6 px-9 py-8">
+        <h1 className="font-display text-2xl font-bold text-ink">Residentes</h1>
 
         {puedeCrear && <ResidenteForm sucursales={sucursales ?? []} />}
 
-        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
+        <div className="overflow-hidden rounded-2xl border border-edge bg-card">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase text-slate-500">
+            <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
               <tr>
                 <th className="px-4 py-3">Nombre</th>
                 <th className="px-4 py-3">Sucursal</th>
@@ -71,17 +72,17 @@ export default async function ResidentesPage() {
             </thead>
             <tbody>
               {(residentes ?? []).map((r) => (
-                <tr key={r.id} className="border-b border-slate-100 last:border-0">
-                  <td className="px-4 py-3 font-medium text-slate-900">
+                <tr key={r.id} className="border-b border-edge last:border-0">
+                  <td className="px-4 py-3 font-medium text-ink">
                     {r.apellido}, {r.nombre}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-ink-soft">
                     {r.sucursales?.nombre ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-ink-soft">
                     {r.ficha_administrativa?.obra_social ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-4 py-3 text-ink-soft">
                     {r.ficha_administrativa?.cuota_mensual != null
                       ? `$${r.ficha_administrativa.cuota_mensual}`
                       : "—"}
@@ -90,8 +91,8 @@ export default async function ResidentesPage() {
                     <span
                       className={
                         r.activo
-                          ? "rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700"
-                          : "rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-500"
+                          ? "rounded-full bg-brass-soft px-2 py-0.5 text-xs font-medium text-brass"
+                          : "rounded-full bg-edge px-2 py-0.5 text-xs font-medium text-ink-soft"
                       }
                     >
                       {r.activo ? "Activo" : "Inactivo"}
@@ -100,7 +101,7 @@ export default async function ResidentesPage() {
                   <td className="px-4 py-3 text-right">
                     <Link
                       href={`/residentes/${r.id}/evolucion`}
-                      className="text-sm text-slate-600 underline hover:text-slate-900"
+                      className="text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
                     >
                       Evolución
                     </Link>
@@ -109,7 +110,7 @@ export default async function ResidentesPage() {
               ))}
               {(residentes ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-slate-400">
+                  <td colSpan={6} className="px-4 py-6 text-center text-ink-soft">
                     Todavía no hay residentes cargados.
                   </td>
                 </tr>
@@ -118,6 +119,6 @@ export default async function ResidentesPage() {
           </table>
         </div>
       </main>
-    </>
+    </div>
   );
 }
