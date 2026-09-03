@@ -27,6 +27,7 @@ const ROLES_CUOTAS: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_RENDICIONES: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_INVENTARIO: RolUsuario[] = ["admin", "administrativo", "enfermero", "cuidador"];
 const ROLES_EMPLEADOS: RolUsuario[] = ["admin", "administrativo"];
+const ROLES_DASHBOARD: RolUsuario[] = ["admin", "administrativo"];
 
 const ETIQUETA_ROL: Record<string, string> = {
   admin: "Administradora",
@@ -101,19 +102,23 @@ export async function Sidebar({ perfil, activo }: Props) {
   return (
     <aside className="flex w-56 flex-shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-edge bg-panel-deep p-4">
       <div className="mb-6 px-1">
-        <p className="font-display text-base font-bold tracking-tight text-ink">
-          Los Abuelos
-        </p>
-        <p className="mt-1 text-[0.65rem] font-medium uppercase tracking-widest text-brass">
-          Suite de cuidado
-        </p>
+        <Link href="/" className="block">
+          <p className="font-display text-base font-bold tracking-tight text-ink">
+            Los Abuelos
+          </p>
+          <p className="mt-1 text-[0.65rem] font-medium uppercase tracking-widest text-brass">
+            Suite de cuidado
+          </p>
+        </Link>
       </div>
 
-      <TabPrincipal
-        href="/"
-        label="Dashboard"
-        activo={activo?.tipo === "dashboard"}
-      />
+      {ROLES_DASHBOARD.includes(perfil.rol) && (
+        <TabPrincipal
+          href="/administrativa"
+          label="Dashboard"
+          activo={activo?.tipo === "dashboard"}
+        />
+      )}
 
       {sucursalesVisibles.map((s) => (
         <div key={s.id} className="mt-3">
