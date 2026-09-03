@@ -64,11 +64,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex min-h-screen w-full">
-      <Sidebar
-        nombre={perfil?.nombre_completo ?? user?.email ?? ""}
-        rol={perfil?.rol ?? ""}
-        activo="dashboard"
-      />
+      <Sidebar perfil={perfil!} activo={{ tipo: "dashboard" }} />
 
       <main className="flex-1 px-9 py-8">
         <h1 className="mb-6 font-display text-2xl font-bold text-ink">

@@ -53,11 +53,7 @@ export default async function EmpleadosPage() {
 
   return (
     <div className="flex min-h-screen w-full">
-      <Sidebar
-        nombre={perfil?.nombre_completo ?? user?.email ?? ""}
-        rol={perfil?.rol ?? ""}
-        activo="empleados"
-      />
+      <Sidebar perfil={perfil!} activo={{ tipo: "empleados" }} />
 
       <main className="flex-1 space-y-6 px-9 py-8">
         <h1 className="font-display text-2xl font-bold text-ink">Empleados</h1>

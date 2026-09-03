@@ -1,11 +1,13 @@
 "use client";
 
 import { useActionState } from "react";
-import { crearResidente, type CrearResidenteEstado } from "@/app/residentes/actions";
-import type { Sucursal } from "@/lib/types";
+import {
+  crearResidente,
+  type CrearResidenteEstado,
+} from "@/app/sucursales/[id]/residentes/actions";
 
 type Props = {
-  sucursales: Sucursal[];
+  sucursalId: string;
 };
 
 const ESTADO_INICIAL: CrearResidenteEstado = { error: null };
@@ -14,8 +16,9 @@ const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
 const ETIQUETA = "mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft";
 
-export function ResidenteForm({ sucursales }: Props) {
-  const [estado, formAction, enviando] = useActionState(crearResidente, ESTADO_INICIAL);
+export function ResidenteForm({ sucursalId }: Props) {
+  const accionConSucursal = crearResidente.bind(null, sucursalId);
+  const [estado, formAction, enviando] = useActionState(accionConSucursal, ESTADO_INICIAL);
 
   return (
     <form
@@ -27,23 +30,6 @@ export function ResidenteForm({ sucursales }: Props) {
       </h2>
 
       <div>
-        <label className={ETIQUETA}>Sucursal</label>
-        <select name="sucursal_id" required className={CAMPO}>
-          <option value="">Seleccionar...</option>
-          {sucursales.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.nombre}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div>
-        <label className={ETIQUETA}>Fecha de nacimiento</label>
-        <input type="date" name="fecha_nacimiento" className={CAMPO} />
-      </div>
-
-      <div>
         <label className={ETIQUETA}>Nombre</label>
         <input type="text" name="nombre" required className={CAMPO} />
       </div>
@@ -51,6 +37,11 @@ export function ResidenteForm({ sucursales }: Props) {
       <div>
         <label className={ETIQUETA}>Apellido</label>
         <input type="text" name="apellido" required className={CAMPO} />
+      </div>
+
+      <div>
+        <label className={ETIQUETA}>Fecha de nacimiento</label>
+        <input type="date" name="fecha_nacimiento" className={CAMPO} />
       </div>
 
       <div>

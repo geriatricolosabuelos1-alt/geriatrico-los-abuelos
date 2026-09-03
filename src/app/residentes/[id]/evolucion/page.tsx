@@ -41,9 +41,9 @@ export default async function EvolucionResidentePage({
 
   const { data: residente } = await supabase
     .from("residentes")
-    .select("id, nombre, apellido")
+    .select("id, nombre, apellido, sucursal_id")
     .eq("id", id)
-    .single<{ id: string; nombre: string; apellido: string }>();
+    .single<{ id: string; nombre: string; apellido: string; sucursal_id: string }>();
 
   if (!residente) {
     notFound();
@@ -59,9 +59,12 @@ export default async function EvolucionResidentePage({
   return (
     <div className="flex min-h-screen w-full">
       <Sidebar
-        nombre={perfil?.nombre_completo ?? user?.email ?? ""}
-        rol={perfil?.rol ?? ""}
-        activo="residentes"
+        perfil={perfil!}
+        activo={{
+          tipo: "sucursal",
+          sucursalId: residente.sucursal_id,
+          seccion: "residentes",
+        }}
       />
 
       <main className="mx-auto w-full max-w-2xl flex-1 space-y-6 px-9 py-8">

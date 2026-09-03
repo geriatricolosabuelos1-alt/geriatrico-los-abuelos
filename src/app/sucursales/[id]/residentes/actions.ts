@@ -6,12 +6,12 @@ import { createClient } from "@/lib/supabase/server";
 export type CrearResidenteEstado = { error: string | null };
 
 export async function crearResidente(
+  sucursalId: string,
   _estado: CrearResidenteEstado,
   formData: FormData,
 ): Promise<CrearResidenteEstado> {
   const supabase = await createClient();
 
-  const sucursal_id = String(formData.get("sucursal_id") ?? "");
   const nombre = String(formData.get("nombre") ?? "").trim();
   const apellido = String(formData.get("apellido") ?? "").trim();
   const fecha_nacimiento = String(formData.get("fecha_nacimiento") ?? "") || null;
@@ -22,14 +22,14 @@ export async function crearResidente(
   const cuotaRaw = String(formData.get("cuota_mensual") ?? "");
   const cuota_mensual = cuotaRaw ? Number(cuotaRaw) : null;
 
-  if (!sucursal_id || !nombre || !apellido) {
-    return { error: "Sucursal, nombre y apellido son obligatorios." };
+  if (!nombre || !apellido) {
+    return { error: "Nombre y apellido son obligatorios." };
   }
 
   const { data: residente, error: errorResidente } = await supabase
     .from("residentes")
     .insert({
-      sucursal_id,
+      sucursal_id: sucursalId,
       nombre,
       apellido,
       fecha_nacimiento,
@@ -54,6 +54,6 @@ export async function crearResidente(
     return { error: errorFicha.message };
   }
 
-  revalidatePath("/residentes");
+  revalidatePath(`/sucursales/${sucursalId}/residentes`);
   return { error: null };
 }

@@ -85,3 +85,25 @@ export interface Gasto {
   anio: number;
   descripcion: string | null;
 }
+
+export interface ItemInventario {
+  id: string;
+  sucursal_id: string;
+  item: string;
+  cantidad: number;
+  unidad: string;
+  updated_at: string;
+}
+
+export type EstadoPago = "pendiente" | "pagado";
+
+export interface Pago {
+  id: string;
+  residente_id: string;
+  sucursal_id: string;
+  monto: number;
+  mes: number;
+  anio: number;
+  estado: EstadoPago;
+  fecha_pago: string | null;
+}
