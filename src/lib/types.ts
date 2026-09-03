@@ -109,6 +109,16 @@ export interface MovimientoInventario {
 
 export type EstadoPago = "pendiente" | "pagado";
 
+export interface Rendicion {
+  id: string;
+  sucursal_id: string;
+  monto: number | null;
+  descripcion: string | null;
+  fecha: string;
+  imagen_path: string;
+  created_at: string;
+}
+
 export interface Pago {
   id: string;
   residente_id: string;
