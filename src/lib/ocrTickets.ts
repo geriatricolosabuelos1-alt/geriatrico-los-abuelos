@@ -21,6 +21,47 @@ function extraerCantidad(linea: string): number {
   return numero > 0 && numero < 1000 ? numero : 1;
 }
 
+function normalizarMonto(crudo: string): number | null {
+  let limpio = crudo.replace(/[^\d.,]/g, "");
+  if (!limpio) return null;
+
+  const tieneComa = limpio.includes(",");
+  const tienePunto = limpio.includes(".");
+
+  if (tieneComa && tienePunto) {
+    const separadorDecimal = limpio.lastIndexOf(",") > limpio.lastIndexOf(".") ? "," : ".";
+    const separadorMiles = separadorDecimal === "," ? "." : ",";
+    limpio = limpio.split(separadorMiles).join("").replace(separadorDecimal, ".");
+  } else if (tieneComa) {
+    limpio = limpio.replace(",", ".");
+  } else if (tienePunto) {
+    const partes = limpio.split(".");
+    if (partes.length > 2 || partes[partes.length - 1].length === 3) {
+      limpio = limpio.replace(/\./g, "");
+    }
+  }
+
+  const numero = Number(limpio);
+  return Number.isFinite(numero) && numero > 0 ? numero : null;
+}
+
+export function extraerTotal(textoOcr: string): number | null {
+  const lineas = textoOcr.split("\n").map((l) => l.trim()).filter(Boolean);
+  const candidatos: number[] = [];
+
+  for (const linea of lineas) {
+    if (!/total/i.test(linea) || /sub\s*total/i.test(linea)) continue;
+    const numeros = linea.match(/[\d][\d.,]*\d|\d/g) ?? [];
+    for (const n of numeros) {
+      const valor = normalizarMonto(n);
+      if (valor !== null) candidatos.push(valor);
+    }
+  }
+
+  if (candidatos.length === 0) return null;
+  return Math.max(...candidatos);
+}
+
 export function detectarItems(textoOcr: string, insumos: Insumo[]): ItemDetectado[] {
   const lineas = textoOcr.split("\n").map((l) => l.trim()).filter(Boolean);
   const insumosOrdenados = [...insumos].sort((a, b) => b.nombre.length - a.nombre.length);

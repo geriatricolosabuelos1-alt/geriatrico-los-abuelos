@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { crearRendicion, type CrearRendicionEstado } from "@/app/sucursales/[id]/rendiciones/actions";
-import { detectarItems, type ItemDetectado } from "@/lib/ocrTickets";
+import { detectarItems, extraerTotal, type ItemDetectado } from "@/lib/ocrTickets";
 import type { Insumo } from "@/lib/types";
 
 type Props = {
@@ -47,6 +47,8 @@ export function RendicionForm({ sucursalId, insumos }: Props) {
   const [leyendo, setLeyendo] = useState(false);
   const [items, setItems] = useState<ItemRevision[]>([]);
   const [ocrIntentado, setOcrIntentado] = useState(false);
+  const [monto, setMonto] = useState("");
+  const [montoDetectado, setMontoDetectado] = useState(false);
 
   async function manejarArchivo(e: React.ChangeEvent<HTMLInputElement>) {
     const archivo = e.target.files?.[0];
@@ -55,14 +57,23 @@ export function RendicionForm({ sucursalId, insumos }: Props) {
     setLeyendo(true);
     setOcrIntentado(false);
     setItems([]);
+    setMonto("");
+    setMontoDetectado(false);
 
     try {
       const { recognize } = await import("tesseract.js");
       const fuenteOcr =
         archivo.type === "application/pdf" ? await primeraPaginaComoCanvas(archivo) : archivo;
       const { data } = await recognize(fuenteOcr, "spa");
+
       const detectados = detectarItems(data.text, insumos);
       setItems(detectados.map((d) => ({ ...d, incluido: true })));
+
+      const total = extraerTotal(data.text);
+      if (total !== null) {
+        setMonto(String(total));
+        setMontoDetectado(true);
+      }
     } catch {
       setItems([]);
     } finally {
@@ -151,8 +162,20 @@ export function RendicionForm({ sucursalId, insumos }: Props) {
       )}
 
       <div>
-        <label className={ETIQUETA}>Monto</label>
-        <input type="number" step="0.01" name="monto" className={CAMPO} />
+        <label className={ETIQUETA}>
+          Monto {montoDetectado && <span className="text-brass">(detectado)</span>}
+        </label>
+        <input
+          type="number"
+          step="0.01"
+          name="monto"
+          value={monto}
+          onChange={(e) => {
+            setMonto(e.target.value);
+            setMontoDetectado(false);
+          }}
+          className={CAMPO}
+        />
       </div>
 
       <div className="sm:col-span-2">
