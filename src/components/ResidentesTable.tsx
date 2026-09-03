@@ -1,12 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useMemo, useState } from "react";
-import {
-  actualizarResidente,
-  eliminarResidente,
-  type ActualizarResidenteEstado,
-} from "@/app/sucursales/[id]/residentes/actions";
+import { useMemo, useState } from "react";
+import { actualizarResidente, eliminarResidente } from "@/app/sucursales/[id]/residentes/actions";
 
 type FilaResidente = {
   id: string;
@@ -29,24 +25,40 @@ type Props = {
 const CAMPO =
   "w-full rounded-md border border-edge bg-card px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none";
 
-const ESTADO_INICIAL: ActualizarResidenteEstado = { error: null };
-
 function FilaEdicion({
   sucursalId,
   residente,
   onCancelar,
+  onGuardado,
 }: {
   sucursalId: string;
   residente: FilaResidente;
   onCancelar: () => void;
+  onGuardado: () => void;
 }) {
-  const accion = actualizarResidente.bind(null, sucursalId, residente.id);
-  const [estado, formAction, enviando] = useActionState(accion, ESTADO_INICIAL);
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function manejarSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setEnviando(true);
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const resultado = await actualizarResidente(sucursalId, residente.id, { error: null }, formData);
+
+    setEnviando(false);
+    if (resultado.error) {
+      setError(resultado.error);
+    } else {
+      onGuardado();
+    }
+  }
 
   return (
     <tr className="border-b border-edge bg-panel-deep last:border-0">
       <td colSpan={6} className="p-3">
-        <form action={formAction} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <form onSubmit={manejarSubmit} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <input name="nombre" defaultValue={residente.nombre} required className={CAMPO} placeholder="Nombre" />
           <input
             name="apellido"
@@ -98,7 +110,7 @@ function FilaEdicion({
             Activo
           </label>
 
-          {estado.error && <p className="col-span-full text-xs text-red-400">{estado.error}</p>}
+          {error && <p className="col-span-full text-xs text-red-400">{error}</p>}
 
           <div className="col-span-full flex gap-2">
             <button
@@ -170,6 +182,7 @@ export function ResidentesTable({ sucursalId, residentes, puedeEditar, puedeBorr
                   sucursalId={sucursalId}
                   residente={r}
                   onCancelar={() => setEditandoId(null)}
+                  onGuardado={() => setEditandoId(null)}
                 />
               ) : (
                 <tr key={r.id} className="border-b border-edge last:border-0">
