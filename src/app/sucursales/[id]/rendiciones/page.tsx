@@ -82,15 +82,27 @@ export default async function RendicionesSucursalPage({
               key={r.id}
               className="overflow-hidden rounded-2xl border border-edge bg-card"
             >
-              {r.url && (
-                <a href={r.url} target="_blank" rel="noopener noreferrer">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={r.url}
-                    alt={r.descripcion ?? "Ticket de compra"}
-                    className="h-36 w-full object-cover"
-                  />
+              {r.url && r.imagen_path.toLowerCase().endsWith(".pdf") ? (
+                <a
+                  href={r.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-36 w-full flex-col items-center justify-center gap-1 bg-panel-deep text-brass"
+                >
+                  <span className="font-display text-2xl font-bold">PDF</span>
+                  <span className="text-xs text-ink-soft">Ver documento</span>
                 </a>
+              ) : (
+                r.url && (
+                  <a href={r.url} target="_blank" rel="noopener noreferrer">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={r.url}
+                      alt={r.descripcion ?? "Ticket de compra"}
+                      className="h-36 w-full object-cover"
+                    />
+                  </a>
+                )
               )}
               <div className="p-3">
                 <p className="text-sm font-medium text-ink">

@@ -18,6 +18,28 @@ const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
 const ETIQUETA = "mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft";
 
+async function primeraPaginaComoCanvas(archivoPdf: File): Promise<HTMLCanvasElement> {
+  const pdfjsLib = await import("pdfjs-dist");
+  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+    "pdfjs-dist/build/pdf.worker.min.mjs",
+    import.meta.url,
+  ).toString();
+
+  const buffer = await archivoPdf.arrayBuffer();
+  const documento = await pdfjsLib.getDocument({ data: buffer }).promise;
+  const pagina = await documento.getPage(1);
+  const viewport = pagina.getViewport({ scale: 2 });
+
+  const canvas = document.createElement("canvas");
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const contexto = canvas.getContext("2d");
+  if (!contexto) throw new Error("No se pudo preparar el PDF.");
+
+  await pagina.render({ canvas, canvasContext: contexto, viewport }).promise;
+  return canvas;
+}
+
 export function RendicionForm({ sucursalId, insumos }: Props) {
   const accionConSucursal = crearRendicion.bind(null, sucursalId);
   const [estado, formAction, enviando] = useActionState(accionConSucursal, ESTADO_INICIAL);
@@ -36,7 +58,9 @@ export function RendicionForm({ sucursalId, insumos }: Props) {
 
     try {
       const { recognize } = await import("tesseract.js");
-      const { data } = await recognize(archivo, "spa");
+      const fuenteOcr =
+        archivo.type === "application/pdf" ? await primeraPaginaComoCanvas(archivo) : archivo;
+      const { data } = await recognize(fuenteOcr, "spa");
       const detectados = detectarItems(data.text, insumos);
       setItems(detectados.map((d) => ({ ...d, incluido: true })));
     } catch {
@@ -77,12 +101,11 @@ export function RendicionForm({ sucursalId, insumos }: Props) {
       <input type="hidden" name="items" value={itemsParaEnviar} />
 
       <div className="sm:col-span-3">
-        <label className={ETIQUETA}>Foto del ticket</label>
+        <label className={ETIQUETA}>Foto o PDF del ticket</label>
         <input
           type="file"
           name="foto"
-          accept="image/*"
-          capture="environment"
+          accept="image/*,application/pdf"
           required
           onChange={manejarArchivo}
           className={`${CAMPO} file:mr-3 file:rounded-md file:border-0 file:bg-brass file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-panel-deep`}
