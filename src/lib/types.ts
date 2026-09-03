@@ -86,13 +86,25 @@ export interface Gasto {
   descripcion: string | null;
 }
 
-export interface ItemInventario {
+export type CategoriaInsumo = "general" | "carnes" | "verduras";
+
+export interface Insumo {
+  id: string;
+  nombre: string;
+  categoria: CategoriaInsumo;
+  unidad: string;
+  activo: boolean;
+}
+
+export type TipoMovimiento = "entrada" | "salida";
+
+export interface MovimientoInventario {
   id: string;
   sucursal_id: string;
-  item: string;
+  insumo_id: string;
+  tipo: TipoMovimiento;
   cantidad: number;
-  unidad: string;
-  updated_at: string;
+  fecha: string;
 }
 
 export type EstadoPago = "pendiente" | "pagado";

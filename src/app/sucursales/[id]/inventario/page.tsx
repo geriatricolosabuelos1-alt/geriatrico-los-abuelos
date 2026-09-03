@@ -2,9 +2,23 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { InventarioForm } from "@/components/InventarioForm";
-import type { ItemInventario, Perfil } from "@/lib/types";
+import type { CategoriaInsumo, Insumo, Perfil } from "@/lib/types";
 
 type Params = { id: string };
+
+type FilaMovimiento = {
+  insumo_id: string;
+  tipo: string;
+  cantidad: number;
+};
+
+const ETIQUETA_CATEGORIA: Record<CategoriaInsumo, string> = {
+  general: "General",
+  carnes: "Carnes",
+  verduras: "Verduras",
+};
+
+const ORDEN_CATEGORIAS: CategoriaInsumo[] = ["general", "carnes", "verduras"];
 
 export default async function InventarioSucursalPage({
   params,
@@ -34,61 +48,91 @@ export default async function InventarioSucursalPage({
     notFound();
   }
 
-  const { data: items } = await supabase
-    .from("inventario")
-    .select("id, item, cantidad, unidad, updated_at")
+  const { data: insumos } = await supabase
+    .from("insumos")
+    .select("id, nombre, categoria, unidad, activo")
+    .eq("activo", true)
+    .order("nombre")
+    .returns<Insumo[]>();
+
+  const { data: movimientos } = await supabase
+    .from("movimientos_inventario")
+    .select("insumo_id, tipo, cantidad")
     .eq("sucursal_id", id)
-    .order("item")
-    .returns<ItemInventario[]>();
+    .returns<FilaMovimiento[]>();
+
+  const stockPorInsumo = new Map<string, number>();
+  (movimientos ?? []).forEach((m) => {
+    const actual = stockPorInsumo.get(m.insumo_id) ?? 0;
+    stockPorInsumo.set(
+      m.insumo_id,
+      m.tipo === "entrada" ? actual + m.cantidad : actual - m.cantidad,
+    );
+  });
+
+  const listaInsumos = insumos ?? [];
 
   return (
     <div className="flex min-h-screen w-full">
       <Sidebar
-        perfil={perfil}
+        perfil={perfil!}
         activo={{ tipo: "sucursal", sucursalId: id, seccion: "inventario" }}
       />
 
       <main className="flex-1 space-y-6 px-9 py-8">
         <div>
           <p className="text-xs font-semibold uppercase tracking-widest text-brass">
-            {sucursal.nombre}
+            {sucursal!.nombre}
           </p>
           <h1 className="font-display text-2xl font-bold text-ink">Inventario</h1>
         </div>
 
-        <InventarioForm sucursalId={id} />
+        <InventarioForm sucursalId={id} insumos={listaInsumos} />
 
-        <div className="overflow-hidden rounded-2xl border border-edge bg-card">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
-              <tr>
-                <th className="px-4 py-3">Ítem</th>
-                <th className="px-4 py-3">Cantidad</th>
-                <th className="px-4 py-3">Actualizado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(items ?? []).map((i) => (
-                <tr key={i.id} className="border-b border-edge last:border-0">
-                  <td className="px-4 py-3 font-medium text-ink">{i.item}</td>
-                  <td className="px-4 py-3 text-ink-soft">
-                    {i.cantidad} {i.unidad}
-                  </td>
-                  <td className="px-4 py-3 text-ink-soft">
-                    {new Date(i.updated_at).toLocaleDateString("es-AR")}
-                  </td>
-                </tr>
-              ))}
-              {(items ?? []).length === 0 && (
-                <tr>
-                  <td colSpan={3} className="px-4 py-6 text-center text-ink-soft">
-                    Todavía no hay ítems cargados.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {ORDEN_CATEGORIAS.map((cat) => {
+          const items = listaInsumos.filter((i) => i.categoria === cat);
+          if (items.length === 0) return null;
+
+          return (
+            <div key={cat}>
+              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-soft">
+                {ETIQUETA_CATEGORIA[cat]}
+              </p>
+              <div className="overflow-hidden rounded-2xl border border-edge bg-card">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
+                    <tr>
+                      <th className="px-4 py-3">Insumo</th>
+                      <th className="px-4 py-3">Stock</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {items.map((i) => {
+                      const stock = stockPorInsumo.get(i.id) ?? 0;
+                      return (
+                        <tr key={i.id} className="border-b border-edge last:border-0">
+                          <td className="px-4 py-3 font-medium text-ink">{i.nombre}</td>
+                          <td className="px-4 py-3 text-ink-soft">
+                            <span
+                              className={
+                                stock <= 0
+                                  ? "font-semibold text-red-400"
+                                  : "font-semibold text-brass"
+                              }
+                            >
+                              {stock}
+                            </span>{" "}
+                            {i.unidad}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          );
+        })}
       </main>
     </div>
   );

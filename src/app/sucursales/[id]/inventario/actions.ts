@@ -3,38 +3,34 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
-export type GuardarItemEstado = { error: string | null };
+export type RegistrarMovimientoEstado = { error: string | null };
 
-export async function guardarItemInventario(
+export async function registrarMovimiento(
   sucursalId: string,
-  _estado: GuardarItemEstado,
+  _estado: RegistrarMovimientoEstado,
   formData: FormData,
-): Promise<GuardarItemEstado> {
+): Promise<RegistrarMovimientoEstado> {
   const supabase = await createClient();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const item = String(formData.get("item") ?? "").trim();
+  const insumo_id = String(formData.get("insumo_id") ?? "");
+  const tipo = String(formData.get("tipo") ?? "");
   const cantidad = Number(formData.get("cantidad") ?? 0);
-  const unidad = String(formData.get("unidad") ?? "unidades").trim() || "unidades";
 
-  if (!item || Number.isNaN(cantidad)) {
-    return { error: "Completá el ítem y la cantidad." };
+  if (!insumo_id || (tipo !== "entrada" && tipo !== "salida") || !cantidad || cantidad <= 0) {
+    return { error: "Completá insumo, tipo y una cantidad mayor a cero." };
   }
 
-  const { error } = await supabase.from("inventario").upsert(
-    {
-      sucursal_id: sucursalId,
-      item,
-      cantidad,
-      unidad,
-      actualizado_por: user?.id,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "sucursal_id,item" },
-  );
+  const { error } = await supabase.from("movimientos_inventario").insert({
+    sucursal_id: sucursalId,
+    insumo_id,
+    tipo,
+    cantidad,
+    registrado_por: user?.id,
+  });
 
   if (error) {
     return { error: error.message };
