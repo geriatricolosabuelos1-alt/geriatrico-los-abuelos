@@ -3,6 +3,8 @@
 import { useActionState, useState } from "react";
 import { crearRendicion, type CrearRendicionEstado } from "@/app/sucursales/[id]/rendiciones/actions";
 import { detectarItems, extraerTotal, type ItemDetectado } from "@/lib/ocrTickets";
+import { obtenerLectorTickets } from "@/lib/ocrWorker";
+import { prepararTicketParaOcr } from "@/lib/prepararTicketOcr";
 import type { Insumo } from "@/lib/types";
 
 type Props = {
@@ -17,28 +19,6 @@ const ESTADO_INICIAL: CrearRendicionEstado = { error: null };
 const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
 const ETIQUETA = "mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft";
-
-async function primeraPaginaComoCanvas(archivoPdf: File): Promise<HTMLCanvasElement> {
-  const pdfjsLib = await import("pdfjs-dist");
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    "pdfjs-dist/build/pdf.worker.min.mjs",
-    import.meta.url,
-  ).toString();
-
-  const buffer = await archivoPdf.arrayBuffer();
-  const documento = await pdfjsLib.getDocument({ data: buffer }).promise;
-  const pagina = await documento.getPage(1);
-  const viewport = pagina.getViewport({ scale: 2 });
-
-  const canvas = document.createElement("canvas");
-  canvas.width = viewport.width;
-  canvas.height = viewport.height;
-  const contexto = canvas.getContext("2d");
-  if (!contexto) throw new Error("No se pudo preparar el PDF.");
-
-  await pagina.render({ canvas, canvasContext: contexto, viewport }).promise;
-  return canvas;
-}
 
 export function RendicionForm({ sucursalId, insumos }: Props) {
   const accionConSucursal = crearRendicion.bind(null, sucursalId);
@@ -61,10 +41,11 @@ export function RendicionForm({ sucursalId, insumos }: Props) {
     setMontoDetectado(false);
 
     try {
-      const { recognize } = await import("tesseract.js");
-      const fuenteOcr =
-        archivo.type === "application/pdf" ? await primeraPaginaComoCanvas(archivo) : archivo;
-      const { data } = await recognize(fuenteOcr, "spa");
+      const [lector, fuenteOcr] = await Promise.all([
+        obtenerLectorTickets(),
+        prepararTicketParaOcr(archivo),
+      ]);
+      const { data } = await lector.recognize(fuenteOcr);
 
       const detectados = detectarItems(data.text, insumos);
       setItems(detectados.map((d) => ({ ...d, incluido: true })));
