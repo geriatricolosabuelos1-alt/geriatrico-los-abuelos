@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { ResidenteForm } from "@/components/ResidenteForm";
+import { ResidentesTable } from "@/components/ResidentesTable";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
@@ -11,8 +11,11 @@ type FilaResidente = {
   id: string;
   nombre: string;
   apellido: string;
+  fecha_nacimiento: string | null;
+  contacto_familiar: string | null;
+  telefono_familiar: string | null;
   activo: boolean;
-  ficha_administrativa: { obra_social: string | null; cuota_mensual: number | null } | null;
+  ficha_administrativa: { obra_social: string | null; tipo_cobertura: string | null; cuota_mensual: number | null } | null;
 };
 
 export default async function ResidentesSucursalPage({
@@ -50,7 +53,7 @@ export default async function ResidentesSucursalPage({
   const { data: residentes } = await supabase
     .from("residentes")
     .select(
-      "id, nombre, apellido, activo, ficha_administrativa(obra_social, cuota_mensual)",
+      "id, nombre, apellido, fecha_nacimiento, contacto_familiar, telefono_familiar, activo, ficha_administrativa(obra_social, tipo_cobertura, cuota_mensual)",
     )
     .eq("sucursal_id", id)
     .order("apellido")
@@ -73,62 +76,12 @@ export default async function ResidentesSucursalPage({
 
         {puedeCrear && <ResidenteForm sucursalId={id} />}
 
-        <div className="overflow-hidden rounded-2xl border border-edge bg-card">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
-              <tr>
-                <th className="px-4 py-3">Nombre</th>
-                <th className="px-4 py-3">Obra social</th>
-                <th className="px-4 py-3">Cuota</th>
-                <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {(residentes ?? []).map((r) => (
-                <tr key={r.id} className="border-b border-edge last:border-0">
-                  <td className="px-4 py-3 font-medium text-ink">
-                    {r.apellido}, {r.nombre}
-                  </td>
-                  <td className="px-4 py-3 text-ink-soft">
-                    {r.ficha_administrativa?.obra_social ?? "—"}
-                  </td>
-                  <td className="px-4 py-3 text-ink-soft">
-                    {r.ficha_administrativa?.cuota_mensual != null
-                      ? `$${r.ficha_administrativa.cuota_mensual}`
-                      : "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={
-                        r.activo
-                          ? "rounded-full bg-brass-soft px-2 py-0.5 text-xs font-medium text-brass"
-                          : "rounded-full bg-edge px-2 py-0.5 text-xs font-medium text-ink-soft"
-                      }
-                    >
-                      {r.activo ? "Activo" : "Inactivo"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <Link
-                      href={`/residentes/${r.id}/evolucion`}
-                      className="text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
-                    >
-                      Evolución
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-              {(residentes ?? []).length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-6 text-center text-ink-soft">
-                    Todavía no hay residentes cargados en esta sucursal.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <ResidentesTable
+          sucursalId={id}
+          residentes={residentes ?? []}
+          puedeEditar={puedeCrear}
+          puedeBorrar={perfil.rol === "admin"}
+        />
       </main>
     </div>
   );
