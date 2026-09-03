@@ -129,7 +129,7 @@ function FilaEdicion({
             <button
               type="submit"
               disabled={enviando}
-              className="rounded-md bg-brass px-3 py-1.5 text-xs font-semibold text-panel-deep hover:bg-brass/90 disabled:opacity-50"
+              className="rounded-md bg-brass px-3 py-1.5 text-xs font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
             >
               {enviando ? "Guardando..." : "Guardar"}
             </button>

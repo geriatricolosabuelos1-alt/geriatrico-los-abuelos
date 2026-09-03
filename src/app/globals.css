@@ -1,21 +1,30 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-karla), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
 
-  --color-panel: #1c1730;
-  --color-panel-deep: #150f26;
-  --color-card: #241d3d;
-  --color-edge: #332a56;
-  --color-ink: #e8e4f2;
-  --color-ink-soft: #8b83ab;
-  --color-brass: #d4a24c;
-  --color-brass-soft: rgb(212 162 76 / 0.18);
-  --color-tab: #2c2447;
+  --color-panel: #3d3a54;
+  --color-panel-deep: rgb(0 0 0 / 0.22);
+  --color-card: rgb(255 255 255 / 0.14);
+  --color-edge: rgb(255 255 255 / 0.18);
+  --color-ink: #ffffff;
+  --color-ink-soft: #d8d4ea;
+  --color-brass: #5eead4;
+  --color-brass-soft: rgb(94 234 212 / 0.22);
+  --color-tab: rgb(255 255 255 / 0.18);
+  --color-btn-ink: #14101f;
 }
 
-body {
-  background: var(--color-panel);
-  color: var(--color-ink);
+.bg-panel {
+  background:
+    radial-gradient(ellipse 900px 600px at 15% 0%, rgb(196 181 253 / 0.4), transparent 60%),
+    radial-gradient(ellipse 750px 600px at 90% 20%, rgb(94 234 212 / 0.3), transparent 55%),
+    radial-gradient(ellipse 1000px 750px at 50% 100%, rgb(244 114 182 / 0.22), transparent 60%),
+    var(--color-panel);
+}
+
+.bg-card,
+.bg-panel-deep {
+  backdrop-filter: blur(16px);
 }

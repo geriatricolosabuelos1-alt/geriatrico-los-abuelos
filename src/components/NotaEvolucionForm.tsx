@@ -43,7 +43,7 @@ export function NotaEvolucionForm({ residenteId, mostrarSelectorTipo }: Props) {
       <button
         type="submit"
         disabled={enviando}
-        className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-panel-deep hover:bg-brass/90 disabled:opacity-50"
+        className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
       >
         {enviando ? "Guardando..." : "Agregar nota"}
       </button>

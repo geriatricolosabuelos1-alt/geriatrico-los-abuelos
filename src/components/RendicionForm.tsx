@@ -135,7 +135,7 @@ export function RendicionForm({ sucursalId }: Props) {
           accept="image/*,application/pdf"
           required
           onChange={manejarArchivo}
-          className={`${CAMPO} file:mr-3 file:rounded-md file:border-0 file:bg-brass file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-panel-deep`}
+          className={`${CAMPO} file:mr-3 file:rounded-md file:border-0 file:bg-brass file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-btn-ink`}
         />
         {leyendo && (
           <p className="mt-2 text-xs text-ink-soft">Leyendo el ticket, un momento...</p>
@@ -260,7 +260,7 @@ export function RendicionForm({ sucursalId }: Props) {
         <button
           type="submit"
           disabled={enviando || leyendo}
-          className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-panel-deep hover:bg-brass/90 disabled:opacity-50"
+          className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
         >
           {enviando ? "Guardando..." : "Guardar rendición"}
         </button>

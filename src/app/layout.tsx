@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
-import { Sora, Karla } from "next/font/google";
+import { Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 import "./globals.css";
 
-const sora = Sora({
-  variable: "--font-sora",
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["500", "600", "700", "800"],
 });
 
-const karla = Karla({
-  variable: "--font-karla",
+const instrument = Instrument_Sans({
+  variable: "--font-instrument",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
@@ -23,7 +23,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es"
-      className={`${sora.variable} ${karla.variable} h-full antialiased`}
+      className={`${bricolage.variable} ${instrument.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-panel text-ink font-sans">
         {children}
