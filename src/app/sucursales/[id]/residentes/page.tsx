@@ -1,7 +1,7 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
-import { ResidenteForm } from "@/components/ResidenteForm";
 import { ResidentesTable } from "@/components/ResidentesTable";
 import type { Perfil } from "@/lib/types";
 
@@ -76,7 +76,14 @@ export default async function ResidentesSucursalPage({
           <h1 className="font-display text-2xl font-bold text-ink">Residentes</h1>
         </div>
 
-        {puedeCrear && <ResidenteForm sucursalId={id} />}
+        {puedeCrear && (
+          <Link
+            href={`/sucursales/${id}/residentes/nuevo`}
+            className="inline-block rounded-full bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90"
+          >
+            + Nuevo residente
+          </Link>
+        )}
 
         <ResidentesTable
           sucursalId={id}
