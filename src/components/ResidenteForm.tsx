@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   crearResidente,
   type CrearResidenteEstado,
@@ -20,15 +20,37 @@ export function ResidenteForm({ sucursalId }: Props) {
   const accionConSucursal = crearResidente.bind(null, sucursalId);
   const [estado, formAction, enviando] = useActionState(accionConSucursal, ESTADO_INICIAL);
   const hoy = new Date().toISOString().slice(0, 10);
+  const [abierto, setAbierto] = useState(false);
+
+  if (!abierto) {
+    return (
+      <button
+        type="button"
+        onClick={() => setAbierto(true)}
+        className="rounded-full bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90"
+      >
+        + Nuevo residente
+      </button>
+    );
+  }
 
   return (
     <form
       action={formAction}
       className="grid grid-cols-1 gap-4 rounded-2xl border border-edge bg-card p-5 sm:grid-cols-2"
     >
-      <h2 className="col-span-full font-display text-sm font-semibold text-ink">
-        Nuevo residente
-      </h2>
+      <div className="col-span-full flex items-center justify-between">
+        <h2 className="font-display text-sm font-semibold text-ink">
+          Nuevo residente
+        </h2>
+        <button
+          type="button"
+          onClick={() => setAbierto(false)}
+          className="text-xs font-medium uppercase tracking-wide text-ink-soft hover:text-ink"
+        >
+          Cancelar
+        </button>
+      </div>
 
       <div>
         <label className={ETIQUETA}>Nombre</label>
