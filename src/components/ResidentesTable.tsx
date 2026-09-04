@@ -66,7 +66,7 @@ function FilaEdicion({
 
   return (
     <tr className="border-b border-edge bg-panel-deep last:border-0">
-      <td colSpan={7} className="p-3">
+      <td colSpan={6} className="p-3">
         <form onSubmit={manejarSubmit} className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <input name="nombre" defaultValue={residente.nombre} required className={CAMPO} placeholder="Nombre" />
           <input
@@ -284,7 +284,6 @@ export function ResidentesTable({ sucursalId, residentes, puedeEditar, puedeBorr
                 onOrdenar={manejarOrdenar}
               />
               <th className="px-4 py-3">Obra social</th>
-              <th className="px-4 py-3">Cuota</th>
               <th className="px-4 py-3">Estado</th>
               <th className="px-4 py-3"></th>
             </tr>
@@ -301,24 +300,19 @@ export function ResidentesTable({ sucursalId, residentes, puedeEditar, puedeBorr
                 />
               ) : (
                 <tr key={r.id} className="border-b border-edge last:border-0">
-                  <td className="px-4 py-3 font-medium text-ink whitespace-nowrap">
+                  <td className="px-4 py-3 align-middle font-medium text-ink whitespace-nowrap">
                     {r.apellido}, {r.nombre}
                   </td>
-                  <td className="px-4 py-3 text-ink-soft whitespace-nowrap">
+                  <td className="px-4 py-3 align-middle text-ink-soft whitespace-nowrap">
                     {formatearFecha(r.fecha_ingreso)}
                   </td>
-                  <td className="px-4 py-3 text-ink-soft whitespace-nowrap">
+                  <td className="px-4 py-3 align-middle text-ink-soft whitespace-nowrap">
                     {formatearFecha(r.fecha_egreso)}
                   </td>
-                  <td className="px-4 py-3 text-ink-soft">
+                  <td className="px-4 py-3 align-middle text-ink-soft">
                     {r.ficha_administrativa?.obra_social ?? "—"}
                   </td>
-                  <td className="px-4 py-3 text-ink-soft whitespace-nowrap">
-                    {r.ficha_administrativa?.cuota_mensual != null
-                      ? `$${r.ficha_administrativa.cuota_mensual}`
-                      : "—"}
-                  </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 align-middle">
                     <span
                       className={
                         r.activo
@@ -329,7 +323,7 @@ export function ResidentesTable({ sucursalId, residentes, puedeEditar, puedeBorr
                       {r.activo ? "Activo" : "Inactivo"}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                  <td className="px-4 py-3 text-right align-middle whitespace-nowrap">
                     <Link
                       href={`/residentes/${r.id}/legajo`}
                       className="mr-3 text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
@@ -364,7 +358,7 @@ export function ResidentesTable({ sucursalId, residentes, puedeEditar, puedeBorr
             )}
             {filtrados.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-ink-soft">
+                <td colSpan={6} className="px-4 py-6 text-center text-ink-soft">
                   Ningún residente coincide con el filtro.
                 </td>
               </tr>
