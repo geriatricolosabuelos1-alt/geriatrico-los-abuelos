@@ -331,6 +331,12 @@ export function ResidentesTable({ sucursalId, residentes, puedeEditar, puedeBorr
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
                     <Link
+                      href={`/residentes/${r.id}/legajo`}
+                      className="mr-3 text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                    >
+                      Legajo
+                    </Link>
+                    <Link
                       href={`/residentes/${r.id}/evolucion`}
                       className="mr-3 text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
                     >

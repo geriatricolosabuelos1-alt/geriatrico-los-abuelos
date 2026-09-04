@@ -28,8 +28,11 @@ export interface Residente {
   nombre: string;
   apellido: string;
   fecha_nacimiento: string | null;
+  dni: string | null;
+  nacionalidad: string | null;
   fecha_ingreso: string | null;
   fecha_egreso: string | null;
+  habitacion: string | null;
   contacto_familiar: string | null;
   telefono_familiar: string | null;
   observaciones_medicas: string | null;
@@ -46,8 +49,10 @@ export interface FichaAdministrativa {
 
 export interface FichaMedica {
   residente_id: string;
+  medico_cabecera: string | null;
   medico_emergencia: string | null;
   telefono_emergencia_medica: string | null;
+  grupo_sanguineo: string | null;
   alergias: string | null;
   diagnosticos: string | null;
 }
