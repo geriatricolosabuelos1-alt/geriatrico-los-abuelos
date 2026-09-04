@@ -3,12 +3,6 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const RUTAS_PUBLICAS = ["/login", "/registro"];
 
-// Acceso de desarrollo: si estan seteadas, inicia sesion automaticamente
-// con una cuenta tecnica en vez de mostrar la pantalla de login.
-// Para volver a exigir login, borrar estas dos variables de entorno.
-const DEV_AUTOLOGIN_EMAIL = process.env.DEV_AUTOLOGIN_EMAIL;
-const DEV_AUTOLOGIN_PASSWORD = process.env.DEV_AUTOLOGIN_PASSWORD;
-
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -33,17 +27,9 @@ export async function middleware(request: NextRequest) {
     },
   );
 
-  let {
+  const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  if (!user && DEV_AUTOLOGIN_EMAIL && DEV_AUTOLOGIN_PASSWORD) {
-    const { data } = await supabase.auth.signInWithPassword({
-      email: DEV_AUTOLOGIN_EMAIL,
-      password: DEV_AUTOLOGIN_PASSWORD,
-    });
-    user = data.user;
-  }
 
   const esRutaPublica = RUTAS_PUBLICAS.some((ruta) =>
     request.nextUrl.pathname.startsWith(ruta),
