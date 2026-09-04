@@ -25,13 +25,17 @@ export default async function LegajoResidentePage({
     .eq("id", user!.id)
     .single<Perfil>();
 
-  const { data: residente } = await supabase
+  const { data: residente, error: errorResidente } = await supabase
     .from("residentes")
     .select(
       "id, sucursal_id, nombre, apellido, fecha_nacimiento, dni, nacionalidad, fecha_ingreso, fecha_egreso, habitacion, contacto_familiar, telefono_familiar, observaciones_medicas, activo",
     )
     .eq("id", id)
     .single<Residente>();
+
+  if (errorResidente) {
+    console.error("[legajo] error al leer residente:", errorResidente);
+  }
 
   if (!residente || !perfil) {
     notFound();
@@ -62,7 +66,7 @@ export default async function LegajoResidentePage({
         }}
       />
 
-      <main className="mx-auto w-full max-w-3xl flex-1 space-y-6 px-9 py-8">
+      <main className="mx-auto w-full max-w-5xl flex-1 space-y-6 px-9 py-8">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft">
