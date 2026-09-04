@@ -66,7 +66,7 @@ export default async function LegajoResidentePage({
         }}
       />
 
-      <main className="mx-auto w-full max-w-5xl flex-1 space-y-6 px-9 py-8">
+      <main className="w-full flex-1 space-y-6 px-9 py-8">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft">

@@ -53,7 +53,7 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
 
   return (
     <form action={formAction} className="space-y-6">
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <section className="rounded-2xl border border-edge bg-card p-6">
           <h2 className={SECCION}>Datos personales</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -122,7 +122,7 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
           </div>
         </section>
 
-        <section className="rounded-2xl border border-edge bg-card p-6 lg:col-span-2">
+        <section className="rounded-2xl border border-edge bg-card p-6 lg:col-span-2 xl:col-span-2">
           <h2 className={SECCION}>Ficha médica</h2>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Campo
