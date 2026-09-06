@@ -101,7 +101,22 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
               type="date"
               defaultValue={residente.fecha_ingreso}
             />
+            <Campo
+              label="Fecha de egreso"
+              name="fecha_egreso"
+              type="date"
+              defaultValue={residente.fecha_egreso}
+            />
             <Campo label="Habitación" name="habitacion" defaultValue={residente.habitacion} />
+            <label className="flex items-center gap-2 self-end pb-2.5 text-sm text-ink-soft">
+              <input
+                type="checkbox"
+                name="activo"
+                defaultChecked={residente.activo}
+                className="h-4 w-4"
+              />
+              Activo
+            </label>
           </div>
         </section>
 

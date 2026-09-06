@@ -19,7 +19,9 @@ export async function actualizarLegajo(
   const dni = String(formData.get("dni") ?? "").trim() || null;
   const nacionalidad = String(formData.get("nacionalidad") ?? "").trim() || null;
   const fecha_ingreso = String(formData.get("fecha_ingreso") ?? "") || null;
+  const fecha_egreso = String(formData.get("fecha_egreso") ?? "") || null;
   const habitacion = String(formData.get("habitacion") ?? "").trim() || null;
+  const activo = formData.get("activo") === "on";
   const contacto_familiar = String(formData.get("contacto_familiar") ?? "").trim() || null;
   const telefono_familiar = String(formData.get("telefono_familiar") ?? "").trim() || null;
 
@@ -44,7 +46,9 @@ export async function actualizarLegajo(
       dni,
       nacionalidad,
       fecha_ingreso,
+      fecha_egreso,
       habitacion,
+      activo,
       contacto_familiar,
       telefono_familiar,
     })

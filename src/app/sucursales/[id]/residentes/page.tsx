@@ -88,7 +88,6 @@ export default async function ResidentesSucursalPage({
         <ResidentesTable
           sucursalId={id}
           residentes={residentes ?? []}
-          puedeEditar={puedeCrear}
           puedeBorrar={perfil.rol === "admin"}
         />
       </main>
