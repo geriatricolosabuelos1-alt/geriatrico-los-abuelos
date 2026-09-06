@@ -300,8 +300,13 @@ export function ResidentesTable({ sucursalId, residentes, puedeEditar, puedeBorr
                 />
               ) : (
                 <tr key={r.id} className="border-b border-edge last:border-0">
-                  <td className="px-4 py-3 align-middle font-medium text-ink whitespace-nowrap">
-                    {r.apellido}, {r.nombre}
+                  <td className="px-4 py-3 align-middle font-medium whitespace-nowrap">
+                    <Link
+                      href={`/residentes/${r.id}/legajo`}
+                      className="text-ink underline decoration-transparent underline-offset-2 hover:decoration-brass"
+                    >
+                      {r.apellido}, {r.nombre}
+                    </Link>
                   </td>
                   <td className="px-4 py-3 align-middle text-ink-soft whitespace-nowrap">
                     {formatearFecha(r.fecha_ingreso)}
@@ -324,12 +329,6 @@ export function ResidentesTable({ sucursalId, residentes, puedeEditar, puedeBorr
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right align-middle whitespace-nowrap">
-                    <Link
-                      href={`/residentes/${r.id}/legajo`}
-                      className="mr-3 text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
-                    >
-                      Legajo
-                    </Link>
                     <Link
                       href={`/residentes/${r.id}/evolucion`}
                       className="mr-3 text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
