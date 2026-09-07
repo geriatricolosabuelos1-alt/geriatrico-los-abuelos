@@ -33,34 +33,38 @@ export default async function InventarioSucursalPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: perfil } = await supabase
-    .from("perfiles")
-    .select("id, nombre_completo, rol, sucursal_id, activo")
-    .eq("id", user!.id)
-    .single<Perfil>();
-
-  const { data: sucursal } = await supabase
-    .from("sucursales")
-    .select("id, nombre")
-    .eq("id", id)
-    .single<{ id: string; nombre: string }>();
+  const [
+    { data: perfil },
+    { data: sucursal },
+    { data: insumos },
+    { data: movimientos },
+  ] = await Promise.all([
+    supabase
+      .from("perfiles")
+      .select("id, nombre_completo, rol, sucursal_id, activo")
+      .eq("id", user!.id)
+      .single<Perfil>(),
+    supabase
+      .from("sucursales")
+      .select("id, nombre")
+      .eq("id", id)
+      .single<{ id: string; nombre: string }>(),
+    supabase
+      .from("insumos")
+      .select("id, nombre, categoria, unidad, activo")
+      .eq("activo", true)
+      .order("nombre")
+      .returns<Insumo[]>(),
+    supabase
+      .from("movimientos_inventario")
+      .select("insumo_id, tipo, cantidad")
+      .eq("sucursal_id", id)
+      .returns<FilaMovimiento[]>(),
+  ]);
 
   if (!sucursal || !perfil) {
     notFound();
   }
-
-  const { data: insumos } = await supabase
-    .from("insumos")
-    .select("id, nombre, categoria, unidad, activo")
-    .eq("activo", true)
-    .order("nombre")
-    .returns<Insumo[]>();
-
-  const { data: movimientos } = await supabase
-    .from("movimientos_inventario")
-    .select("insumo_id, tipo, cantidad")
-    .eq("sucursal_id", id)
-    .returns<FilaMovimiento[]>();
 
   const stockPorInsumo = new Map<string, number>();
   (movimientos ?? []).forEach((m) => {
