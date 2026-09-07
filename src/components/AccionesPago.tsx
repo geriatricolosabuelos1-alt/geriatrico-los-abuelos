@@ -60,7 +60,7 @@ export function AccionesPago({ residenteId, pagoId, estado, restante }: Props) {
 
   if (mostrarForm) {
     return (
-      <div className="flex flex-wrap items-center justify-end gap-1.5">
+      <div className="flex flex-nowrap items-center justify-end gap-1">
         <input
           type="number"
           step="0.01"
@@ -68,12 +68,12 @@ export function AccionesPago({ residenteId, pagoId, estado, restante }: Props) {
           max={restante}
           value={monto}
           onChange={(e) => setMonto(e.target.value)}
-          className="w-20 rounded-md border border-edge bg-panel-deep px-1.5 py-1 text-xs text-ink"
+          className="w-12 shrink-0 rounded-md border border-edge bg-panel-deep px-1 py-1 text-[11px] text-ink"
         />
         <select
           value={metodoPago}
           onChange={(e) => setMetodoPago(e.target.value as MetodoPago)}
-          className="rounded-md border border-edge bg-panel-deep px-1.5 py-1 text-xs text-ink"
+          className="w-[84px] shrink-0 rounded-md border border-edge bg-panel-deep px-1 py-1 text-[11px] text-ink"
         >
           {METODOS.map((m) => (
             <option key={m.valor} value={m.valor} style={{ backgroundColor: "#0b0a14" }}>
@@ -85,13 +85,13 @@ export function AccionesPago({ residenteId, pagoId, estado, restante }: Props) {
           type="date"
           value={fecha}
           onChange={(e) => setFecha(e.target.value)}
-          className="rounded-md border border-edge bg-panel-deep px-1.5 py-1 text-xs text-ink"
+          className="w-[108px] shrink-0 rounded-md border border-edge bg-panel-deep px-1 py-1 text-[11px] text-ink"
         />
         <button
           type="button"
           onClick={confirmarPago}
           disabled={enviando}
-          className="text-xs font-medium text-brass hover:text-ink disabled:opacity-50"
+          className="shrink-0 text-xs font-medium text-brass hover:text-ink disabled:opacity-50"
         >
           {enviando ? "..." : "OK"}
         </button>
