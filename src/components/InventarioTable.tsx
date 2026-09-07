@@ -1,0 +1,150 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { actualizarUnidadInsumo } from "@/app/sucursales/[id]/inventario/actions";
+import type { CategoriaInsumo } from "@/lib/types";
+
+type FilaInsumo = {
+  id: string;
+  nombre: string;
+  categoria: CategoriaInsumo;
+  unidad: string;
+  stock: number;
+};
+
+type Props = {
+  insumos: FilaInsumo[];
+  esAdmin: boolean;
+};
+
+const ETIQUETA_CATEGORIA: Record<CategoriaInsumo, string> = {
+  general: "General",
+  carnes: "Carnes",
+  verduras: "Verduras",
+};
+
+const ORDEN_CATEGORIAS: CategoriaInsumo[] = ["general", "carnes", "verduras"];
+
+function FilaUnidad({ insumo }: { insumo: FilaInsumo }) {
+  const [unidad, setUnidad] = useState(insumo.unidad);
+  const [enviando, setEnviando] = useState(false);
+
+  async function manejarSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setEnviando(true);
+    const formData = new FormData(e.currentTarget);
+    await actualizarUnidadInsumo(formData);
+    setEnviando(false);
+  }
+
+  return (
+    <form onSubmit={manejarSubmit} className="flex items-center gap-1.5">
+      <input type="hidden" name="insumo_id" value={insumo.id} />
+      <input
+        type="text"
+        name="unidad"
+        value={unidad}
+        onChange={(e) => setUnidad(e.target.value)}
+        className="w-24 rounded-md border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none"
+      />
+      <button
+        type="submit"
+        disabled={enviando}
+        className="text-xs font-medium text-brass hover:text-ink disabled:opacity-50"
+      >
+        {enviando ? "..." : "Guardar"}
+      </button>
+    </form>
+  );
+}
+
+export function InventarioTable({ insumos, esAdmin }: Props) {
+  const [busqueda, setBusqueda] = useState("");
+  const [categoriaFiltro, setCategoriaFiltro] = useState<CategoriaInsumo | "">("");
+
+  const filtrados = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase();
+    return insumos.filter((i) => {
+      const coincideTexto = !texto || i.nombre.toLowerCase().includes(texto);
+      const coincideCategoria = !categoriaFiltro || i.categoria === categoriaFiltro;
+      return coincideTexto && coincideCategoria;
+    });
+  }, [insumos, busqueda, categoriaFiltro]);
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap gap-3">
+        <input
+          type="text"
+          placeholder="Buscar insumo..."
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          className="w-64 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none"
+        />
+        <select
+          value={categoriaFiltro}
+          onChange={(e) => setCategoriaFiltro(e.target.value as CategoriaInsumo | "")}
+          className="rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none"
+        >
+          <option value="">Todas las categorías</option>
+          {ORDEN_CATEGORIAS.map((cat) => (
+            <option key={cat} value={cat}>
+              {ETIQUETA_CATEGORIA[cat]}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {ORDEN_CATEGORIAS.map((cat) => {
+        const items = filtrados.filter((i) => i.categoria === cat);
+        if (items.length === 0) return null;
+
+        return (
+          <div key={cat}>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-soft">
+              {ETIQUETA_CATEGORIA[cat]}
+            </p>
+            <div className="overflow-x-auto rounded-2xl border border-edge bg-card">
+              <table className="w-full text-left text-sm">
+                <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
+                  <tr>
+                    <th className="px-4 py-3">Insumo</th>
+                    <th className="px-4 py-3">Stock</th>
+                    <th className="px-4 py-3">Unidad</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((i) => (
+                    <tr key={i.id} className="border-b border-edge last:border-0">
+                      <td className="px-4 py-3 font-medium text-ink whitespace-nowrap">
+                        {i.nombre}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={
+                            i.stock <= 0
+                              ? "font-semibold text-red-400"
+                              : "font-semibold text-brass"
+                          }
+                        >
+                          {i.stock}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-ink-soft">
+                        {esAdmin ? <FilaUnidad insumo={i} /> : i.unidad}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      })}
+
+      {filtrados.length === 0 && (
+        <p className="text-sm text-ink-soft">Ningún insumo coincide con el filtro.</p>
+      )}
+    </div>
+  );
+}
