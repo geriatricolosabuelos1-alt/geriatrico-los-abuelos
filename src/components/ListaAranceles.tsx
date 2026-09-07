@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { TarjetaArancel } from "@/components/TarjetaArancel";
 import { GenerarPeriodoForm } from "@/components/GenerarPeriodoForm";
@@ -59,6 +60,15 @@ export function ListaAranceles({ items, sucursalNombre, sucursalId }: Props) {
         </div>
         <GenerarPeriodoForm sucursalId={sucursalId} />
         <div className="flex flex-wrap items-center gap-2">
+          {cantidadDeben > 0 && (
+            <Link
+              href={`/sucursales/${sucursalId}/cuotas/informe-deudores`}
+              target="_blank"
+              className="rounded-full border border-brass/40 px-4 py-1.5 text-xs font-semibold text-brass hover:bg-brass-soft"
+            >
+              PDF deudores
+            </Link>
+          )}
           {OPCIONES.map((op) => (
           <button
             key={op.valor}
