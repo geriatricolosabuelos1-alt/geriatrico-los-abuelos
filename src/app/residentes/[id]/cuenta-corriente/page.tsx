@@ -191,7 +191,16 @@ export default async function CuentaCorrientePage({
                     <td className="px-3 py-2.5 text-ink-soft">
                       {recargo > 0 ? `$${recargo.toLocaleString("es-AR")}` : "—"}
                     </td>
-                    <td className="px-3 py-2.5 text-right">
+                    <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                      {p.monto_pagado > 0 && (
+                        <Link
+                          href={`/residentes/${id}/recibo/${p.id}`}
+                          target="_blank"
+                          className="mr-3 text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                        >
+                          Recibo
+                        </Link>
+                      )}
                       <AccionesPago
                         residenteId={id}
                         pagoId={p.id}
