@@ -1,7 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { actualizarUnidadInsumo } from "@/app/sucursales/[id]/inventario/actions";
+import {
+  actualizarUnidadInsumo,
+  crearInsumo,
+  eliminarInsumo,
+  type CrearInsumoEstado,
+} from "@/app/sucursales/[id]/inventario/actions";
 import type { CategoriaInsumo } from "@/lib/types";
 
 type FilaInsumo = {
@@ -58,9 +63,73 @@ function FilaUnidad({ insumo }: { insumo: FilaInsumo }) {
   );
 }
 
+const CAMPO =
+  "rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
+
+function FormularioNuevoInsumo({ onCreado }: { onCreado: () => void }) {
+  const [estado, setEstado] = useState<CrearInsumoEstado>({ error: null });
+  const [enviando, setEnviando] = useState(false);
+
+  async function manejarSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setEnviando(true);
+    const formData = new FormData(e.currentTarget);
+    const resultado = await crearInsumo({ error: null }, formData);
+    setEnviando(false);
+    if (resultado.error) {
+      setEstado(resultado);
+    } else {
+      setEstado({ error: null });
+      (e.target as HTMLFormElement).reset();
+      onCreado();
+    }
+  }
+
+  return (
+    <form
+      onSubmit={manejarSubmit}
+      className="flex flex-wrap items-end gap-3 rounded-2xl border border-edge bg-card p-4"
+    >
+      <div>
+        <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
+          Nombre
+        </label>
+        <input name="nombre" required className={CAMPO} placeholder="Ej: Aceite" />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
+          Categoría
+        </label>
+        <select name="categoria" required defaultValue="general" className={CAMPO}>
+          {ORDEN_CATEGORIAS.map((cat) => (
+            <option key={cat} value={cat}>
+              {ETIQUETA_CATEGORIA[cat]}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
+          Unidad
+        </label>
+        <input name="unidad" className={CAMPO} placeholder="unidades" />
+      </div>
+      {estado.error && <p className="text-xs text-red-400">{estado.error}</p>}
+      <button
+        type="submit"
+        disabled={enviando}
+        className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
+      >
+        {enviando ? "Guardando..." : "Agregar insumo"}
+      </button>
+    </form>
+  );
+}
+
 export function InventarioTable({ insumos, esAdmin }: Props) {
   const [busqueda, setBusqueda] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState<CategoriaInsumo | "">("");
+  const [mostrarNuevo, setMostrarNuevo] = useState(false);
 
   const filtrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
@@ -71,9 +140,14 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
     });
   }, [insumos, busqueda, categoriaFiltro]);
 
+  async function manejarEliminar(id: string, nombre: string) {
+    if (!window.confirm(`¿Eliminar "${nombre}" del catálogo de insumos?`)) return;
+    await eliminarInsumo(id);
+  }
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <input
           type="text"
           placeholder="Buscar insumo..."
@@ -93,7 +167,20 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
             </option>
           ))}
         </select>
+        {esAdmin && (
+          <button
+            type="button"
+            onClick={() => setMostrarNuevo((v) => !v)}
+            className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:text-ink"
+          >
+            {mostrarNuevo ? "Cancelar" : "+ Nuevo insumo"}
+          </button>
+        )}
       </div>
+
+      {esAdmin && mostrarNuevo && (
+        <FormularioNuevoInsumo onCreado={() => setMostrarNuevo(false)} />
+      )}
 
       {ORDEN_CATEGORIAS.map((cat) => {
         const items = filtrados.filter((i) => i.categoria === cat);
@@ -114,6 +201,7 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
                     <th className="px-4 py-3">Insumo</th>
                     <th className="px-4 py-3">Stock</th>
                     <th className="px-4 py-3">Unidad</th>
+                    {esAdmin && <th className="px-4 py-3"></th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -136,6 +224,16 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
                       <td className="px-4 py-3 text-ink-soft">
                         {esAdmin ? <FilaUnidad insumo={i} /> : i.unidad}
                       </td>
+                      {esAdmin && (
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() => manejarEliminar(i.id, i.nombre)}
+                            className="text-xs text-red-400 underline decoration-red-400/40 underline-offset-2 hover:text-red-300"
+                          >
+                            Eliminar
+                          </button>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

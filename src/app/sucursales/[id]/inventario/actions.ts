@@ -51,3 +51,37 @@ export async function actualizarUnidadInsumo(formData: FormData): Promise<void> 
 
   revalidatePath("/sucursales/[id]/inventario", "page");
 }
+
+export type CrearInsumoEstado = { error: string | null };
+
+export async function crearInsumo(
+  _estado: CrearInsumoEstado,
+  formData: FormData,
+): Promise<CrearInsumoEstado> {
+  const supabase = await createClient();
+
+  const nombre = String(formData.get("nombre") ?? "").trim();
+  const categoria = String(formData.get("categoria") ?? "");
+  const unidad = String(formData.get("unidad") ?? "").trim() || "unidades";
+
+  if (!nombre || !["general", "carnes", "verduras"].includes(categoria)) {
+    return { error: "Completá nombre y categoría." };
+  }
+
+  const { error } = await supabase
+    .from("insumos")
+    .insert({ nombre, categoria, unidad, activo: true });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/sucursales/[id]/inventario", "page");
+  return { error: null };
+}
+
+export async function eliminarInsumo(insumoId: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from("insumos").update({ activo: false }).eq("id", insumoId);
+  revalidatePath("/sucursales/[id]/inventario", "page");
+}

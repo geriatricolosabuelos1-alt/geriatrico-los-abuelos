@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { AccionesPago } from "@/components/AccionesPago";
+import { AgregarPeriodoManual } from "@/components/AgregarPeriodoManual";
 import { EditorArancel } from "@/components/EditorArancel";
 import { HistorialPagos } from "@/components/HistorialPagos";
 import { diasDeAtraso } from "@/lib/aranceles";
@@ -137,6 +138,8 @@ export default async function CuentaCorrientePage({
           porcentajeRecargo={fichaAdministrativa?.porcentaje_recargo_mora ?? null}
         />
 
+        <AgregarPeriodoManual residenteId={id} sucursalId={residente.sucursal_id} />
+
         <div className="overflow-x-auto rounded-2xl border border-edge bg-card">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
@@ -208,6 +211,9 @@ export default async function CuentaCorrientePage({
                         residenteId={id}
                         pagoId={p.id}
                         estado={p.estado}
+                        monto={p.monto}
+                        montoPagado={p.monto_pagado}
+                        fechaPago={p.fecha_pago}
                         restante={restante}
                       />
                     </td>

@@ -54,10 +54,68 @@ export async function actualizarMontoGasto(formData: FormData): Promise<void> {
   revalidatePath("/sucursales/[id]/gastos", "page");
 }
 
+export async function actualizarGastoVariable(
+  sucursalId: string,
+  gastoId: string,
+  _estado: EstadoFormulario,
+  formData: FormData,
+): Promise<EstadoFormulario> {
+  const supabase = await createClient();
+
+  const categoria = String(formData.get("categoria") ?? "").trim();
+  const monto = Number(formData.get("monto") ?? 0);
+  const fecha = String(formData.get("fecha") ?? "");
+  const descripcion = String(formData.get("descripcion") ?? "").trim() || null;
+
+  if (!categoria || !monto || monto <= 0 || !fecha) {
+    return { error: "Completá categoría, monto y fecha." };
+  }
+
+  const [anio, mes] = fecha.split("-").map(Number);
+
+  const { error } = await supabase
+    .from("gastos")
+    .update({ categoria, monto, descripcion, fecha, mes, anio })
+    .eq("id", gastoId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/sucursales/${sucursalId}/gastos`);
+  return { error: null };
+}
+
 export async function eliminarGasto(sucursalId: string, gastoId: string): Promise<void> {
   const supabase = await createClient();
   await supabase.from("gastos").delete().eq("id", gastoId);
   revalidatePath(`/sucursales/${sucursalId}/gastos`);
+}
+
+export async function desactivarGastoFijoCatalogo(gastoFijoId: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from("gastos_fijos_catalogo").update({ activo: false }).eq("id", gastoFijoId);
+  revalidatePath("/sucursales/[id]/gastos", "page");
+}
+
+export async function actualizarGastoFijoCatalogo(
+  gastoFijoId: string,
+  formData: FormData,
+): Promise<void> {
+  const supabase = await createClient();
+
+  const nombre = String(formData.get("nombre") ?? "").trim();
+  const montoEstimado = formData.get("monto_estimado")
+    ? Number(formData.get("monto_estimado"))
+    : null;
+  if (!nombre) return;
+
+  await supabase
+    .from("gastos_fijos_catalogo")
+    .update({ nombre, monto_estimado: montoEstimado })
+    .eq("id", gastoFijoId);
+
+  revalidatePath("/sucursales/[id]/gastos", "page");
 }
 
 export async function agregarGastoFijoCatalogo(

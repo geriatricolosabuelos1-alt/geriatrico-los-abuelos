@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import {
+  actualizarGastoFijoCatalogo,
   actualizarMontoGasto,
   agregarGastoFijoCatalogo,
+  desactivarGastoFijoCatalogo,
   eliminarGasto,
   generarGastosFijosDelMes,
   type EstadoFormulario,
@@ -63,12 +65,71 @@ function FilaMonto({ gasto }: { gasto: FilaGastoFijo }) {
   );
 }
 
+function FilaEdicionCatalogo({
+  item,
+  onCancelar,
+  onGuardado,
+}: {
+  item: GastoFijoCatalogo;
+  onCancelar: () => void;
+  onGuardado: () => void;
+}) {
+  const [enviando, setEnviando] = useState(false);
+
+  async function manejarSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setEnviando(true);
+    const formData = new FormData(e.currentTarget);
+    await actualizarGastoFijoCatalogo(item.id, formData);
+    setEnviando(false);
+    onGuardado();
+  }
+
+  return (
+    <tr className="border-b border-edge bg-panel-deep last:border-0">
+      <td colSpan={3} className="p-3">
+        <form onSubmit={manejarSubmit} className="flex flex-wrap items-center gap-2">
+          <input
+            name="nombre"
+            defaultValue={item.nombre}
+            required
+            className="rounded-md border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none"
+          />
+          <input
+            type="number"
+            step="0.01"
+            name="monto_estimado"
+            defaultValue={item.monto_estimado ?? ""}
+            placeholder="Monto estimado"
+            className="w-32 rounded-md border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none"
+          />
+          <button
+            type="submit"
+            disabled={enviando}
+            className="rounded-md bg-brass px-3 py-1.5 text-xs font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
+          >
+            {enviando ? "Guardando..." : "Guardar"}
+          </button>
+          <button
+            type="button"
+            onClick={onCancelar}
+            className="rounded-md border border-edge px-3 py-1.5 text-xs text-ink-soft hover:text-ink"
+          >
+            Cancelar
+          </button>
+        </form>
+      </td>
+    </tr>
+  );
+}
+
 export function GastosFijos({ sucursalId, mes, anio, catalogo, gastosDelMes }: Props) {
   const [generando, setGenerando] = useState(false);
   const [mensaje, setMensaje] = useState<string | null>(null);
   const [mostrarNuevo, setMostrarNuevo] = useState(false);
   const [estado, setEstado] = useState<EstadoFormulario>({ error: null });
   const [enviandoNuevo, setEnviandoNuevo] = useState(false);
+  const [editandoCatalogoId, setEditandoCatalogoId] = useState<string | null>(null);
 
   const gastosPorCatalogoId = new Map<string, FilaGastoFijo>();
   gastosDelMes.forEach((g) => {
@@ -105,6 +166,11 @@ export function GastosFijos({ sucursalId, mes, anio, catalogo, gastosDelMes }: P
   async function manejarEliminar(id: string) {
     if (!window.confirm("¿Eliminar este gasto fijo del mes?")) return;
     await eliminarGasto(sucursalId, id);
+  }
+
+  async function manejarDesactivarCatalogo(id: string, nombre: string) {
+    if (!window.confirm(`¿Dar de baja "${nombre}" del catálogo de gastos fijos?`)) return;
+    await desactivarGastoFijoCatalogo(id);
   }
 
   return (
@@ -182,35 +248,56 @@ export function GastosFijos({ sucursalId, mes, anio, catalogo, gastosDelMes }: P
               </tr>
             </thead>
             <tbody>
-              {catalogo.map((c) => {
-                const gasto = gastosPorCatalogoId.get(c.id);
-                return (
+              {catalogo.map((c) =>
+                editandoCatalogoId === c.id ? (
+                  <FilaEdicionCatalogo
+                    key={c.id}
+                    item={c}
+                    onCancelar={() => setEditandoCatalogoId(null)}
+                    onGuardado={() => setEditandoCatalogoId(null)}
+                  />
+                ) : (
                   <tr key={c.id} className="border-b border-edge last:border-0">
                     <td className="px-4 py-3 font-medium text-ink whitespace-nowrap">
                       {c.nombre}
                     </td>
                     <td className="px-4 py-3">
-                      {gasto ? (
-                        <FilaMonto gasto={gasto} />
-                      ) : (
-                        <span className="text-xs text-ink-soft">
-                          No generado — usá &quot;Generar mes&quot;
-                        </span>
-                      )}
+                      {(() => {
+                        const gasto = gastosPorCatalogoId.get(c.id);
+                        return gasto ? (
+                          <FilaMonto gasto={gasto} />
+                        ) : (
+                          <span className="text-xs text-ink-soft">
+                            No generado — usá &quot;Generar mes&quot;
+                          </span>
+                        );
+                      })()}
                     </td>
-                    <td className="px-4 py-3 text-right">
-                      {gasto && (
+                    <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <button
+                        onClick={() => setEditandoCatalogoId(c.id)}
+                        className="mr-3 text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                      >
+                        Editar
+                      </button>
+                      {gastosPorCatalogoId.get(c.id) && (
                         <button
-                          onClick={() => manejarEliminar(gasto.id)}
-                          className="text-xs text-red-400 underline decoration-red-400/40 underline-offset-2 hover:text-red-300"
+                          onClick={() => manejarEliminar(gastosPorCatalogoId.get(c.id)!.id)}
+                          className="mr-3 text-xs text-red-400 underline decoration-red-400/40 underline-offset-2 hover:text-red-300"
                         >
-                          Eliminar
+                          Eliminar de este mes
                         </button>
                       )}
+                      <button
+                        onClick={() => manejarDesactivarCatalogo(c.id, c.nombre)}
+                        className="text-xs text-red-400 underline decoration-red-400/40 underline-offset-2 hover:text-red-300"
+                      >
+                        Dar de baja
+                      </button>
                     </td>
                   </tr>
-                );
-              })}
+                ),
+              )}
             </tbody>
           </table>
         </div>
