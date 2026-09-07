@@ -151,6 +151,7 @@ export interface MovimientoInventario {
 }
 
 export type EstadoPago = "pendiente" | "parcial" | "pagado";
+export type MetodoPago = "efectivo" | "transferencia" | "mercado_pago";
 
 export interface Rendicion {
   id: string;

@@ -15,6 +15,7 @@ export async function registrarPago(
 
   const monto = Number(formData.get("monto") ?? 0);
   const fecha = String(formData.get("fecha") || new Date().toISOString().slice(0, 10));
+  const metodoPago = String(formData.get("metodo_pago") || "efectivo");
 
   if (!monto || monto <= 0) {
     return { error: "Ingresá un monto mayor a cero." };
@@ -45,7 +46,7 @@ export async function registrarPago(
 
   await supabase
     .from("pagos_historial")
-    .insert({ pago_id: pagoId, monto: montoRegistrado, fecha });
+    .insert({ pago_id: pagoId, monto: montoRegistrado, fecha, metodo_pago: metodoPago });
 
   revalidatePath(`/residentes/${residenteId}/cuenta-corriente`);
   return { error: null };

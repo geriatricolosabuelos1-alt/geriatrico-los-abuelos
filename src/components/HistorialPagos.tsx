@@ -1,16 +1,24 @@
 "use client";
 
 import { useState } from "react";
+import type { MetodoPago } from "@/lib/types";
 
 type PagoHistorial = {
   monto: number;
   fecha: string;
+  metodo_pago: MetodoPago | null;
 };
 
 type Props = {
   montoTotal: number;
   montoPagado: number;
   historial: PagoHistorial[];
+};
+
+const ETIQUETA_METODO: Record<MetodoPago, string> = {
+  efectivo: "Efectivo",
+  transferencia: "Transferencia",
+  mercado_pago: "Mercado Pago",
 };
 
 export function HistorialPagos({ montoTotal, montoPagado, historial }: Props) {
@@ -47,11 +55,12 @@ export function HistorialPagos({ montoTotal, montoPagado, historial }: Props) {
       </button>
 
       {abierto && (
-        <table className="mt-2 w-full max-w-xs border-l-2 border-brass-soft text-xs">
+        <table className="mt-2 w-full max-w-sm border-l-2 border-brass-soft text-xs">
           <thead>
             <tr className="text-[0.6rem] uppercase tracking-wide text-ink-soft/70">
               <th className="px-3 py-1 text-left font-medium">Fecha</th>
               <th className="px-3 py-1 text-left font-medium">Pagó</th>
+              <th className="px-3 py-1 text-left font-medium">Medio</th>
               <th className="px-3 py-1 text-left font-medium">Saldo</th>
             </tr>
           </thead>
@@ -61,11 +70,14 @@ export function HistorialPagos({ montoTotal, montoPagado, historial }: Props) {
                 key={i}
                 className={i < filas.length - 1 ? "border-b border-dashed border-edge" : ""}
               >
-                <td className="px-3 py-1 text-ink-soft">
+                <td className="px-3 py-1 text-ink-soft whitespace-nowrap">
                   {new Date(f.fecha + "T00:00:00").toLocaleDateString("es-AR")}
                 </td>
                 <td className="px-3 py-1 font-medium text-ink">
                   ${f.monto.toLocaleString("es-AR")}
+                </td>
+                <td className="px-3 py-1 text-ink-soft whitespace-nowrap">
+                  {f.metodo_pago ? ETIQUETA_METODO[f.metodo_pago] : "—"}
                 </td>
                 <td className="px-3 py-1 font-medium text-amber-400">
                   {f.restante > 0 ? `$${f.restante.toLocaleString("es-AR")}` : "—"}

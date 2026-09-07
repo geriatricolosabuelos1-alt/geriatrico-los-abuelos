@@ -5,6 +5,7 @@ import {
   eliminarPago,
   registrarPago,
 } from "@/app/residentes/[id]/cuenta-corriente/actions";
+import type { MetodoPago } from "@/lib/types";
 
 type Props = {
   residenteId: string;
@@ -13,10 +14,17 @@ type Props = {
   restante: number;
 };
 
+const METODOS: { valor: MetodoPago; etiqueta: string }[] = [
+  { valor: "efectivo", etiqueta: "Efectivo" },
+  { valor: "transferencia", etiqueta: "Transferencia" },
+  { valor: "mercado_pago", etiqueta: "Mercado Pago" },
+];
+
 export function AccionesPago({ residenteId, pagoId, estado, restante }: Props) {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [monto, setMonto] = useState(String(restante));
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
+  const [metodoPago, setMetodoPago] = useState<MetodoPago>("efectivo");
   const [enviando, setEnviando] = useState(false);
 
   async function confirmarPago() {
@@ -27,6 +35,7 @@ export function AccionesPago({ residenteId, pagoId, estado, restante }: Props) {
     const formData = new FormData();
     formData.set("monto", monto);
     formData.set("fecha", fecha);
+    formData.set("metodo_pago", metodoPago);
     await registrarPago(residenteId, pagoId, { error: null }, formData);
     setEnviando(false);
     setMostrarForm(false);
@@ -51,7 +60,7 @@ export function AccionesPago({ residenteId, pagoId, estado, restante }: Props) {
 
   if (mostrarForm) {
     return (
-      <div className="flex items-center justify-end gap-1.5">
+      <div className="flex flex-wrap items-center justify-end gap-1.5">
         <input
           type="number"
           step="0.01"
@@ -61,6 +70,17 @@ export function AccionesPago({ residenteId, pagoId, estado, restante }: Props) {
           onChange={(e) => setMonto(e.target.value)}
           className="w-20 rounded-md border border-edge bg-panel-deep px-1.5 py-1 text-xs text-ink"
         />
+        <select
+          value={metodoPago}
+          onChange={(e) => setMetodoPago(e.target.value as MetodoPago)}
+          className="rounded-md border border-edge bg-panel-deep px-1.5 py-1 text-xs text-ink"
+        >
+          {METODOS.map((m) => (
+            <option key={m.valor} value={m.valor} style={{ backgroundColor: "#0b0a14" }}>
+              {m.etiqueta}
+            </option>
+          ))}
+        </select>
         <input
           type="date"
           value={fecha}

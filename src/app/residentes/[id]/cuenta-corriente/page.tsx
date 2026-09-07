@@ -6,7 +6,7 @@ import { AccionesPago } from "@/components/AccionesPago";
 import { EditorArancel } from "@/components/EditorArancel";
 import { HistorialPagos } from "@/components/HistorialPagos";
 import { diasDeAtraso } from "@/lib/aranceles";
-import type { Perfil } from "@/lib/types";
+import type { MetodoPago, Perfil } from "@/lib/types";
 
 type Params = { id: string };
 
@@ -19,7 +19,7 @@ type FilaPago = {
   estado: "pendiente" | "parcial" | "pagado";
   fecha_pago: string | null;
   tipo_pago: "obra_social" | "paciente";
-  pagos_historial: { monto: number; fecha: string }[];
+  pagos_historial: { monto: number; fecha: string; metodo_pago: MetodoPago | null }[];
 };
 
 const ETIQUETA_ESTADO: Record<FilaPago["estado"], string> = {
@@ -87,7 +87,9 @@ export default async function CuentaCorrientePage({
 
   const { data: pagos } = await supabase
     .from("pagos")
-    .select("id, monto, monto_pagado, mes, anio, estado, fecha_pago, tipo_pago, pagos_historial(monto, fecha)")
+    .select(
+      "id, monto, monto_pagado, mes, anio, estado, fecha_pago, tipo_pago, pagos_historial(monto, fecha, metodo_pago)",
+    )
     .eq("residente_id", id)
     .order("anio", { ascending: false })
     .order("mes", { ascending: false })
