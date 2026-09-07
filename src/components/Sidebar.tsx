@@ -157,7 +157,7 @@ export async function Sidebar({ perfil, activo }: Props) {
         </div>
       )}
 
-      {ROLES_DASHBOARD.includes(perfil.rol) && (
+      {ROLES_DASHBOARD.includes(perfil.rol) && areaActual === "administrativa" && (
         <TabPrincipal
           href="/administrativa"
           label="Dashboard"
@@ -181,7 +181,7 @@ export async function Sidebar({ perfil, activo }: Props) {
               }
             />
           )}
-          {ROLES_CUOTAS.includes(perfil.rol) && (
+          {ROLES_CUOTAS.includes(perfil.rol) && areaActual === "administrativa" && (
             <SubTab
               href={`/sucursales/${s.id}/cuotas`}
               label="Aranceles"
@@ -192,7 +192,7 @@ export async function Sidebar({ perfil, activo }: Props) {
               }
             />
           )}
-          {ROLES_INVENTARIO.includes(perfil.rol) && (
+          {ROLES_INVENTARIO.includes(perfil.rol) && areaActual === "administrativa" && (
             <SubTab
               href={`/sucursales/${s.id}/inventario`}
               label="Inventario"
@@ -203,7 +203,7 @@ export async function Sidebar({ perfil, activo }: Props) {
               }
             />
           )}
-          {ROLES_RENDICIONES.includes(perfil.rol) && (
+          {ROLES_RENDICIONES.includes(perfil.rol) && areaActual === "administrativa" && (
             <SubTab
               href={`/sucursales/${s.id}/rendiciones`}
               label="Rendiciones"
@@ -217,7 +217,7 @@ export async function Sidebar({ perfil, activo }: Props) {
         </div>
       ))}
 
-      {ROLES_EMPLEADOS.includes(perfil.rol) && (
+      {ROLES_EMPLEADOS.includes(perfil.rol) && areaActual === "administrativa" && (
         <div className="mt-3">
           <TabPrincipal
             href="/empleados"
