@@ -17,8 +17,9 @@ type Props = {
 const ESTADO_INICIAL: ActualizarArancelEstado = { error: null };
 
 const CAMPO =
-  "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
-const ETIQUETA = "mb-1 block text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft";
+  "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none print:border-neutral-300 print:bg-white print:px-0 print:text-black";
+const ETIQUETA =
+  "mb-1 block text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft print:text-neutral-500";
 
 function formatearMonto(monto: number | null): string {
   return monto != null ? `$${monto.toLocaleString("es-AR")}` : "—";
@@ -42,9 +43,9 @@ export function EditorArancel({
   return (
     <form
       action={formAction}
-      className="grid grid-cols-2 gap-3 rounded-2xl border border-edge bg-card p-5 sm:grid-cols-4"
+      className="grid grid-cols-2 gap-3 rounded-2xl border border-edge bg-card p-5 sm:grid-cols-4 print:rounded-none print:border-0 print:bg-white print:p-0"
     >
-      <h2 className="col-span-2 font-display text-sm font-semibold text-ink sm:col-span-4">
+      <h2 className="col-span-2 font-display text-sm font-semibold text-ink sm:col-span-4 print:text-black">
         Arancel
       </h2>
 
@@ -72,7 +73,7 @@ export function EditorArancel({
       </div>
       <div>
         <label className={ETIQUETA}>Diferencia a pagar</label>
-        <p className="rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm font-semibold text-brass">
+        <p className="rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm font-semibold text-brass print:border-neutral-300 print:bg-white print:px-0 print:text-black">
           {formatearMonto(diferencia)}
         </p>
       </div>
@@ -88,7 +89,7 @@ export function EditorArancel({
         />
       </div>
 
-      <div className="col-span-2 flex items-center gap-3 sm:col-span-4">
+      <div className="col-span-2 flex items-center gap-3 sm:col-span-4 print:hidden">
         <button
           type="submit"
           disabled={enviando}

@@ -6,6 +6,7 @@ import { AccionesPago } from "@/components/AccionesPago";
 import { AgregarPeriodoManual } from "@/components/AgregarPeriodoManual";
 import { EditorArancel } from "@/components/EditorArancel";
 import { HistorialPagos } from "@/components/HistorialPagos";
+import { BotonExportarPdf } from "@/components/BotonExportarPdf";
 import { diasDeAtraso } from "@/lib/aranceles";
 import type { MetodoPago, Perfil } from "@/lib/types";
 
@@ -103,31 +104,48 @@ export default async function CuentaCorrientePage({
 
   return (
     <div className="flex min-h-screen w-full">
-      <Sidebar
-        perfil={perfil}
-        activo={{
-          tipo: "sucursal",
-          sucursalId: residente.sucursal_id,
-          seccion: "cuotas",
-        }}
-      />
+      <style>{`@page { size: A4; margin: 14mm; }`}</style>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-9 py-8">
+      <div className="print:hidden">
+        <Sidebar
+          perfil={perfil}
+          activo={{
+            tipo: "sucursal",
+            sucursalId: residente.sucursal_id,
+            seccion: "cuotas",
+          }}
+        />
+      </div>
+
+      <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-9 py-8 print:max-w-none print:space-y-4 print:px-0 print:py-0">
+        <div className="hidden print:block">
+          <p className="font-display text-lg font-bold text-black">Los Abuelos</p>
+          <p className="text-xs uppercase tracking-widest text-neutral-600">
+            Informe de cuenta corriente
+          </p>
+          <p className="mt-1 text-xs text-neutral-600">
+            Generado el {new Date().toLocaleDateString("es-AR")}
+          </p>
+        </div>
+
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft">
+            <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft print:text-neutral-600">
               Cuenta corriente
             </p>
-            <h1 className="font-display text-2xl font-bold text-ink">
+            <h1 className="font-display text-2xl font-bold text-ink print:text-black">
               {residente.apellido}, {residente.nombre}
             </h1>
           </div>
-          <Link
-            href={`/sucursales/${residente.sucursal_id}/cuotas`}
-            className="text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
-          >
-            Volver a Aranceles
-          </Link>
+          <div className="flex items-center gap-3 print:hidden">
+            <BotonExportarPdf />
+            <Link
+              href={`/sucursales/${residente.sucursal_id}/cuotas`}
+              className="text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+            >
+              Volver a Aranceles
+            </Link>
+          </div>
         </div>
 
         <EditorArancel
@@ -138,11 +156,13 @@ export default async function CuentaCorrientePage({
           porcentajeRecargo={fichaAdministrativa?.porcentaje_recargo_mora ?? null}
         />
 
-        <AgregarPeriodoManual residenteId={id} sucursalId={residente.sucursal_id} />
+        <div className="print:hidden">
+          <AgregarPeriodoManual residenteId={id} sucursalId={residente.sucursal_id} />
+        </div>
 
-        <div className="overflow-x-auto rounded-2xl border border-edge bg-card">
+        <div className="overflow-x-auto rounded-2xl border border-edge bg-card print:overflow-visible print:rounded-none print:border-0 print:bg-white">
           <table className="w-full text-left text-sm">
-            <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
+            <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft print:border-neutral-300 print:bg-white print:text-neutral-500">
               <tr>
                 <th className="px-3 py-2.5">Período</th>
                 <th className="px-3 py-2.5">Parte</th>
@@ -151,7 +171,7 @@ export default async function CuentaCorrientePage({
                 <th className="px-3 py-2.5">Fecha de pago</th>
                 <th className="px-3 py-2.5">Días de atraso</th>
                 <th className="px-3 py-2.5">Recargo por mora</th>
-                <th className="px-3 py-2.5"></th>
+                <th className="px-3 py-2.5 print:hidden"></th>
               </tr>
             </thead>
             <tbody>
@@ -160,14 +180,14 @@ export default async function CuentaCorrientePage({
                 const atraso = diasDeAtraso(p, diaVencimiento);
                 const recargo = atraso > 0 ? (restante * porcentajeRecargo) / 100 : 0;
                 return (
-                  <tr key={p.id} className="border-b border-edge last:border-0">
-                    <td className="px-3 py-2.5 font-medium text-ink whitespace-nowrap">
+                  <tr key={p.id} className="border-b border-edge last:border-0 print:border-neutral-300">
+                    <td className="px-3 py-2.5 font-medium text-ink whitespace-nowrap print:text-black">
                       {MESES[p.mes]} {p.anio}
                     </td>
-                    <td className="px-3 py-2.5 text-ink-soft whitespace-nowrap">
+                    <td className="px-3 py-2.5 text-ink-soft whitespace-nowrap print:text-neutral-700">
                       {ETIQUETA_TIPO_PAGO[p.tipo_pago]}
                     </td>
-                    <td className="px-3 py-2.5 text-ink-soft">
+                    <td className="px-3 py-2.5 text-ink-soft print:text-neutral-700">
                       ${p.monto.toLocaleString("es-AR")}
                       <HistorialPagos
                         montoTotal={p.monto}
@@ -177,27 +197,27 @@ export default async function CuentaCorrientePage({
                     </td>
                     <td className="px-3 py-2.5">
                       <span
-                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${CLASE_ESTADO[p.estado]}`}
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${CLASE_ESTADO[p.estado]} print:border print:border-neutral-400 print:bg-white print:text-black`}
                       >
                         {ETIQUETA_ESTADO[p.estado]}
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 text-ink-soft whitespace-nowrap">
+                    <td className="px-3 py-2.5 text-ink-soft whitespace-nowrap print:text-neutral-700">
                       {p.fecha_pago
                         ? new Date(p.fecha_pago + "T00:00:00").toLocaleDateString("es-AR")
                         : "—"}
                     </td>
-                    <td className="px-3 py-2.5 text-ink-soft">
+                    <td className="px-3 py-2.5 text-ink-soft print:text-neutral-700">
                       {atraso > 0 ? (
-                        <span className="text-red-400">{atraso} días</span>
+                        <span className="text-red-400 print:text-black">{atraso} días</span>
                       ) : (
                         "—"
                       )}
                     </td>
-                    <td className="px-3 py-2.5 text-ink-soft">
+                    <td className="px-3 py-2.5 text-ink-soft print:text-neutral-700">
                       {recargo > 0 ? `$${recargo.toLocaleString("es-AR")}` : "—"}
                     </td>
-                    <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                    <td className="px-3 py-2.5 text-right whitespace-nowrap print:hidden">
                       {p.monto_pagado > 0 && (
                         <Link
                           href={`/residentes/${id}/recibo/${p.id}`}
