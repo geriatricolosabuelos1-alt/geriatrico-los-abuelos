@@ -1,4 +1,6 @@
-import Link from "next/link";
+"use client";
+
+import { useRouter } from "next/navigation";
 import type { ResumenCuentaCorriente } from "@/lib/aranceles";
 
 type Props = {
@@ -37,10 +39,18 @@ function Dato({ etiqueta, children }: { etiqueta: string; children: React.ReactN
 }
 
 export function TarjetaArancel({ residente, obraSocial, resumen }: Props) {
+  const router = useRouter();
+  const href = `/residentes/${residente.id}/cuenta-corriente`;
+
   return (
-    <Link
-      href={`/residentes/${residente.id}/cuenta-corriente`}
-      className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl border border-edge bg-card p-4 hover:border-brass"
+    <div
+      role="link"
+      tabIndex={0}
+      onClick={() => router.push(href)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") router.push(href);
+      }}
+      className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-2xl border border-edge bg-card p-4 hover:border-brass cursor-pointer"
     >
       <div className="min-w-[11rem] flex-shrink-0">
         <p className="font-display text-sm font-semibold text-ink">
@@ -76,6 +86,17 @@ export function TarjetaArancel({ residente, obraSocial, resumen }: Props) {
           {resumen.totalMora > 0 ? formatearMonto(resumen.totalMora) : "—"}
         </span>
       </Dato>
-    </Link>
+
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          router.push(`${href}?exportar=1`);
+        }}
+        className="ml-auto shrink-0 rounded-full border border-brass/40 px-3 py-1 text-[0.65rem] font-semibold text-brass hover:bg-brass-soft"
+      >
+        PDF
+      </button>
+    </div>
   );
 }
