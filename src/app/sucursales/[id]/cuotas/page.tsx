@@ -86,6 +86,7 @@ export default async function CuotasSucursalPage({
         ) : (
           <ListaAranceles
             sucursalNombre={sucursal.nombre}
+            sucursalId={id}
             items={(residentes ?? []).map((r) => {
               const pagosDelResidente = (pagos ?? []).filter((p) => p.residente_id === r.id);
               const diaVencimiento = r.ficha_administrativa?.fecha_vencimiento_cuota

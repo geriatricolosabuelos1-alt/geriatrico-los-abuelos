@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { TarjetaArancel } from "@/components/TarjetaArancel";
+import { GenerarPeriodoForm } from "@/components/GenerarPeriodoForm";
 import type { ResumenCuentaCorriente } from "@/lib/aranceles";
 
 type ItemArancel = {
@@ -18,11 +19,12 @@ type ItemArancel = {
 type Props = {
   items: ItemArancel[];
   sucursalNombre: string;
+  sucursalId: string;
 };
 
 type Filtro = "todos" | "al_dia" | "deben";
 
-export function ListaAranceles({ items, sucursalNombre }: Props) {
+export function ListaAranceles({ items, sucursalNombre, sucursalId }: Props) {
   const [filtro, setFiltro] = useState<Filtro>("todos");
 
   const filtrados = useMemo(() => {
@@ -53,6 +55,7 @@ export function ListaAranceles({ items, sucursalNombre }: Props) {
           </p>
           <h1 className="font-display text-2xl font-bold text-ink">Aranceles</h1>
         </div>
+        <GenerarPeriodoForm sucursalId={sucursalId} />
         <div className="flex gap-2">
           {OPCIONES.map((op) => (
           <button

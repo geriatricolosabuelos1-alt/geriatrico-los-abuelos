@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { generarPeriodoParaSucursal, type ResultadoGeneracion } from "@/lib/generarPeriodo";
 
 export type ActualizarArancelEstado = { error: string | null };
 
@@ -35,4 +36,28 @@ export async function actualizarArancel(
   revalidatePath(`/sucursales/${sucursalId}/cuotas`);
   revalidatePath(`/residentes/${residenteId}/cuenta-corriente`);
   return { error: null };
+}
+
+export type GenerarPeriodoEstado = ResultadoGeneracion & { error: string | null };
+
+export async function generarPeriodoDelMes(
+  sucursalId: string,
+  _estado: GenerarPeriodoEstado,
+  formData: FormData,
+): Promise<GenerarPeriodoEstado> {
+  const supabase = await createClient();
+
+  const mesAnio = String(formData.get("mes_anio") ?? "");
+  const [anioStr, mesStr] = mesAnio.split("-");
+  const anio = Number(anioStr);
+  const mes = Number(mesStr);
+
+  if (!anio || !mes) {
+    return { error: "Elegí un mes válido.", generados: 0, omitidos: 0 };
+  }
+
+  const resultado = await generarPeriodoParaSucursal(supabase, sucursalId, mes, anio);
+
+  revalidatePath(`/sucursales/${sucursalId}/cuotas`);
+  return { error: null, ...resultado };
 }
