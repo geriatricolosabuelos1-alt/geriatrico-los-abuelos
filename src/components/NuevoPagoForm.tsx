@@ -6,6 +6,8 @@ import { crearPago, type CrearPagoEstado } from "@/app/residentes/[id]/cuenta-co
 type Props = {
   residenteId: string;
   sucursalId: string;
+  montoObraSocialDefault: number | null;
+  montoPacienteDefault: number | null;
 };
 
 const ESTADO_INICIAL: CrearPagoEstado = { error: null };
@@ -19,7 +21,12 @@ const MESES = [
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
 
-export function NuevoPagoForm({ residenteId, sucursalId }: Props) {
+export function NuevoPagoForm({
+  residenteId,
+  sucursalId,
+  montoObraSocialDefault,
+  montoPacienteDefault,
+}: Props) {
   const accionConIds = crearPago.bind(null, residenteId, sucursalId);
   const [estado, formAction, enviando] = useActionState(accionConIds, ESTADO_INICIAL);
   const hoy = new Date();
@@ -27,15 +34,35 @@ export function NuevoPagoForm({ residenteId, sucursalId }: Props) {
   return (
     <form
       action={formAction}
-      className="grid grid-cols-2 gap-3 rounded-2xl border border-edge bg-card p-5 sm:grid-cols-4"
+      className="grid grid-cols-2 gap-3 rounded-2xl border border-edge bg-card p-5 sm:grid-cols-5"
     >
-      <h2 className="col-span-2 font-display text-sm font-semibold text-ink sm:col-span-4">
+      <h2 className="col-span-2 font-display text-sm font-semibold text-ink sm:col-span-5">
         Nuevo período
       </h2>
+      <p className="col-span-2 -mt-2 text-[0.7rem] text-ink-soft sm:col-span-5">
+        Los montos se traen de Arancel — cambialos acá solo si este período puntual tiene un
+        acuerdo distinto.
+      </p>
 
       <div>
-        <label className={ETIQUETA}>Monto</label>
-        <input type="number" step="0.01" name="monto" required className={CAMPO} />
+        <label className={ETIQUETA}>Cubre obra social</label>
+        <input
+          type="number"
+          step="0.01"
+          name="monto_obra_social"
+          defaultValue={montoObraSocialDefault ?? ""}
+          className={CAMPO}
+        />
+      </div>
+      <div>
+        <label className={ETIQUETA}>A cargo del paciente</label>
+        <input
+          type="number"
+          step="0.01"
+          name="monto_paciente"
+          defaultValue={montoPacienteDefault ?? ""}
+          className={CAMPO}
+        />
       </div>
       <div>
         <label className={ETIQUETA}>Mes</label>
@@ -69,7 +96,7 @@ export function NuevoPagoForm({ residenteId, sucursalId }: Props) {
       </div>
 
       {estado.error && (
-        <p className="col-span-2 text-sm text-red-400 sm:col-span-4">{estado.error}</p>
+        <p className="col-span-2 text-sm text-red-400 sm:col-span-5">{estado.error}</p>
       )}
     </form>
   );

@@ -17,6 +17,12 @@ type FilaPago = {
   anio: number;
   estado: "pendiente" | "pagado";
   fecha_pago: string | null;
+  tipo_pago: "obra_social" | "paciente";
+};
+
+const ETIQUETA_TIPO_PAGO: Record<FilaPago["tipo_pago"], string> = {
+  obra_social: "Obra social",
+  paciente: "Paciente",
 };
 
 const MESES = [
@@ -67,7 +73,7 @@ export default async function CuentaCorrientePage({
 
   const { data: pagos } = await supabase
     .from("pagos")
-    .select("id, monto, mes, anio, estado, fecha_pago")
+    .select("id, monto, mes, anio, estado, fecha_pago, tipo_pago")
     .eq("residente_id", id)
     .order("anio", { ascending: false })
     .order("mes", { ascending: false })
@@ -115,13 +121,24 @@ export default async function CuentaCorrientePage({
           porcentajeRecargo={fichaAdministrativa?.porcentaje_recargo_mora ?? null}
         />
 
-        <NuevoPagoForm residenteId={id} sucursalId={residente.sucursal_id} />
+        <NuevoPagoForm
+          residenteId={id}
+          sucursalId={residente.sucursal_id}
+          montoObraSocialDefault={fichaAdministrativa?.monto_cobertura_obra_social ?? null}
+          montoPacienteDefault={
+            fichaAdministrativa?.cuota_mensual != null &&
+            fichaAdministrativa?.monto_cobertura_obra_social != null
+              ? fichaAdministrativa.cuota_mensual - fichaAdministrativa.monto_cobertura_obra_social
+              : null
+          }
+        />
 
         <div className="overflow-x-auto rounded-2xl border border-edge bg-card">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
               <tr>
                 <th className="px-4 py-3">Período</th>
+                <th className="px-4 py-3">Parte</th>
                 <th className="px-4 py-3">Monto</th>
                 <th className="px-4 py-3">Estado</th>
                 <th className="px-4 py-3">Fecha de pago</th>
@@ -138,6 +155,9 @@ export default async function CuentaCorrientePage({
                   <tr key={p.id} className="border-b border-edge last:border-0">
                     <td className="px-4 py-3 font-medium text-ink whitespace-nowrap">
                       {MESES[p.mes]} {p.anio}
+                    </td>
+                    <td className="px-4 py-3 text-ink-soft whitespace-nowrap">
+                      {ETIQUETA_TIPO_PAGO[p.tipo_pago]}
                     </td>
                     <td className="px-4 py-3 text-ink-soft">${p.monto.toLocaleString("es-AR")}</td>
                     <td className="px-4 py-3">
@@ -174,7 +194,7 @@ export default async function CuentaCorrientePage({
               })}
               {(pagos ?? []).length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-4 py-6 text-center text-ink-soft">
+                  <td colSpan={8} className="px-4 py-6 text-center text-ink-soft">
                     Todavía no hay pagos cargados.
                   </td>
                 </tr>

@@ -13,22 +13,40 @@ export async function crearPago(
 ): Promise<CrearPagoEstado> {
   const supabase = await createClient();
 
-  const monto = Number(formData.get("monto") ?? 0);
+  const montoObraSocial = Number(formData.get("monto_obra_social") ?? 0);
+  const montoPaciente = Number(formData.get("monto_paciente") ?? 0);
   const mes = Number(formData.get("mes") ?? 0);
   const anio = Number(formData.get("anio") ?? 0);
 
-  if (!monto || !mes || !anio) {
-    return { error: "Completá monto, mes y año." };
+  if ((!montoObraSocial && !montoPaciente) || !mes || !anio) {
+    return { error: "Completá al menos un monto, mes y año." };
   }
 
-  const { error } = await supabase.from("pagos").insert({
-    residente_id: residenteId,
-    sucursal_id: sucursalId,
-    monto,
-    mes,
-    anio,
-    estado: "pendiente",
-  });
+  const filas = [];
+  if (montoObraSocial > 0) {
+    filas.push({
+      residente_id: residenteId,
+      sucursal_id: sucursalId,
+      monto: montoObraSocial,
+      mes,
+      anio,
+      estado: "pendiente" as const,
+      tipo_pago: "obra_social" as const,
+    });
+  }
+  if (montoPaciente > 0) {
+    filas.push({
+      residente_id: residenteId,
+      sucursal_id: sucursalId,
+      monto: montoPaciente,
+      mes,
+      anio,
+      estado: "pendiente" as const,
+      tipo_pago: "paciente" as const,
+    });
+  }
+
+  const { error } = await supabase.from("pagos").insert(filas);
 
   if (error) {
     return { error: error.message };
