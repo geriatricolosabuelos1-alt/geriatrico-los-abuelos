@@ -107,6 +107,8 @@ export interface Empleado {
   activo: boolean;
 }
 
+export type TipoGasto = "fijo" | "variable";
+
 export interface Gasto {
   id: string;
   sucursal_id: string;
@@ -115,6 +117,16 @@ export interface Gasto {
   mes: number;
   anio: number;
   descripcion: string | null;
+  tipo: TipoGasto;
+  fecha: string;
+  gasto_fijo_id: string | null;
+}
+
+export interface GastoFijoCatalogo {
+  id: string;
+  nombre: string;
+  monto_estimado: number | null;
+  activo: boolean;
 }
 
 export type CategoriaInsumo = "general" | "carnes" | "verduras";

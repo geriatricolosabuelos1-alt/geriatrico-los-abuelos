@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { cerrarSesion } from "@/app/actions";
 import type { Perfil, RolUsuario, Sucursal } from "@/lib/types";
 
-type Seccion = "residentes" | "cuotas" | "inventario" | "rendiciones";
+type Seccion = "residentes" | "cuotas" | "inventario" | "rendiciones" | "gastos";
 
 type Props = {
   perfil: Perfil;
@@ -25,6 +25,7 @@ const ROLES_RESIDENTES: RolUsuario[] = [
 ];
 const ROLES_CUOTAS: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_RENDICIONES: RolUsuario[] = ["admin", "administrativo"];
+const ROLES_GASTOS: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_INVENTARIO: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_EMPLEADOS: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_DASHBOARD: RolUsuario[] = ["admin", "administrativo"];
@@ -211,6 +212,17 @@ export async function Sidebar({ perfil, activo }: Props) {
                 activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
                 activo.seccion === "rendiciones"
+              }
+            />
+          )}
+          {ROLES_GASTOS.includes(perfil.rol) && areaActual === "administrativa" && (
+            <SubTab
+              href={`/sucursales/${s.id}/gastos`}
+              label="Gastos"
+              activo={
+                activo?.tipo === "sucursal" &&
+                activo.sucursalId === s.id &&
+                activo.seccion === "gastos"
               }
             />
           )}
