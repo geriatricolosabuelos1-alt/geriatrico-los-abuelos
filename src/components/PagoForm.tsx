@@ -35,10 +35,24 @@ export function PagoForm({ sucursalId, residentes }: Props) {
 
       <div className="sm:col-span-2">
         <label className={ETIQUETA}>Residente</label>
-        <select name="residente_id" required className={CAMPO}>
-          <option value="">Seleccionar...</option>
+        <select
+          name="residente_id"
+          required
+          className={CAMPO}
+          style={{ colorScheme: "dark", fontSize: "0.875rem" }}
+        >
+          <option
+            value=""
+            style={{ backgroundColor: "#0b0a14", color: "#eceafc", fontSize: "0.875rem" }}
+          >
+            Seleccionar...
+          </option>
           {residentes.map((r) => (
-            <option key={r.id} value={r.id}>
+            <option
+              key={r.id}
+              value={r.id}
+              style={{ backgroundColor: "#0b0a14", color: "#eceafc", fontSize: "0.875rem" }}
+            >
               {r.apellido}, {r.nombre}
             </option>
           ))}
