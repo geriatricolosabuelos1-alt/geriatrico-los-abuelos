@@ -40,14 +40,12 @@ export async function registrarMovimiento(
   return { error: null };
 }
 
-export async function actualizarUnidadInsumo(
-  insumoId: string,
-  formData: FormData,
-): Promise<void> {
+export async function actualizarUnidadInsumo(formData: FormData): Promise<void> {
   const supabase = await createClient();
 
+  const insumoId = String(formData.get("insumo_id") ?? "");
   const unidad = String(formData.get("unidad") ?? "").trim();
-  if (!unidad) return;
+  if (!insumoId || !unidad) return;
 
   await supabase.from("insumos").update({ unidad }).eq("id", insumoId);
 

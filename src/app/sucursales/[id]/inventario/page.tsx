@@ -133,9 +133,10 @@ export default async function InventarioSucursalPage({
                           <td className="px-4 py-3 text-ink-soft">
                             {esAdmin ? (
                               <form
-                                action={actualizarUnidadInsumo.bind(null, i.id)}
+                                action={actualizarUnidadInsumo}
                                 className="flex items-center gap-1.5"
                               >
+                                <input type="hidden" name="insumo_id" value={i.id} />
                                 <input
                                   type="text"
                                   name="unidad"
