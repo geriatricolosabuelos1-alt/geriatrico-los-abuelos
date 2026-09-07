@@ -22,6 +22,7 @@ type Props = {
   sucursalId: string;
   residentes: FilaResidente[];
   puedeBorrar: boolean;
+  esAdministrativo: boolean;
 };
 
 type Columna = "nombre" | "ingreso" | "egreso";
@@ -56,7 +57,12 @@ function EncabezadoOrdenable({
   );
 }
 
-export function ResidentesTable({ sucursalId, residentes, puedeBorrar }: Props) {
+export function ResidentesTable({
+  sucursalId,
+  residentes,
+  puedeBorrar,
+  esAdministrativo,
+}: Props) {
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState<"todos" | "activo" | "inactivo">("todos");
   const [orden, setOrden] = useState<{ columna: Columna; direccion: Direccion }>({
@@ -149,7 +155,7 @@ export function ResidentesTable({ sucursalId, residentes, puedeBorrar }: Props) 
                 ordenActual={orden}
                 onOrdenar={manejarOrdenar}
               />
-              <th className="px-4 py-3">Obra social</th>
+              {esAdministrativo && <th className="px-4 py-3">Obra social</th>}
               <th className="px-4 py-3">Contacto de emergencia</th>
               <th className="px-4 py-3">Estado</th>
               <th className="px-4 py-3"></th>
@@ -160,7 +166,11 @@ export function ResidentesTable({ sucursalId, residentes, puedeBorrar }: Props) 
                 <tr key={r.id} className="border-b border-edge last:border-0">
                   <td className="px-4 py-3 align-middle font-medium whitespace-nowrap">
                     <Link
-                      href={`/residentes/${r.id}/legajo`}
+                      href={
+                        esAdministrativo
+                          ? `/residentes/${r.id}/legajo`
+                          : `/residentes/${r.id}/evolucion`
+                      }
                       className="flex items-center gap-3 text-ink underline decoration-transparent underline-offset-2 hover:decoration-brass"
                     >
                       <span className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full border border-edge bg-panel-deep">
@@ -186,9 +196,11 @@ export function ResidentesTable({ sucursalId, residentes, puedeBorrar }: Props) 
                   <td className="px-4 py-3 align-middle text-ink-soft whitespace-nowrap">
                     {formatearFecha(r.fecha_egreso)}
                   </td>
-                  <td className="px-4 py-3 align-middle text-ink-soft">
-                    {r.ficha_administrativa?.obra_social ?? "—"}
-                  </td>
+                  {esAdministrativo && (
+                    <td className="px-4 py-3 align-middle text-ink-soft">
+                      {r.ficha_administrativa?.obra_social ?? "—"}
+                    </td>
+                  )}
                   <td className="px-4 py-3 align-middle text-ink-soft whitespace-nowrap">
                     {r.contacto_familiar || r.telefono_familiar ? (
                       <>
@@ -232,7 +244,10 @@ export function ResidentesTable({ sucursalId, residentes, puedeBorrar }: Props) 
             ))}
             {filtrados.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-ink-soft">
+                <td
+                  colSpan={esAdministrativo ? 7 : 6}
+                  className="px-4 py-6 text-center text-ink-soft"
+                >
                   Ningún residente coincide con el filtro.
                 </td>
               </tr>

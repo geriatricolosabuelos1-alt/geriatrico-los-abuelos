@@ -25,7 +25,7 @@ const ROLES_RESIDENTES: RolUsuario[] = [
 ];
 const ROLES_CUOTAS: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_RENDICIONES: RolUsuario[] = ["admin", "administrativo"];
-const ROLES_INVENTARIO: RolUsuario[] = ["admin", "administrativo", "enfermero", "cuidador"];
+const ROLES_INVENTARIO: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_EMPLEADOS: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_DASHBOARD: RolUsuario[] = ["admin", "administrativo"];
 

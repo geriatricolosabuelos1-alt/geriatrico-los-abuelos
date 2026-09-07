@@ -90,6 +90,7 @@ export default async function ResidentesSucursalPage({
           sucursalId={id}
           residentes={residentes ?? []}
           puedeBorrar={perfil.rol === "admin"}
+          esAdministrativo={["admin", "administrativo"].includes(perfil.rol)}
         />
       </main>
     </div>
