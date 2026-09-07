@@ -3,32 +3,30 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
-export type CrearPagoEstado = { error: string | null };
+export type ActualizarArancelEstado = { error: string | null };
 
-export async function crearPago(
+export async function actualizarArancel(
+  residenteId: string,
   sucursalId: string,
-  _estado: CrearPagoEstado,
+  _estado: ActualizarArancelEstado,
   formData: FormData,
-): Promise<CrearPagoEstado> {
+): Promise<ActualizarArancelEstado> {
   const supabase = await createClient();
 
-  const residente_id = String(formData.get("residente_id") ?? "");
-  const monto = Number(formData.get("monto") ?? 0);
-  const mes = Number(formData.get("mes") ?? 0);
-  const anio = Number(formData.get("anio") ?? 0);
+  const cuotaRaw = String(formData.get("cuota_mensual") ?? "");
+  const coberturaRaw = String(formData.get("monto_cobertura_obra_social") ?? "");
+  const recargoRaw = String(formData.get("porcentaje_recargo_mora") ?? "");
 
-  if (!residente_id || !monto || !mes || !anio) {
-    return { error: "Completá residente, monto, mes y año." };
-  }
+  const cuota_mensual = cuotaRaw ? Number(cuotaRaw) : null;
+  const monto_cobertura_obra_social = coberturaRaw ? Number(coberturaRaw) : null;
+  const porcentaje_recargo_mora = recargoRaw ? Number(recargoRaw) : null;
 
-  const { error } = await supabase.from("pagos").insert({
-    residente_id,
-    sucursal_id: sucursalId,
-    monto,
-    mes,
-    anio,
-    estado: "pendiente",
-  });
+  const { error } = await supabase
+    .from("ficha_administrativa")
+    .upsert(
+      { residente_id: residenteId, cuota_mensual, monto_cobertura_obra_social, porcentaje_recargo_mora },
+      { onConflict: "residente_id" },
+    );
 
   if (error) {
     return { error: error.message };
@@ -36,15 +34,4 @@ export async function crearPago(
 
   revalidatePath(`/sucursales/${sucursalId}/cuotas`);
   return { error: null };
-}
-
-export async function marcarPagado(sucursalId: string, pagoId: string): Promise<void> {
-  const supabase = await createClient();
-
-  await supabase
-    .from("pagos")
-    .update({ estado: "pagado", fecha_pago: new Date().toISOString().slice(0, 10) })
-    .eq("id", pagoId);
-
-  revalidatePath(`/sucursales/${sucursalId}/cuotas`);
 }

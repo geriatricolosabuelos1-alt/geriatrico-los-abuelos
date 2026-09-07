@@ -49,6 +49,8 @@ export interface FichaAdministrativa {
   fecha_vencimiento_cuota: string | null;
   mecanismo_actualizacion: string | null;
   cud_vencimiento: string | null;
+  monto_cobertura_obra_social: number | null;
+  porcentaje_recargo_mora: number | null;
 }
 
 export type TipoDocumentoResidente =
