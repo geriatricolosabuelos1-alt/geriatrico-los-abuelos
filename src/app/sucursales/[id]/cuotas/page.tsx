@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
-import { TarjetaArancel } from "@/components/TarjetaArancel";
+import { ListaAranceles } from "@/components/ListaAranceles";
 import { calcularResumenCuenta, type PagoResumen } from "@/lib/aranceles";
 import type { Perfil } from "@/lib/types";
 
@@ -78,38 +78,36 @@ export default async function CuotasSucursalPage({
           <h1 className="font-display text-2xl font-bold text-ink">Aranceles</h1>
         </div>
 
-        <div className="space-y-3">
-          {(residentes ?? []).map((r) => {
-            const pagosDelResidente = (pagos ?? []).filter((p) => p.residente_id === r.id);
-            const diaVencimiento = r.ficha_administrativa?.fecha_vencimiento_cuota
-              ? new Date(r.ficha_administrativa.fecha_vencimiento_cuota + "T00:00:00").getDate()
-              : 10;
-            const resumen = calcularResumenCuenta(
-              pagosDelResidente,
-              diaVencimiento,
-              r.ficha_administrativa?.porcentaje_recargo_mora ?? 0,
-            );
+        {(residentes ?? []).length === 0 ? (
+          <p className="rounded-2xl border border-edge bg-card p-6 text-center text-ink-soft">
+            No hay residentes activos en esta sucursal.
+          </p>
+        ) : (
+          <ListaAranceles
+            items={(residentes ?? []).map((r) => {
+              const pagosDelResidente = (pagos ?? []).filter((p) => p.residente_id === r.id);
+              const diaVencimiento = r.ficha_administrativa?.fecha_vencimiento_cuota
+                ? new Date(r.ficha_administrativa.fecha_vencimiento_cuota + "T00:00:00").getDate()
+                : 10;
+              const resumen = calcularResumenCuenta(
+                pagosDelResidente,
+                diaVencimiento,
+                r.ficha_administrativa?.porcentaje_recargo_mora ?? 0,
+              );
 
-            return (
-              <TarjetaArancel
-                key={r.id}
-                residente={{
+              return {
+                residente: {
                   id: r.id,
                   nombre: r.nombre,
                   apellido: r.apellido,
                   fecha_ingreso: r.fecha_ingreso,
-                }}
-                obraSocial={r.ficha_administrativa?.obra_social ?? null}
-                resumen={resumen}
-              />
-            );
-          })}
-          {(residentes ?? []).length === 0 && (
-            <p className="rounded-2xl border border-edge bg-card p-6 text-center text-ink-soft">
-              No hay residentes activos en esta sucursal.
-            </p>
-          )}
-        </div>
+                },
+                obraSocial: r.ficha_administrativa?.obra_social ?? null,
+                resumen,
+              };
+            })}
+          />
+        )}
       </main>
     </div>
   );
