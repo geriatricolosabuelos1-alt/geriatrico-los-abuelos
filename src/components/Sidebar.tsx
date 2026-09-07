@@ -29,6 +29,16 @@ const ROLES_INVENTARIO: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_EMPLEADOS: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_DASHBOARD: RolUsuario[] = ["admin", "administrativo"];
 
+const ROLES_ADMINISTRATIVA: RolUsuario[] = ["admin", "administrativo"];
+const ROLES_MEDICINA: RolUsuario[] = [
+  "admin",
+  "medico",
+  "nutricionista",
+  "kinesiologo",
+  "enfermero",
+  "cuidador",
+];
+
 const ETIQUETA_ROL: Record<string, string> = {
   admin: "Administradora",
   administrativo: "Administrativo",
@@ -99,6 +109,16 @@ export async function Sidebar({ perfil, activo }: Props) {
     ? (todasSucursales ?? [])
     : (todasSucursales ?? []).filter((s) => s.id === perfil.sucursal_id);
 
+  const puedeAdministrativa = ROLES_ADMINISTRATIVA.includes(perfil.rol);
+  const puedeMedicina = ROLES_MEDICINA.includes(perfil.rol);
+  const sucursalMedicina = perfil.sucursal_id ?? todasSucursales?.[0]?.id ?? null;
+  const areaActual: "administrativa" | "medicina" =
+    activo?.tipo === "dashboard" ||
+    activo?.tipo === "empleados" ||
+    (activo?.tipo === "sucursal" && activo.seccion !== "residentes")
+      ? "administrativa"
+      : "medicina";
+
   return (
     <aside className="flex w-56 flex-shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-edge bg-panel-deep p-4">
       <div className="mb-6 px-1">
@@ -111,6 +131,31 @@ export async function Sidebar({ perfil, activo }: Props) {
           </p>
         </Link>
       </div>
+
+      {puedeAdministrativa && puedeMedicina && (
+        <div className="mb-4 flex rounded-lg border border-edge bg-panel-deep p-1 text-xs font-medium">
+          <Link
+            href="/administrativa"
+            className={`flex-1 rounded-md py-1.5 text-center ${
+              areaActual === "administrativa"
+                ? "bg-tab text-ink"
+                : "text-ink-soft hover:text-ink"
+            }`}
+          >
+            Administrativa
+          </Link>
+          <Link
+            href={sucursalMedicina ? `/sucursales/${sucursalMedicina}/residentes` : "#"}
+            className={`flex-1 rounded-md py-1.5 text-center ${
+              areaActual === "medicina"
+                ? "bg-tab text-ink"
+                : "text-ink-soft hover:text-ink"
+            }`}
+          >
+            Medicina
+          </Link>
+        </div>
+      )}
 
       {ROLES_DASHBOARD.includes(perfil.rol) && (
         <TabPrincipal
