@@ -28,3 +28,12 @@
 .bg-panel-deep {
   backdrop-filter: blur(16px);
 }
+
+select {
+  color-scheme: dark;
+}
+
+select option {
+  background-color: var(--color-panel);
+  color: var(--color-ink);
+}
