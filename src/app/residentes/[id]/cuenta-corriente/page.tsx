@@ -107,7 +107,7 @@ export default async function CuentaCorrientePage({
         }}
       />
 
-      <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 px-9 py-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-9 py-8">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft">
@@ -137,14 +137,14 @@ export default async function CuentaCorrientePage({
           <table className="w-full text-left text-sm">
             <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
               <tr>
-                <th className="px-4 py-3">Período</th>
-                <th className="px-4 py-3">Parte</th>
-                <th className="px-4 py-3">Monto</th>
-                <th className="px-4 py-3">Estado</th>
-                <th className="px-4 py-3">Fecha de pago</th>
-                <th className="px-4 py-3">Días de atraso</th>
-                <th className="px-4 py-3">Recargo por mora</th>
-                <th className="px-4 py-3"></th>
+                <th className="px-3 py-2.5">Período</th>
+                <th className="px-3 py-2.5">Parte</th>
+                <th className="px-3 py-2.5">Monto</th>
+                <th className="px-3 py-2.5">Estado</th>
+                <th className="px-3 py-2.5">Fecha de pago</th>
+                <th className="px-3 py-2.5">Días de atraso</th>
+                <th className="px-3 py-2.5">Recargo por mora</th>
+                <th className="px-3 py-2.5"></th>
               </tr>
             </thead>
             <tbody>
@@ -154,13 +154,13 @@ export default async function CuentaCorrientePage({
                 const recargo = atraso > 0 ? (restante * porcentajeRecargo) / 100 : 0;
                 return (
                   <tr key={p.id} className="border-b border-edge last:border-0">
-                    <td className="px-4 py-3 font-medium text-ink whitespace-nowrap">
+                    <td className="px-3 py-2.5 font-medium text-ink whitespace-nowrap">
                       {MESES[p.mes]} {p.anio}
                     </td>
-                    <td className="px-4 py-3 text-ink-soft whitespace-nowrap">
+                    <td className="px-3 py-2.5 text-ink-soft whitespace-nowrap">
                       {ETIQUETA_TIPO_PAGO[p.tipo_pago]}
                     </td>
-                    <td className="px-4 py-3 text-ink-soft">
+                    <td className="px-3 py-2.5 text-ink-soft">
                       ${p.monto.toLocaleString("es-AR")}
                       {p.estado === "parcial" && (
                         <span className="block text-xs text-amber-400">
@@ -169,29 +169,29 @@ export default async function CuentaCorrientePage({
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2.5">
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${CLASE_ESTADO[p.estado]}`}
                       >
                         {ETIQUETA_ESTADO[p.estado]}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-ink-soft whitespace-nowrap">
+                    <td className="px-3 py-2.5 text-ink-soft whitespace-nowrap">
                       {p.fecha_pago
                         ? new Date(p.fecha_pago + "T00:00:00").toLocaleDateString("es-AR")
                         : "—"}
                     </td>
-                    <td className="px-4 py-3 text-ink-soft">
+                    <td className="px-3 py-2.5 text-ink-soft">
                       {atraso > 0 ? (
                         <span className="text-red-400">{atraso} días</span>
                       ) : (
                         "—"
                       )}
                     </td>
-                    <td className="px-4 py-3 text-ink-soft">
+                    <td className="px-3 py-2.5 text-ink-soft">
                       {recargo > 0 ? `$${recargo.toLocaleString("es-AR")}` : "—"}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-3 py-2.5 text-right">
                       <AccionesPago
                         residenteId={id}
                         pagoId={p.id}
