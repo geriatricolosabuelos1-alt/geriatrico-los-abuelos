@@ -33,5 +33,6 @@ export async function actualizarArancel(
   }
 
   revalidatePath(`/sucursales/${sucursalId}/cuotas`);
+  revalidatePath(`/residentes/${residenteId}/cuenta-corriente`);
   return { error: null };
 }

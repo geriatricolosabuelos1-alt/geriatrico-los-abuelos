@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { NuevoPagoForm } from "@/components/NuevoPagoForm";
 import { AccionesPago } from "@/components/AccionesPago";
+import { EditorArancel } from "@/components/EditorArancel";
+import { diasDeAtraso } from "@/lib/aranceles";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
@@ -21,13 +23,6 @@ const MESES = [
   "", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
   "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
 ];
-
-function diasDeAtraso(pago: FilaPago, diaVencimiento: number): number {
-  const fechaVencimiento = new Date(pago.anio, pago.mes - 1, diaVencimiento);
-  const fechaComparar = pago.fecha_pago ? new Date(pago.fecha_pago + "T00:00:00") : new Date();
-  const diffMs = fechaComparar.getTime() - fechaVencimiento.getTime();
-  return Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)));
-}
 
 export default async function CuentaCorrientePage({
   params,
@@ -59,9 +54,16 @@ export default async function CuentaCorrientePage({
 
   const { data: fichaAdministrativa } = await supabase
     .from("ficha_administrativa")
-    .select("porcentaje_recargo_mora, fecha_vencimiento_cuota")
+    .select(
+      "cuota_mensual, monto_cobertura_obra_social, porcentaje_recargo_mora, fecha_vencimiento_cuota",
+    )
     .eq("residente_id", id)
-    .maybeSingle<{ porcentaje_recargo_mora: number | null; fecha_vencimiento_cuota: string | null }>();
+    .maybeSingle<{
+      cuota_mensual: number | null;
+      monto_cobertura_obra_social: number | null;
+      porcentaje_recargo_mora: number | null;
+      fecha_vencimiento_cuota: string | null;
+    }>();
 
   const { data: pagos } = await supabase
     .from("pagos")
@@ -104,6 +106,14 @@ export default async function CuentaCorrientePage({
             Volver a Aranceles
           </Link>
         </div>
+
+        <EditorArancel
+          residenteId={id}
+          sucursalId={residente.sucursal_id}
+          cuotaMensual={fichaAdministrativa?.cuota_mensual ?? null}
+          montoCobertura={fichaAdministrativa?.monto_cobertura_obra_social ?? null}
+          porcentajeRecargo={fichaAdministrativa?.porcentaje_recargo_mora ?? null}
+        />
 
         <NuevoPagoForm residenteId={id} sucursalId={residente.sucursal_id} />
 

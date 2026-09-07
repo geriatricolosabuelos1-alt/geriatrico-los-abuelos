@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { TarjetaArancel } from "@/components/TarjetaArancel";
+import { calcularResumenCuenta, type PagoResumen } from "@/lib/aranceles";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
@@ -13,9 +14,8 @@ type FilaResidenteArancel = {
   fecha_ingreso: string | null;
   ficha_administrativa: {
     obra_social: string | null;
-    cuota_mensual: number | null;
-    monto_cobertura_obra_social: number | null;
     porcentaje_recargo_mora: number | null;
+    fecha_vencimiento_cuota: string | null;
   } | null;
 };
 
@@ -50,12 +50,18 @@ export default async function CuotasSucursalPage({
   const { data: residentes } = await supabase
     .from("residentes")
     .select(
-      "id, nombre, apellido, fecha_ingreso, ficha_administrativa(obra_social, cuota_mensual, monto_cobertura_obra_social, porcentaje_recargo_mora)",
+      "id, nombre, apellido, fecha_ingreso, ficha_administrativa(obra_social, porcentaje_recargo_mora, fecha_vencimiento_cuota)",
     )
     .eq("sucursal_id", id)
     .eq("activo", true)
     .order("apellido")
     .returns<FilaResidenteArancel[]>();
+
+  const { data: pagos } = await supabase
+    .from("pagos")
+    .select("residente_id, monto, mes, anio, estado, fecha_pago")
+    .eq("sucursal_id", id)
+    .returns<(PagoResumen & { residente_id: string })[]>();
 
   return (
     <div className="flex min-h-screen w-full">
@@ -73,22 +79,31 @@ export default async function CuotasSucursalPage({
         </div>
 
         <div className="space-y-3">
-          {(residentes ?? []).map((r) => (
-            <TarjetaArancel
-              key={r.id}
-              residente={{
-                id: r.id,
-                nombre: r.nombre,
-                apellido: r.apellido,
-                fecha_ingreso: r.fecha_ingreso,
-              }}
-              sucursalId={id}
-              obraSocial={r.ficha_administrativa?.obra_social ?? null}
-              cuotaMensual={r.ficha_administrativa?.cuota_mensual ?? null}
-              montoCobertura={r.ficha_administrativa?.monto_cobertura_obra_social ?? null}
-              porcentajeRecargo={r.ficha_administrativa?.porcentaje_recargo_mora ?? null}
-            />
-          ))}
+          {(residentes ?? []).map((r) => {
+            const pagosDelResidente = (pagos ?? []).filter((p) => p.residente_id === r.id);
+            const diaVencimiento = r.ficha_administrativa?.fecha_vencimiento_cuota
+              ? new Date(r.ficha_administrativa.fecha_vencimiento_cuota + "T00:00:00").getDate()
+              : 10;
+            const resumen = calcularResumenCuenta(
+              pagosDelResidente,
+              diaVencimiento,
+              r.ficha_administrativa?.porcentaje_recargo_mora ?? 0,
+            );
+
+            return (
+              <TarjetaArancel
+                key={r.id}
+                residente={{
+                  id: r.id,
+                  nombre: r.nombre,
+                  apellido: r.apellido,
+                  fecha_ingreso: r.fecha_ingreso,
+                }}
+                obraSocial={r.ficha_administrativa?.obra_social ?? null}
+                resumen={resumen}
+              />
+            );
+          })}
           {(residentes ?? []).length === 0 && (
             <p className="rounded-2xl border border-edge bg-card p-6 text-center text-ink-soft">
               No hay residentes activos en esta sucursal.
