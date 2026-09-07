@@ -150,6 +150,7 @@ export function ResidentesTable({ sucursalId, residentes, puedeBorrar }: Props) 
                 onOrdenar={manejarOrdenar}
               />
               <th className="px-4 py-3">Obra social</th>
+              <th className="px-4 py-3">Contacto de emergencia</th>
               <th className="px-4 py-3">Estado</th>
               <th className="px-4 py-3"></th>
             </tr>
@@ -188,6 +189,18 @@ export function ResidentesTable({ sucursalId, residentes, puedeBorrar }: Props) 
                   <td className="px-4 py-3 align-middle text-ink-soft">
                     {r.ficha_administrativa?.obra_social ?? "—"}
                   </td>
+                  <td className="px-4 py-3 align-middle text-ink-soft whitespace-nowrap">
+                    {r.contacto_familiar || r.telefono_familiar ? (
+                      <>
+                        {r.contacto_familiar ?? "—"}
+                        {r.telefono_familiar && (
+                          <span className="text-ink-soft/70"> · {r.telefono_familiar}</span>
+                        )}
+                      </>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
                   <td className="px-4 py-3 align-middle">
                     <span
                       className={
@@ -219,7 +232,7 @@ export function ResidentesTable({ sucursalId, residentes, puedeBorrar }: Props) 
             ))}
             {filtrados.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-6 text-center text-ink-soft">
+                <td colSpan={7} className="px-4 py-6 text-center text-ink-soft">
                   Ningún residente coincide con el filtro.
                 </td>
               </tr>
