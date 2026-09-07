@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { AccionesPago } from "@/components/AccionesPago";
 import { EditorArancel } from "@/components/EditorArancel";
+import { HistorialPagos } from "@/components/HistorialPagos";
 import { diasDeAtraso } from "@/lib/aranceles";
 import type { Perfil } from "@/lib/types";
 
@@ -18,6 +19,7 @@ type FilaPago = {
   estado: "pendiente" | "parcial" | "pagado";
   fecha_pago: string | null;
   tipo_pago: "obra_social" | "paciente";
+  pagos_historial: { monto: number; fecha: string }[];
 };
 
 const ETIQUETA_ESTADO: Record<FilaPago["estado"], string> = {
@@ -85,7 +87,7 @@ export default async function CuentaCorrientePage({
 
   const { data: pagos } = await supabase
     .from("pagos")
-    .select("id, monto, monto_pagado, mes, anio, estado, fecha_pago, tipo_pago")
+    .select("id, monto, monto_pagado, mes, anio, estado, fecha_pago, tipo_pago, pagos_historial(monto, fecha)")
     .eq("residente_id", id)
     .order("anio", { ascending: false })
     .order("mes", { ascending: false })
@@ -162,12 +164,7 @@ export default async function CuentaCorrientePage({
                     </td>
                     <td className="px-3 py-2.5 text-ink-soft">
                       ${p.monto.toLocaleString("es-AR")}
-                      {p.estado === "parcial" && (
-                        <span className="block text-xs text-amber-400">
-                          Pagado ${p.monto_pagado.toLocaleString("es-AR")} · restan $
-                          {restante.toLocaleString("es-AR")}
-                        </span>
-                      )}
+                      <HistorialPagos montoTotal={p.monto} historial={p.pagos_historial} />
                     </td>
                     <td className="px-3 py-2.5">
                       <span

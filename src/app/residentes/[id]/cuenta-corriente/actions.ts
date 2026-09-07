@@ -32,6 +32,7 @@ export async function registrarPago(
 
   const nuevoMontoPagado = Math.min(pago.monto_pagado + monto, pago.monto);
   const nuevoEstado = nuevoMontoPagado >= pago.monto ? "pagado" : "parcial";
+  const montoRegistrado = nuevoMontoPagado - pago.monto_pagado;
 
   const { error } = await supabase
     .from("pagos")
@@ -41,6 +42,10 @@ export async function registrarPago(
   if (error) {
     return { error: error.message };
   }
+
+  await supabase
+    .from("pagos_historial")
+    .insert({ pago_id: pagoId, monto: montoRegistrado, fecha });
 
   revalidatePath(`/residentes/${residenteId}/cuenta-corriente`);
   return { error: null };
