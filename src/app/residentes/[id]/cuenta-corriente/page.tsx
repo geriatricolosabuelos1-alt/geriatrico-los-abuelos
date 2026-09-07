@@ -164,7 +164,11 @@ export default async function CuentaCorrientePage({
                     </td>
                     <td className="px-3 py-2.5 text-ink-soft">
                       ${p.monto.toLocaleString("es-AR")}
-                      <HistorialPagos montoTotal={p.monto} historial={p.pagos_historial} />
+                      <HistorialPagos
+                        montoTotal={p.monto}
+                        montoPagado={p.monto_pagado}
+                        historial={p.pagos_historial}
+                      />
                     </td>
                     <td className="px-3 py-2.5">
                       <span

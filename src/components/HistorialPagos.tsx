@@ -9,10 +9,11 @@ type PagoHistorial = {
 
 type Props = {
   montoTotal: number;
+  montoPagado: number;
   historial: PagoHistorial[];
 };
 
-export function HistorialPagos({ montoTotal, historial }: Props) {
+export function HistorialPagos({ montoTotal, montoPagado, historial }: Props) {
   const [abierto, setAbierto] = useState(false);
 
   if (historial.length === 0) return null;
@@ -21,7 +22,10 @@ export function HistorialPagos({ montoTotal, historial }: Props) {
     (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime(),
   );
 
-  let acumulado = 0;
+  // Puede haber pagos previos a que existiera este historial: el punto de
+  // partida es lo ya pagado menos lo que sí quedó registrado acá.
+  const registrado = historial.reduce((acc, h) => acc + h.monto, 0);
+  let acumulado = montoPagado - registrado;
   const filas = ordenado.map((h) => {
     acumulado += h.monto;
     return { ...h, restante: montoTotal - acumulado };
