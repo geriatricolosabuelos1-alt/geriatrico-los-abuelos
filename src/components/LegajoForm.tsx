@@ -65,7 +65,7 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <section className="rounded-2xl border border-edge bg-card p-5">
           <h2 className={SECCION}>Datos personales</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3">
             <Campo label="Nombre" name="nombre" defaultValue={residente.nombre} />
             <Campo label="Apellido" name="apellido" defaultValue={residente.apellido} />
             <Campo
@@ -85,7 +85,7 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
 
         <section className="rounded-2xl border border-edge bg-card p-5">
           <h2 className={SECCION}>Cobertura</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3">
             <Campo
               label="Obra social / prepaga"
               name="obra_social"
@@ -121,7 +121,7 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
 
         <section className="rounded-2xl border border-edge bg-card p-5">
           <h2 className={SECCION}>Estadía</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3">
             <Campo
               label="Fecha de ingreso"
               name="fecha_ingreso"
@@ -135,7 +135,7 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
               defaultValue={residente.fecha_egreso}
             />
             <Campo label="Habitación" name="habitacion" defaultValue={residente.habitacion} />
-            <label className="flex items-center gap-2 self-end pb-2.5 text-sm text-ink-soft">
+            <label className="flex items-center gap-2 text-sm text-ink-soft">
               <input
                 type="checkbox"
                 name="activo"
@@ -149,7 +149,7 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
 
         <section className="rounded-2xl border border-edge bg-card p-5">
           <h2 className={SECCION}>Contacto de emergencia</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3">
             <Campo
               label="Familiar o referente afectivo"
               name="contacto_familiar"
@@ -166,7 +166,7 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
 
         <section className="rounded-2xl border border-edge bg-card p-5 lg:col-span-2 xl:col-span-2">
           <h2 className={SECCION}>Ficha médica</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
             <Campo
               label="Médico de cabecera"
               name="medico_cabecera"
