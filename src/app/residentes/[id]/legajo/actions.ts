@@ -27,6 +27,10 @@ export async function actualizarLegajo(
 
   const obra_social = String(formData.get("obra_social") ?? "").trim() || null;
   const tipo_cobertura = String(formData.get("tipo_cobertura") ?? "").trim() || null;
+  const fecha_vencimiento_cuota = String(formData.get("fecha_vencimiento_cuota") ?? "") || null;
+  const mecanismo_actualizacion =
+    String(formData.get("mecanismo_actualizacion") ?? "").trim() || null;
+  const cud_vencimiento = String(formData.get("cud_vencimiento") ?? "") || null;
 
   const medico_cabecera = String(formData.get("medico_cabecera") ?? "").trim() || null;
   const grupo_sanguineo = String(formData.get("grupo_sanguineo") ?? "").trim() || null;
@@ -61,7 +65,14 @@ export async function actualizarLegajo(
   const { error: errorFichaAdmin } = await supabase
     .from("ficha_administrativa")
     .upsert(
-      { residente_id: residenteId, obra_social, tipo_cobertura },
+      {
+        residente_id: residenteId,
+        obra_social,
+        tipo_cobertura,
+        fecha_vencimiento_cuota,
+        mecanismo_actualizacion,
+        cud_vencimiento,
+      },
       { onConflict: "residente_id" },
     );
 

@@ -6,6 +6,7 @@ import {
   type ActualizarLegajoEstado,
 } from "@/app/residentes/[id]/legajo/actions";
 import { FotoPicker } from "@/components/FotoPicker";
+import { DocumentosResidente } from "@/components/DocumentosResidente";
 import type { FichaAdministrativa, FichaMedica, Residente } from "@/lib/types";
 
 type Props = {
@@ -96,6 +97,24 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
               defaultValue={fichaAdministrativa?.tipo_cobertura}
               placeholder="Subsidio, particular..."
             />
+            <Campo
+              label="Vencimiento de cuota"
+              name="fecha_vencimiento_cuota"
+              type="date"
+              defaultValue={fichaAdministrativa?.fecha_vencimiento_cuota}
+            />
+            <Campo
+              label="Mecanismo de actualización"
+              name="mecanismo_actualizacion"
+              defaultValue={fichaAdministrativa?.mecanismo_actualizacion}
+              placeholder="IPC, bimestral, etc."
+            />
+            <Campo
+              label="Vencimiento del CUD"
+              name="cud_vencimiento"
+              type="date"
+              defaultValue={fichaAdministrativa?.cud_vencimiento}
+            />
           </div>
         </section>
 
@@ -178,6 +197,8 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
             </div>
           </div>
         </section>
+
+        <DocumentosResidente residenteId={residente.id} />
       </div>
 
       {estado.error && <p className="text-base text-red-400">{estado.error}</p>}

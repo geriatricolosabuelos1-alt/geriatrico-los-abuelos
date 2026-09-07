@@ -46,6 +46,24 @@ export interface FichaAdministrativa {
   tipo_cobertura: string | null;
   cuota_mensual: number | null;
   notas_contrato: string | null;
+  fecha_vencimiento_cuota: string | null;
+  mecanismo_actualizacion: string | null;
+  cud_vencimiento: string | null;
+}
+
+export type TipoDocumentoResidente =
+  | "orden_internacion"
+  | "cud"
+  | "nota_derivacion"
+  | "contrato";
+
+export interface DocumentoResidente {
+  id: string;
+  residente_id: string;
+  tipo: TipoDocumentoResidente;
+  nombre_archivo: string;
+  url: string;
+  created_at: string;
 }
 
 export interface FichaMedica {
