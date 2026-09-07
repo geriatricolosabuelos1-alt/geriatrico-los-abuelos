@@ -12,6 +12,8 @@ type FilaResidenteArancel = {
   nombre: string;
   apellido: string;
   fecha_ingreso: string | null;
+  contacto_familiar: string | null;
+  telefono_familiar: string | null;
   ficha_administrativa: {
     obra_social: string | null;
     porcentaje_recargo_mora: number | null;
@@ -50,7 +52,7 @@ export default async function CuotasSucursalPage({
   const { data: residentes } = await supabase
     .from("residentes")
     .select(
-      "id, nombre, apellido, fecha_ingreso, ficha_administrativa(obra_social, porcentaje_recargo_mora, fecha_vencimiento_cuota)",
+      "id, nombre, apellido, fecha_ingreso, contacto_familiar, telefono_familiar, ficha_administrativa(obra_social, porcentaje_recargo_mora, fecha_vencimiento_cuota)",
     )
     .eq("sucursal_id", id)
     .eq("activo", true)
@@ -104,6 +106,8 @@ export default async function CuotasSucursalPage({
                   nombre: r.nombre,
                   apellido: r.apellido,
                   fecha_ingreso: r.fecha_ingreso,
+                  contacto_familiar: r.contacto_familiar,
+                  telefono_familiar: r.telefono_familiar,
                 },
                 obraSocial: r.ficha_administrativa?.obra_social ?? null,
                 resumen,

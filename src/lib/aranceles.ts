@@ -19,6 +19,7 @@ export type ResumenCuentaCorriente = {
   cantidadPendientes: number;
   totalAdeudado: number;
   totalMora: number;
+  diasMoraMax: number;
 };
 
 export function calcularResumenCuenta(
@@ -45,11 +46,16 @@ export function calcularResumenCuenta(
     const restante = p.monto - p.monto_pagado;
     return acc + (atraso > 0 ? (restante * porcentajeRecargo) / 100 : 0);
   }, 0);
+  const diasMoraMax = conSaldo.reduce(
+    (max, p) => Math.max(max, diasDeAtraso(p, diaVencimiento)),
+    0,
+  );
 
   return {
     ultimoPeriodoPagado,
     cantidadPendientes: conSaldo.length,
     totalAdeudado,
     totalMora,
+    diasMoraMax,
   };
 }
