@@ -13,6 +13,7 @@ type FilaResidente = {
   fecha_egreso: string | null;
   contacto_familiar: string | null;
   telefono_familiar: string | null;
+  foto_url: string | null;
   activo: boolean;
   ficha_administrativa: { obra_social: string | null; tipo_cobertura: string | null; cuota_mensual: number | null } | null;
 };
@@ -159,8 +160,22 @@ export function ResidentesTable({ sucursalId, residentes, puedeBorrar }: Props) 
                   <td className="px-4 py-3 align-middle font-medium whitespace-nowrap">
                     <Link
                       href={`/residentes/${r.id}/legajo`}
-                      className="text-ink underline decoration-transparent underline-offset-2 hover:decoration-brass"
+                      className="flex items-center gap-3 text-ink underline decoration-transparent underline-offset-2 hover:decoration-brass"
                     >
+                      <span className="h-8 w-8 flex-shrink-0 overflow-hidden rounded-full border border-edge bg-panel-deep">
+                        {r.foto_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={r.foto_url}
+                            alt=""
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <span className="flex h-full w-full items-center justify-center text-xs text-ink-soft">
+                            {r.nombre.charAt(0)}
+                          </span>
+                        )}
+                      </span>
                       {r.apellido}, {r.nombre}
                     </Link>
                   </td>

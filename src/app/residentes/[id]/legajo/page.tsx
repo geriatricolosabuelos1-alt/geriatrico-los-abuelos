@@ -28,7 +28,7 @@ export default async function LegajoResidentePage({
   const { data: residente, error: errorResidente } = await supabase
     .from("residentes")
     .select(
-      "id, sucursal_id, nombre, apellido, fecha_nacimiento, dni, nacionalidad, fecha_ingreso, fecha_egreso, habitacion, contacto_familiar, telefono_familiar, observaciones_medicas, activo",
+      "id, sucursal_id, nombre, apellido, fecha_nacimiento, dni, nacionalidad, fecha_ingreso, fecha_egreso, habitacion, contacto_familiar, telefono_familiar, observaciones_medicas, foto_url, activo",
     )
     .eq("id", id)
     .single<Residente>();

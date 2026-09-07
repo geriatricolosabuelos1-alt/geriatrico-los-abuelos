@@ -36,6 +36,7 @@ export interface Residente {
   contacto_familiar: string | null;
   telefono_familiar: string | null;
   observaciones_medicas: string | null;
+  foto_url: string | null;
   activo: boolean;
 }
 

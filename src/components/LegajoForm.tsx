@@ -5,6 +5,7 @@ import {
   actualizarLegajo,
   type ActualizarLegajoEstado,
 } from "@/app/residentes/[id]/legajo/actions";
+import { FotoPicker } from "@/components/FotoPicker";
 import type { FichaAdministrativa, FichaMedica, Residente } from "@/lib/types";
 
 type Props = {
@@ -53,6 +54,12 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
 
   return (
     <form action={formAction} className="space-y-6">
+      <FotoPicker
+        residenteId={residente.id}
+        sucursalId={residente.sucursal_id}
+        fotoActual={residente.foto_url}
+      />
+
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <section className="rounded-2xl border border-edge bg-card p-6">
           <h2 className={SECCION}>Datos personales</h2>
