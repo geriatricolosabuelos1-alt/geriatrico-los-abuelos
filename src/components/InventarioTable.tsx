@@ -105,11 +105,11 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
               {ETIQUETA_CATEGORIA[cat]}
             </p>
             <div
-              className="overflow-x-auto rounded-2xl border border-edge"
+              className="max-h-[420px] overflow-y-auto border border-edge"
               style={{ background: "rgb(255 255 255 / 0.05)" }}
             >
               <table className="w-full text-left text-sm">
-                <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
+                <thead className="sticky top-0 border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
                   <tr>
                     <th className="px-4 py-3">Insumo</th>
                     <th className="px-4 py-3">Stock</th>
