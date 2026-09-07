@@ -1,8 +1,9 @@
 export type PagoResumen = {
   monto: number;
+  monto_pagado: number;
   mes: number;
   anio: number;
-  estado: "pendiente" | "pagado";
+  estado: "pendiente" | "parcial" | "pagado";
   fecha_pago: string | null;
 };
 
@@ -26,7 +27,7 @@ export function calcularResumenCuenta(
   porcentajeRecargo: number,
 ): ResumenCuentaCorriente {
   const pagados = pagos.filter((p) => p.estado === "pagado");
-  const pendientes = pagos.filter((p) => p.estado === "pendiente");
+  const conSaldo = pagos.filter((p) => p.estado !== "pagado");
 
   const ultimoPeriodoPagado = pagados.reduce<{ mes: number; anio: number } | null>(
     (ultimo, p) => {
@@ -38,15 +39,16 @@ export function calcularResumenCuenta(
     null,
   );
 
-  const totalAdeudado = pendientes.reduce((acc, p) => acc + p.monto, 0);
-  const totalMora = pendientes.reduce((acc, p) => {
+  const totalAdeudado = conSaldo.reduce((acc, p) => acc + (p.monto - p.monto_pagado), 0);
+  const totalMora = conSaldo.reduce((acc, p) => {
     const atraso = diasDeAtraso(p, diaVencimiento);
-    return acc + (atraso > 0 ? (p.monto * porcentajeRecargo) / 100 : 0);
+    const restante = p.monto - p.monto_pagado;
+    return acc + (atraso > 0 ? (restante * porcentajeRecargo) / 100 : 0);
   }, 0);
 
   return {
     ultimoPeriodoPagado,
-    cantidadPendientes: pendientes.length,
+    cantidadPendientes: conSaldo.length,
     totalAdeudado,
     totalMora,
   };

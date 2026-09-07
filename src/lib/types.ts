@@ -138,7 +138,7 @@ export interface MovimientoInventario {
   fecha: string;
 }
 
-export type EstadoPago = "pendiente" | "pagado";
+export type EstadoPago = "pendiente" | "parcial" | "pagado";
 
 export interface Rendicion {
   id: string;
@@ -155,6 +155,7 @@ export interface Pago {
   residente_id: string;
   sucursal_id: string;
   monto: number;
+  monto_pagado: number;
   mes: number;
   anio: number;
   estado: EstadoPago;

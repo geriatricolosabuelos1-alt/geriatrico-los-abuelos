@@ -3,50 +3,40 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
-export type CrearPagoEstado = { error: string | null };
+export type RegistrarPagoEstado = { error: string | null };
 
-export async function crearPago(
+export async function registrarPago(
   residenteId: string,
-  sucursalId: string,
-  _estado: CrearPagoEstado,
+  pagoId: string,
+  _estado: RegistrarPagoEstado,
   formData: FormData,
-): Promise<CrearPagoEstado> {
+): Promise<RegistrarPagoEstado> {
   const supabase = await createClient();
 
-  const montoObraSocial = Number(formData.get("monto_obra_social") ?? 0);
-  const montoPaciente = Number(formData.get("monto_paciente") ?? 0);
-  const mes = Number(formData.get("mes") ?? 0);
-  const anio = Number(formData.get("anio") ?? 0);
+  const monto = Number(formData.get("monto") ?? 0);
+  const fecha = String(formData.get("fecha") || new Date().toISOString().slice(0, 10));
 
-  if ((!montoObraSocial && !montoPaciente) || !mes || !anio) {
-    return { error: "Completá al menos un monto, mes y año." };
+  if (!monto || monto <= 0) {
+    return { error: "Ingresá un monto mayor a cero." };
   }
 
-  const filas = [];
-  if (montoObraSocial > 0) {
-    filas.push({
-      residente_id: residenteId,
-      sucursal_id: sucursalId,
-      monto: montoObraSocial,
-      mes,
-      anio,
-      estado: "pendiente" as const,
-      tipo_pago: "obra_social" as const,
-    });
-  }
-  if (montoPaciente > 0) {
-    filas.push({
-      residente_id: residenteId,
-      sucursal_id: sucursalId,
-      monto: montoPaciente,
-      mes,
-      anio,
-      estado: "pendiente" as const,
-      tipo_pago: "paciente" as const,
-    });
+  const { data: pago, error: errorConsulta } = await supabase
+    .from("pagos")
+    .select("monto, monto_pagado")
+    .eq("id", pagoId)
+    .single<{ monto: number; monto_pagado: number }>();
+
+  if (errorConsulta || !pago) {
+    return { error: errorConsulta?.message ?? "No se encontró el pago." };
   }
 
-  const { error } = await supabase.from("pagos").insert(filas);
+  const nuevoMontoPagado = Math.min(pago.monto_pagado + monto, pago.monto);
+  const nuevoEstado = nuevoMontoPagado >= pago.monto ? "pagado" : "parcial";
+
+  const { error } = await supabase
+    .from("pagos")
+    .update({ monto_pagado: nuevoMontoPagado, estado: nuevoEstado, fecha_pago: fecha })
+    .eq("id", pagoId);
 
   if (error) {
     return { error: error.message };
@@ -54,21 +44,6 @@ export async function crearPago(
 
   revalidatePath(`/residentes/${residenteId}/cuenta-corriente`);
   return { error: null };
-}
-
-export async function marcarPagado(
-  residenteId: string,
-  pagoId: string,
-  fechaPago: string,
-): Promise<void> {
-  const supabase = await createClient();
-
-  await supabase
-    .from("pagos")
-    .update({ estado: "pagado", fecha_pago: fechaPago || new Date().toISOString().slice(0, 10) })
-    .eq("id", pagoId);
-
-  revalidatePath(`/residentes/${residenteId}/cuenta-corriente`);
 }
 
 export async function eliminarPago(residenteId: string, pagoId: string): Promise<void> {

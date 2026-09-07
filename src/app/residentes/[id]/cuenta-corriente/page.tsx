@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
-import { NuevoPagoForm } from "@/components/NuevoPagoForm";
 import { AccionesPago } from "@/components/AccionesPago";
 import { EditorArancel } from "@/components/EditorArancel";
 import { diasDeAtraso } from "@/lib/aranceles";
@@ -13,11 +12,24 @@ type Params = { id: string };
 type FilaPago = {
   id: string;
   monto: number;
+  monto_pagado: number;
   mes: number;
   anio: number;
-  estado: "pendiente" | "pagado";
+  estado: "pendiente" | "parcial" | "pagado";
   fecha_pago: string | null;
   tipo_pago: "obra_social" | "paciente";
+};
+
+const ETIQUETA_ESTADO: Record<FilaPago["estado"], string> = {
+  pendiente: "Pendiente",
+  parcial: "Parcial",
+  pagado: "Pagado",
+};
+
+const CLASE_ESTADO: Record<FilaPago["estado"], string> = {
+  pendiente: "bg-edge text-ink-soft",
+  parcial: "bg-amber-500/15 text-amber-400",
+  pagado: "bg-brass-soft text-brass",
 };
 
 const ETIQUETA_TIPO_PAGO: Record<FilaPago["tipo_pago"], string> = {
@@ -73,7 +85,7 @@ export default async function CuentaCorrientePage({
 
   const { data: pagos } = await supabase
     .from("pagos")
-    .select("id, monto, mes, anio, estado, fecha_pago, tipo_pago")
+    .select("id, monto, monto_pagado, mes, anio, estado, fecha_pago, tipo_pago")
     .eq("residente_id", id)
     .order("anio", { ascending: false })
     .order("mes", { ascending: false })
@@ -121,18 +133,6 @@ export default async function CuentaCorrientePage({
           porcentajeRecargo={fichaAdministrativa?.porcentaje_recargo_mora ?? null}
         />
 
-        <NuevoPagoForm
-          residenteId={id}
-          sucursalId={residente.sucursal_id}
-          montoObraSocialDefault={fichaAdministrativa?.monto_cobertura_obra_social ?? null}
-          montoPacienteDefault={
-            fichaAdministrativa?.cuota_mensual != null &&
-            fichaAdministrativa?.monto_cobertura_obra_social != null
-              ? fichaAdministrativa.cuota_mensual - fichaAdministrativa.monto_cobertura_obra_social
-              : null
-          }
-        />
-
         <div className="overflow-x-auto rounded-2xl border border-edge bg-card">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
@@ -149,8 +149,9 @@ export default async function CuentaCorrientePage({
             </thead>
             <tbody>
               {(pagos ?? []).map((p) => {
+                const restante = p.monto - p.monto_pagado;
                 const atraso = diasDeAtraso(p, diaVencimiento);
-                const recargo = atraso > 0 ? (p.monto * porcentajeRecargo) / 100 : 0;
+                const recargo = atraso > 0 ? (restante * porcentajeRecargo) / 100 : 0;
                 return (
                   <tr key={p.id} className="border-b border-edge last:border-0">
                     <td className="px-4 py-3 font-medium text-ink whitespace-nowrap">
@@ -159,16 +160,20 @@ export default async function CuentaCorrientePage({
                     <td className="px-4 py-3 text-ink-soft whitespace-nowrap">
                       {ETIQUETA_TIPO_PAGO[p.tipo_pago]}
                     </td>
-                    <td className="px-4 py-3 text-ink-soft">${p.monto.toLocaleString("es-AR")}</td>
+                    <td className="px-4 py-3 text-ink-soft">
+                      ${p.monto.toLocaleString("es-AR")}
+                      {p.estado === "parcial" && (
+                        <span className="block text-xs text-amber-400">
+                          Pagado ${p.monto_pagado.toLocaleString("es-AR")} · restan $
+                          {restante.toLocaleString("es-AR")}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3">
                       <span
-                        className={
-                          p.estado === "pagado"
-                            ? "rounded-full bg-brass-soft px-2 py-0.5 text-xs font-medium text-brass"
-                            : "rounded-full bg-edge px-2 py-0.5 text-xs font-medium text-ink-soft"
-                        }
+                        className={`rounded-full px-2 py-0.5 text-xs font-medium ${CLASE_ESTADO[p.estado]}`}
                       >
-                        {p.estado === "pagado" ? "Pagado" : "Pendiente"}
+                        {ETIQUETA_ESTADO[p.estado]}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-ink-soft whitespace-nowrap">
@@ -187,7 +192,12 @@ export default async function CuentaCorrientePage({
                       {recargo > 0 ? `$${recargo.toLocaleString("es-AR")}` : "—"}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <AccionesPago residenteId={id} pagoId={p.id} estado={p.estado} />
+                      <AccionesPago
+                        residenteId={id}
+                        pagoId={p.id}
+                        estado={p.estado}
+                        restante={restante}
+                      />
                     </td>
                   </tr>
                 );

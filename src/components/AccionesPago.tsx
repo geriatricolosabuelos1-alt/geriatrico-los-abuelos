@@ -3,25 +3,33 @@
 import { useState } from "react";
 import {
   eliminarPago,
-  marcarPagado,
+  registrarPago,
 } from "@/app/residentes/[id]/cuenta-corriente/actions";
 
 type Props = {
   residenteId: string;
   pagoId: string;
-  estado: "pendiente" | "pagado";
+  estado: "pendiente" | "parcial" | "pagado";
+  restante: number;
 };
 
-export function AccionesPago({ residenteId, pagoId, estado }: Props) {
-  const [mostrarFecha, setMostrarFecha] = useState(false);
+export function AccionesPago({ residenteId, pagoId, estado, restante }: Props) {
+  const [mostrarForm, setMostrarForm] = useState(false);
+  const [monto, setMonto] = useState(String(restante));
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10));
   const [enviando, setEnviando] = useState(false);
 
   async function confirmarPago() {
+    const montoNumero = Number(monto);
+    if (!montoNumero || montoNumero <= 0) return;
+
     setEnviando(true);
-    await marcarPagado(residenteId, pagoId, fecha);
+    const formData = new FormData();
+    formData.set("monto", monto);
+    formData.set("fecha", fecha);
+    await registrarPago(residenteId, pagoId, { error: null }, formData);
     setEnviando(false);
-    setMostrarFecha(false);
+    setMostrarForm(false);
   }
 
   async function borrar() {
@@ -41,9 +49,18 @@ export function AccionesPago({ residenteId, pagoId, estado }: Props) {
     );
   }
 
-  if (mostrarFecha) {
+  if (mostrarForm) {
     return (
       <div className="flex items-center justify-end gap-1.5">
+        <input
+          type="number"
+          step="0.01"
+          min="0"
+          max={restante}
+          value={monto}
+          onChange={(e) => setMonto(e.target.value)}
+          className="w-20 rounded-md border border-edge bg-panel-deep px-1.5 py-1 text-xs text-ink"
+        />
         <input
           type="date"
           value={fecha}
@@ -65,10 +82,10 @@ export function AccionesPago({ residenteId, pagoId, estado }: Props) {
   return (
     <button
       type="button"
-      onClick={() => setMostrarFecha(true)}
+      onClick={() => setMostrarForm(true)}
       className="text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
     >
-      Marcar pagado
+      {estado === "parcial" ? "Registrar pago" : "Marcar pagado"}
     </button>
   );
 }

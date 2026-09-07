@@ -59,7 +59,7 @@ export default async function CuotasSucursalPage({
 
   const { data: pagos } = await supabase
     .from("pagos")
-    .select("residente_id, monto, mes, anio, estado, fecha_pago")
+    .select("residente_id, monto, monto_pagado, mes, anio, estado, fecha_pago")
     .eq("sucursal_id", id)
     .returns<(PagoResumen & { residente_id: string })[]>();
 
