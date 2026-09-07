@@ -18,9 +18,10 @@ type Props = {
 const ESTADO_INICIAL: ActualizarLegajoEstado = { error: null };
 
 const CAMPO =
-  "w-full rounded-lg border border-edge bg-panel-deep px-4 py-3 text-base text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
-const ETIQUETA = "mb-1.5 block text-sm font-medium uppercase tracking-wide text-ink-soft";
-const SECCION = "mb-4 font-display text-lg font-semibold text-ink";
+  "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
+const ETIQUETA =
+  "mb-1 block text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft";
+const SECCION = "mb-3 font-display text-base font-semibold text-ink";
 
 function Campo({
   label,
@@ -62,9 +63,9 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
       />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3">
-        <section className="rounded-2xl border border-edge bg-card p-6">
+        <section className="rounded-2xl border border-edge bg-card p-5">
           <h2 className={SECCION}>Datos personales</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Campo label="Nombre" name="nombre" defaultValue={residente.nombre} />
             <Campo label="Apellido" name="apellido" defaultValue={residente.apellido} />
             <Campo
@@ -82,9 +83,9 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
           </div>
         </section>
 
-        <section className="rounded-2xl border border-edge bg-card p-6">
+        <section className="rounded-2xl border border-edge bg-card p-5">
           <h2 className={SECCION}>Cobertura</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Campo
               label="Obra social / prepaga"
               name="obra_social"
@@ -98,7 +99,7 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
               placeholder="Subsidio, particular..."
             />
             <Campo
-              label="Vencimiento de cuota"
+              label="Vencimiento de arancel mensual"
               name="fecha_vencimiento_cuota"
               type="date"
               defaultValue={fichaAdministrativa?.fecha_vencimiento_cuota}
@@ -118,9 +119,9 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
           </div>
         </section>
 
-        <section className="rounded-2xl border border-edge bg-card p-6">
+        <section className="rounded-2xl border border-edge bg-card p-5">
           <h2 className={SECCION}>Estadía</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Campo
               label="Fecha de ingreso"
               name="fecha_ingreso"
@@ -146,9 +147,9 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
           </div>
         </section>
 
-        <section className="rounded-2xl border border-edge bg-card p-6">
+        <section className="rounded-2xl border border-edge bg-card p-5">
           <h2 className={SECCION}>Contacto de emergencia</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Campo
               label="Familiar o referente afectivo"
               name="contacto_familiar"
@@ -163,9 +164,9 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
           </div>
         </section>
 
-        <section className="rounded-2xl border border-edge bg-card p-6 lg:col-span-2 xl:col-span-2">
+        <section className="rounded-2xl border border-edge bg-card p-5 lg:col-span-2 xl:col-span-2">
           <h2 className={SECCION}>Ficha médica</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Campo
               label="Médico de cabecera"
               name="medico_cabecera"

@@ -139,7 +139,7 @@ export async function Sidebar({ perfil, activo }: Props) {
           {ROLES_CUOTAS.includes(perfil.rol) && (
             <SubTab
               href={`/sucursales/${s.id}/cuotas`}
-              label="Cuotas"
+              label="Aranceles"
               activo={
                 activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&

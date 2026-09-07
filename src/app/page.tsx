@@ -101,7 +101,7 @@ export default async function SeleccionarAreaPage() {
         <Tarjeta
           href="/administrativa"
           titulo="Administrativa"
-          subtitulo="Empleados, cuotas, inventario, rendiciones"
+          subtitulo="Empleados, aranceles, inventario, rendiciones"
           icono="📋"
           habilitada={puedeAdministrativa}
         />

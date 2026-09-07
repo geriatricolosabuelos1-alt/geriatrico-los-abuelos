@@ -80,7 +80,7 @@ export default async function CuotasSucursalPage({
           <p className="text-xs font-semibold uppercase tracking-widest text-brass">
             {sucursal.nombre}
           </p>
-          <h1 className="font-display text-2xl font-bold text-ink">Cuotas</h1>
+          <h1 className="font-display text-2xl font-bold text-ink">Aranceles</h1>
         </div>
 
         <PagoForm sucursalId={id} residentes={residentes ?? []} />
@@ -134,7 +134,7 @@ export default async function CuotasSucursalPage({
               {(pagos ?? []).length === 0 && (
                 <tr>
                   <td colSpan={5} className="px-4 py-6 text-center text-ink-soft">
-                    Todavía no hay cuotas cargadas.
+                    Todavía no hay aranceles cargados.
                   </td>
                 </tr>
               )}

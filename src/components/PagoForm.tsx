@@ -30,7 +30,7 @@ export function PagoForm({ sucursalId, residentes }: Props) {
       className="grid grid-cols-1 gap-4 rounded-2xl border border-edge bg-card p-5 sm:grid-cols-2"
     >
       <h2 className="col-span-full font-display text-sm font-semibold text-ink">
-        Nueva cuota
+        Nuevo arancel
       </h2>
 
       <div className="sm:col-span-2">
@@ -83,7 +83,7 @@ export function PagoForm({ sucursalId, residentes }: Props) {
           disabled={enviando}
           className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
         >
-          {enviando ? "Guardando..." : "Guardar cuota"}
+          {enviando ? "Guardando..." : "Guardar arancel"}
         </button>
       </div>
     </form>

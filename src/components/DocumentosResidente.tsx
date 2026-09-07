@@ -75,8 +75,8 @@ export function DocumentosResidente({ residenteId }: Props) {
   }
 
   return (
-    <section className="rounded-2xl border border-edge bg-card p-6 lg:col-span-2 xl:col-span-3">
-      <h2 className="mb-4 font-display text-lg font-semibold text-ink">Documentos</h2>
+    <section className="rounded-2xl border border-edge bg-card p-5 lg:col-span-2 xl:col-span-3">
+      <h2 className="mb-3 font-display text-base font-semibold text-ink">Documentos</h2>
 
       {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
 
