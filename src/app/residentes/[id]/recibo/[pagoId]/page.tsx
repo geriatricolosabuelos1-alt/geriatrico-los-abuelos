@@ -25,7 +25,7 @@ const ETIQUETA_TIPO_PAGO: Record<Pago["tipo_pago"], string> = {
   paciente: "Paciente / familia",
 };
 
-function numeroALetras(monto: number): string {
+function formatearImporte(monto: number): string {
   return `$${monto.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`;
 }
 
@@ -75,73 +75,107 @@ export default async function ReciboPage({
   const numeroRecibo = `${ahora.getFullYear()}${String(ahora.getMonth() + 1).padStart(2, "0")}${String(ahora.getDate()).padStart(2, "0")}-${pago.id.slice(0, 8).toUpperCase()}`;
 
   return (
-    <div className="flex min-h-screen w-full items-start justify-center bg-panel px-4 py-10 print:block print:bg-white print:px-0 print:py-0">
-      <div className="w-full max-w-2xl space-y-6 rounded-2xl border border-edge bg-card p-8 print:max-w-none print:rounded-none print:border-0 print:bg-white print:p-0 print:text-black">
-        <div className="flex items-start justify-between border-b border-edge pb-4 print:border-black">
+    <div className="flex min-h-screen w-full justify-center bg-panel px-4 py-10 print:block print:min-h-0 print:bg-white print:px-0 print:py-0">
+      <style>{`@page { size: A4; margin: 16mm; }`}</style>
+
+      <div className="w-full max-w-[720px] overflow-hidden rounded-2xl border border-edge bg-card shadow-2xl print:max-w-none print:rounded-none print:border-0 print:bg-white print:shadow-none print:text-black">
+        <div className="flex items-start justify-between bg-gradient-to-r from-brass/20 via-brass/5 to-transparent px-8 py-6 print:bg-white print:px-0 print:pb-4">
           <div>
-            <p className="font-display text-lg font-bold text-ink print:text-black">
+            <p className="font-display text-2xl font-bold tracking-tight text-ink print:text-black">
               Los Abuelos
             </p>
-            <p className="text-xs text-ink-soft print:text-black">
+            <p className="mt-0.5 text-xs uppercase tracking-widest text-ink-soft print:text-neutral-600">
+              Suite de cuidado
+            </p>
+            <p className="mt-2 text-xs text-ink-soft print:text-neutral-600">
               {sucursal?.nombre}
               {sucursal?.direccion ? ` · ${sucursal.direccion}` : ""}
             </p>
           </div>
-          <div className="text-right">
-            <p className="text-xs font-semibold uppercase tracking-widest text-brass print:text-black">
+          <div className="rounded-xl border border-brass/40 bg-panel-deep px-4 py-3 text-right print:border-black print:bg-white">
+            <p className="text-xs font-bold uppercase tracking-widest text-brass print:text-black">
               Recibo
             </p>
-            <p className="text-xs text-ink-soft print:text-black">Nº {numeroRecibo}</p>
-            <p className="text-xs text-ink-soft print:text-black">
-              Emitido: {ahora.toLocaleDateString("es-AR")} {ahora.toLocaleTimeString("es-AR")}
+            <p className="mt-1 text-xs text-ink-soft print:text-neutral-600">Nº {numeroRecibo}</p>
+            <p className="text-xs text-ink-soft print:text-neutral-600">
+              {ahora.toLocaleDateString("es-AR")} · {ahora.toLocaleTimeString("es-AR")}
             </p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft print:text-black">
-              Recibí de
-            </p>
-            <p className="text-sm font-medium text-ink print:text-black">
-              {residente.apellido}, {residente.nombre}
-            </p>
-            {residente.dni && (
-              <p className="text-xs text-ink-soft print:text-black">DNI {residente.dni}</p>
-            )}
+        <div className="space-y-6 px-8 py-6 print:px-0">
+          <div className="grid grid-cols-2 gap-6 border-b border-edge pb-6 print:border-neutral-300">
+            <div>
+              <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft print:text-neutral-500">
+                Recibí de
+              </p>
+              <p className="mt-1 text-base font-semibold text-ink print:text-black">
+                {residente.apellido}, {residente.nombre}
+              </p>
+              {residente.dni && (
+                <p className="text-xs text-ink-soft print:text-neutral-600">
+                  DNI {residente.dni}
+                </p>
+              )}
+            </div>
+            <div>
+              <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft print:text-neutral-500">
+                En concepto de
+              </p>
+              <p className="mt-1 text-base font-semibold text-ink print:text-black">
+                Arancel de {MESES[pago.mes]} de {pago.anio}
+              </p>
+              <p className="text-xs text-ink-soft print:text-neutral-600">
+                {ETIQUETA_TIPO_PAGO[pago.tipo_pago]}
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft print:text-black">
-              Concepto
+
+          <table className="w-full text-left text-sm">
+            <thead>
+              <tr className="border-b border-edge text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft print:border-neutral-300 print:text-neutral-500">
+                <th className="pb-2">Período</th>
+                <th className="pb-2">Detalle</th>
+                <th className="pb-2 text-right">Importe</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td className="py-3 font-medium text-ink print:text-black">
+                  {MESES[pago.mes].charAt(0).toUpperCase() + MESES[pago.mes].slice(1)}{" "}
+                  {pago.anio}
+                </td>
+                <td className="py-3 text-ink-soft print:text-neutral-600">
+                  {ETIQUETA_TIPO_PAGO[pago.tipo_pago]}
+                </td>
+                <td className="py-3 text-right font-medium text-ink print:text-black">
+                  {formatearImporte(importe)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div className="flex items-center justify-between rounded-xl border border-brass/30 bg-brass-soft px-6 py-4 print:rounded-none print:border-2 print:border-black print:bg-white">
+            <p className="text-xs font-semibold uppercase tracking-widest text-ink print:text-black">
+              Total recibido
             </p>
-            <p className="text-sm font-medium text-ink print:text-black">
-              Arancel de {MESES[pago.mes]} de {pago.anio}
+            <p className="font-display text-3xl font-bold text-brass print:text-black">
+              {formatearImporte(importe)}
             </p>
-            <p className="text-xs text-ink-soft print:text-black">
-              {ETIQUETA_TIPO_PAGO[pago.tipo_pago]}
+          </div>
+
+          <div className="flex items-end justify-between gap-8 pt-10">
+            <p className="max-w-[16rem] text-[0.65rem] leading-relaxed text-ink-soft print:text-neutral-500">
+              Este comprobante no reemplaza a la factura o recibo oficial de ARCA.
             </p>
+            <div className="text-center">
+              <div className="mb-1 w-56 border-t border-edge print:border-black" />
+              <p className="text-xs text-ink-soft print:text-neutral-600">Firma y aclaración</p>
+            </div>
           </div>
         </div>
 
-        <div className="rounded-xl border border-edge bg-panel-deep p-5 text-center print:border-black print:bg-white">
-          <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft print:text-black">
-            Importe recibido
-          </p>
-          <p className="font-display text-3xl font-bold text-brass print:text-black">
-            {numeroALetras(importe)}
-          </p>
-        </div>
-
-        <div className="pt-8 text-center text-xs text-ink-soft print:text-black">
-          <div className="mx-auto mb-1 w-48 border-t border-edge print:border-black" />
-          Firma y aclaración
-        </div>
-
-        <p className="text-center text-[0.65rem] text-ink-soft print:text-black">
-          Este comprobante no reemplaza a la factura o recibo oficial de ARCA.
-        </p>
-
-        <div className="print:hidden">
+        <div className="border-t border-edge px-8 py-4 print:hidden">
           <BotonImprimir />
         </div>
       </div>
