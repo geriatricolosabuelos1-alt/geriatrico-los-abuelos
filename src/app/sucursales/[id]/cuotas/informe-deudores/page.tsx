@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { calcularResumenCuenta, type PagoResumen } from "@/lib/aranceles";
-import { AutoExportarPdf } from "@/components/AutoExportarPdf";
 import { BotonExportarPdf } from "@/components/BotonExportarPdf";
 
 type Params = { id: string };
@@ -89,7 +88,6 @@ export default async function InformeDeudoresPage({
   return (
     <div className="flex min-h-screen w-full justify-center bg-panel px-4 py-10 print:block print:min-h-0 print:bg-white print:px-0 print:py-0">
       <style>{`@page { size: A4; margin: 14mm; }`}</style>
-      <AutoExportarPdf activo />
 
       <div className="w-full max-w-[860px] overflow-hidden rounded-2xl border border-edge bg-card p-8 shadow-2xl print:max-w-none print:rounded-none print:border-0 print:bg-white print:p-0 print:text-black print:shadow-none">
         <div className="mb-6 flex items-center justify-between">

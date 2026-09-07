@@ -91,7 +91,7 @@ export function TarjetaArancel({ residente, obraSocial, resumen }: Props) {
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          router.push(`${href}?exportar=1`);
+          router.push(href);
         }}
         className="ml-auto shrink-0 rounded-full border border-brass/40 px-3 py-1 text-[0.65rem] font-semibold text-brass hover:bg-brass-soft"
       >
