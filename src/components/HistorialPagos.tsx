@@ -36,22 +36,44 @@ export function HistorialPagos({ montoTotal, montoPagado, historial }: Props) {
       <button
         type="button"
         onClick={() => setAbierto((v) => !v)}
-        className="text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+        className="inline-flex items-center gap-1 text-xs font-medium text-brass hover:text-ink"
       >
+        <span
+          className={`text-[0.6rem] transition-transform ${abierto ? "rotate-90" : ""}`}
+        >
+          ▶
+        </span>
         {abierto ? "Ocultar pagos" : `Ver pagos (${historial.length})`}
       </button>
+
       {abierto && (
-        <ul className="mt-1 space-y-0.5 text-xs text-ink-soft">
-          {filas.map((f, i) => (
-            <li key={i}>
-              {new Date(f.fecha + "T00:00:00").toLocaleDateString("es-AR")} — pagó $
-              {f.monto.toLocaleString("es-AR")}
-              {f.restante > 0 && (
-                <span className="text-amber-400"> · restan ${f.restante.toLocaleString("es-AR")}</span>
-              )}
-            </li>
-          ))}
-        </ul>
+        <table className="mt-2 w-full max-w-xs border-l-2 border-brass-soft text-xs">
+          <thead>
+            <tr className="text-[0.6rem] uppercase tracking-wide text-ink-soft/70">
+              <th className="px-3 py-1 text-left font-medium">Fecha</th>
+              <th className="px-3 py-1 text-left font-medium">Pagó</th>
+              <th className="px-3 py-1 text-left font-medium">Saldo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filas.map((f, i) => (
+              <tr
+                key={i}
+                className={i < filas.length - 1 ? "border-b border-dashed border-edge" : ""}
+              >
+                <td className="px-3 py-1 text-ink-soft">
+                  {new Date(f.fecha + "T00:00:00").toLocaleDateString("es-AR")}
+                </td>
+                <td className="px-3 py-1 font-medium text-ink">
+                  ${f.monto.toLocaleString("es-AR")}
+                </td>
+                <td className="px-3 py-1 font-medium text-amber-400">
+                  {f.restante > 0 ? `$${f.restante.toLocaleString("es-AR")}` : "—"}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );
