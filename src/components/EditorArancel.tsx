@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import {
   actualizarArancel,
   type ActualizarArancelEstado,
@@ -34,8 +34,10 @@ export function EditorArancel({
   const accionConIds = actualizarArancel.bind(null, residenteId, sucursalId);
   const [estado, formAction, enviando] = useActionState(accionConIds, ESTADO_INICIAL);
 
-  const diferencia =
-    cuotaMensual != null && montoCobertura != null ? cuotaMensual - montoCobertura : null;
+  const [cuota, setCuota] = useState(cuotaMensual);
+  const [cobertura, setCobertura] = useState(montoCobertura);
+
+  const diferencia = cuota != null && cobertura != null ? cuota - cobertura : null;
 
   return (
     <form
@@ -52,7 +54,8 @@ export function EditorArancel({
           type="number"
           step="0.01"
           name="cuota_mensual"
-          defaultValue={cuotaMensual ?? ""}
+          value={cuota ?? ""}
+          onChange={(e) => setCuota(e.target.value === "" ? null : Number(e.target.value))}
           className={CAMPO}
         />
       </div>
@@ -62,7 +65,8 @@ export function EditorArancel({
           type="number"
           step="0.01"
           name="monto_cobertura_obra_social"
-          defaultValue={montoCobertura ?? ""}
+          value={cobertura ?? ""}
+          onChange={(e) => setCobertura(e.target.value === "" ? null : Number(e.target.value))}
           className={CAMPO}
         />
       </div>

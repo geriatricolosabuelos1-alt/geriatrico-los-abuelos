@@ -71,19 +71,21 @@ export default async function CuotasSucursalPage({
       />
 
       <main className="flex-1 space-y-6 px-9 py-8">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-brass">
-            {sucursal.nombre}
-          </p>
-          <h1 className="font-display text-2xl font-bold text-ink">Aranceles</h1>
-        </div>
-
         {(residentes ?? []).length === 0 ? (
-          <p className="rounded-2xl border border-edge bg-card p-6 text-center text-ink-soft">
-            No hay residentes activos en esta sucursal.
-          </p>
+          <>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-brass">
+                {sucursal.nombre}
+              </p>
+              <h1 className="font-display text-2xl font-bold text-ink">Aranceles</h1>
+            </div>
+            <p className="rounded-2xl border border-edge bg-card p-6 text-center text-ink-soft">
+              No hay residentes activos en esta sucursal.
+            </p>
+          </>
         ) : (
           <ListaAranceles
+            sucursalNombre={sucursal.nombre}
             items={(residentes ?? []).map((r) => {
               const pagosDelResidente = (pagos ?? []).filter((p) => p.residente_id === r.id);
               const diaVencimiento = r.ficha_administrativa?.fecha_vencimiento_cuota

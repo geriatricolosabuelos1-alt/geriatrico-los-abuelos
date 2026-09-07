@@ -17,11 +17,12 @@ type ItemArancel = {
 
 type Props = {
   items: ItemArancel[];
+  sucursalNombre: string;
 };
 
 type Filtro = "todos" | "al_dia" | "deben";
 
-export function ListaAranceles({ items }: Props) {
+export function ListaAranceles({ items, sucursalNombre }: Props) {
   const [filtro, setFiltro] = useState<Filtro>("todos");
 
   const filtrados = useMemo(() => {
@@ -45,8 +46,15 @@ export function ListaAranceles({ items }: Props) {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        {OPCIONES.map((op) => (
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-brass">
+            {sucursalNombre}
+          </p>
+          <h1 className="font-display text-2xl font-bold text-ink">Aranceles</h1>
+        </div>
+        <div className="flex gap-2">
+          {OPCIONES.map((op) => (
           <button
             key={op.valor}
             type="button"
@@ -57,9 +65,10 @@ export function ListaAranceles({ items }: Props) {
                 : "rounded-full border border-edge px-4 py-1.5 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
             }
           >
-            {op.etiqueta}
-          </button>
-        ))}
+              {op.etiqueta}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="space-y-3">
