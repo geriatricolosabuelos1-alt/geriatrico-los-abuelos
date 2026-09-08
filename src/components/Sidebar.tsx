@@ -58,6 +58,40 @@ const ETIQUETA_ROL: Record<string, string> = {
   kinesiologo: "Kinesiólogo/a",
 };
 
+const PILDORA_RGB: Record<string, string> = {
+  Dashboard: "56 189 248",
+  Residentes: "244 114 182",
+  Aranceles: "196 181 253",
+  Inventario: "45 212 191",
+  Rendiciones: "252 211 77",
+  Gastos: "110 231 183",
+  Empleados: "251 146 60",
+};
+
+function Pildora({
+  label,
+  activo,
+}: {
+  label: string;
+  activo: boolean;
+}) {
+  const rgb = PILDORA_RGB[label] ?? "167 139 250";
+  return (
+    <span
+      className="inline-block rounded-full px-3 py-1.5 font-karla text-[0.8rem] font-semibold transition-all duration-150"
+      style={{
+        backgroundColor: `rgb(${rgb} / ${activo ? 0.22 : 0.13})`,
+        color: `rgb(${rgb})`,
+        boxShadow: activo
+          ? `0 0 0 1px rgb(${rgb} / 0.6), 0 0 16px rgb(${rgb} / 0.5)`
+          : `0 0 0 1px rgb(${rgb} / 0.22)`,
+      }}
+    >
+      {label}
+    </span>
+  );
+}
+
 function TabPrincipal({
   href,
   label,
@@ -68,18 +102,8 @@ function TabPrincipal({
   activo: boolean;
 }) {
   return (
-    <Link
-      href={href}
-      className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 font-karla text-sm font-medium ${
-        activo ? "bg-tab text-ink" : "text-ink-soft hover:bg-tab/50"
-      }`}
-    >
-      <span
-        className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${
-          activo ? "bg-brass" : "bg-edge"
-        }`}
-      />
-      {label}
+    <Link href={href} className="block hover:brightness-125">
+      <Pildora label={label} activo={activo} />
     </Link>
   );
 }
@@ -94,13 +118,8 @@ function SubTab({
   activo: boolean;
 }) {
   return (
-    <Link
-      href={href}
-      className={`block rounded-md py-1.5 pl-6 pr-2.5 font-karla text-[0.8rem] ${
-        activo ? "font-semibold text-brass" : "text-ink-soft hover:text-ink"
-      }`}
-    >
-      {label}
+    <Link href={href} className="block hover:brightness-125">
+      <Pildora label={label} activo={activo} />
     </Link>
   );
 }
@@ -196,7 +215,7 @@ export async function Sidebar({ perfil, activo }: Props) {
       )}
 
       {sucursalesVisibles.map((s) => (
-        <div key={s.id} className="mt-3">
+        <div key={s.id} className="mt-3 flex flex-col items-start gap-1.5">
           <p className="px-2.5 pb-1 text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
             {s.nombre}
           </p>
