@@ -2,7 +2,7 @@
 
 @theme inline {
   --font-sans: var(--font-public), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-display: "Fraunces", ui-serif, Georgia, serif;
   --font-karla: var(--font-public), ui-sans-serif, system-ui, sans-serif;
 
   --color-panel: #efe7d7;
