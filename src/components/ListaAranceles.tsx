@@ -64,7 +64,7 @@ function TarjetaResumen({
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
         {etiqueta}
       </p>
-      <p className="font-display text-2xl font-bold text-ink">{valor}</p>
+      <p className="font-display text-[32px] font-bold text-ink">{valor}</p>
       <p className="mt-1 text-xs text-ink-soft">{detalle}</p>
     </div>
   );
@@ -99,7 +99,7 @@ export function ListaAranceles({ items, sucursalNombre, sucursalId, resumenMes }
           <p className="text-xs font-semibold uppercase tracking-widest text-brass">
             {sucursalNombre}
           </p>
-          <h1 className="font-display text-2xl font-bold text-ink">Aranceles</h1>
+          <h1 className="font-display text-[32px] font-bold text-ink">Aranceles</h1>
         </div>
         <GenerarPeriodoForm sucursalId={sucursalId} />
         <div className="flex flex-wrap items-center gap-2">

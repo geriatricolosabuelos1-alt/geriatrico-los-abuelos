@@ -64,7 +64,7 @@ export default async function RendicionesSucursalPage({
           <p className="text-xs font-semibold uppercase tracking-widest text-brass">
             {sucursal!.nombre}
           </p>
-          <h1 className="font-display text-2xl font-bold text-ink">Rendiciones</h1>
+          <h1 className="font-display text-[32px] font-bold text-ink">Rendiciones</h1>
         </div>
 
         <RendicionForm sucursalId={id} />

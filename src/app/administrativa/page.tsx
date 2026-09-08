@@ -67,7 +67,7 @@ export default async function DashboardPage() {
       <Sidebar perfil={perfil!} activo={{ tipo: "dashboard" }} />
 
       <main className="flex-1 px-9 py-8">
-        <h1 className="mb-6 font-display text-2xl font-bold text-ink">
+        <h1 className="mb-6 font-display text-[32px] font-bold text-ink">
           Dashboard
         </h1>
 

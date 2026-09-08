@@ -51,7 +51,7 @@ export default async function EmpleadosPage() {
       <Sidebar perfil={perfil!} activo={{ tipo: "empleados" }} />
 
       <main className="flex-1 space-y-6 px-9 py-8">
-        <h1 className="font-display text-2xl font-bold text-ink">Empleados</h1>
+        <h1 className="font-display text-[32px] font-bold text-ink">Empleados</h1>
 
         <EmpleadoForm sucursales={sucursales ?? []} />
 

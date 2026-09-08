@@ -91,7 +91,7 @@ export default async function SeleccionarAreaPage() {
         <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-brass">
           Los Abuelos
         </p>
-        <h1 className="mt-1 font-display text-2xl font-bold text-ink">
+        <h1 className="mt-1 font-display text-[32px] font-bold text-ink">
           ¿A qué área querés entrar?
         </h1>
         <p className="mt-1 text-sm text-ink-soft">{perfil?.nombre_completo}</p>

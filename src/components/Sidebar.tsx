@@ -59,16 +59,6 @@ const ETIQUETA_ROL: Record<string, string> = {
   kinesiologo: "Kinesiólogo/a",
 };
 
-const PILDORA_ICONO: Record<string, string> = {
-  Dashboard: "📊",
-  Residentes: "❤️",
-  Aranceles: "💲",
-  Inventario: "📦",
-  Rendiciones: "🧾",
-  Gastos: "💸",
-  Empleados: "👥",
-};
-
 function NavRow({
   href,
   label,
@@ -78,21 +68,15 @@ function NavRow({
   label: string;
   activo: boolean;
 }) {
-  const icono = PILDORA_ICONO[label];
   return (
     <Link
       href={href}
-      className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[0.83rem] font-medium transition-colors ${
+      className={`block rounded-lg px-3 py-2.5 text-[0.83rem] font-medium transition-colors ${
         activo
           ? "bg-brass text-btn-ink"
           : "text-ink-soft hover:bg-panel-deep hover:text-ink"
       }`}
     >
-      {icono && (
-        <span aria-hidden="true" className="text-[0.9rem] leading-none">
-          {icono}
-        </span>
-      )}
       {label}
     </Link>
   );
@@ -212,7 +196,7 @@ export async function Sidebar({ perfil, activo }: Props) {
       )}
 
       {sucursalesVisibles.map((s) => (
-        <div key={s.id} className="mt-3 flex flex-col items-start gap-1.5">
+        <div key={s.id} className="mt-3 flex flex-col gap-1">
           <p className="px-2.5 pb-1 text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
             {s.nombre}
           </p>

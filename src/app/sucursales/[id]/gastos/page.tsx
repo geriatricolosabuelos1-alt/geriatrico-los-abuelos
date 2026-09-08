@@ -91,7 +91,7 @@ export default async function GastosSucursalPage({
             <p className="text-xs font-semibold uppercase tracking-widest text-brass">
               {sucursal!.nombre}
             </p>
-            <h1 className="font-display text-2xl font-bold text-ink">Gastos</h1>
+            <h1 className="font-display text-[32px] font-bold text-ink">Gastos</h1>
           </div>
 
           <form className="flex gap-2">
