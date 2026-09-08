@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { cerrarSesion } from "@/app/actions";
-import type { Perfil, RolUsuario, Sucursal } from "@/lib/types";
+import type { CategoriaInsumo, Perfil, RolUsuario, Sucursal } from "@/lib/types";
 
 type Seccion = "residentes" | "cuotas" | "inventario" | "rendiciones" | "gastos";
 
@@ -11,8 +11,16 @@ type Props = {
     tipo: "sucursal";
     sucursalId: string;
     seccion: Seccion;
+    categoriaInventario?: CategoriaInsumo;
   };
 };
+
+const ETIQUETA_CATEGORIA_INVENTARIO: Record<CategoriaInsumo, string> = {
+  medicos: "Insumos médicos",
+  varios: "Insumos varios",
+};
+
+const ORDEN_CATEGORIAS_INVENTARIO: CategoriaInsumo[] = ["medicos", "varios"];
 
 const ROLES_RESIDENTES: RolUsuario[] = [
   "admin",
@@ -89,6 +97,27 @@ function SubTab({
     <Link
       href={href}
       className={`block rounded-md py-1.5 pl-6 pr-2.5 font-karla text-[0.8rem] ${
+        activo ? "font-semibold text-brass" : "text-ink-soft hover:text-ink"
+      }`}
+    >
+      {label}
+    </Link>
+  );
+}
+
+function SubSubTab({
+  href,
+  label,
+  activo,
+}: {
+  href: string;
+  label: string;
+  activo: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`block rounded-md py-1 pl-10 pr-2.5 font-karla text-[0.75rem] ${
         activo ? "font-semibold text-brass" : "text-ink-soft hover:text-ink"
       }`}
     >
@@ -194,15 +223,29 @@ export async function Sidebar({ perfil, activo }: Props) {
             />
           )}
           {ROLES_INVENTARIO.includes(perfil.rol) && areaActual === "administrativa" && (
-            <SubTab
-              href={`/sucursales/${s.id}/inventario`}
-              label="Inventario"
-              activo={
-                activo?.tipo === "sucursal" &&
+            <>
+              <SubTab
+                href={`/sucursales/${s.id}/inventario`}
+                label="Inventario"
+                activo={
+                  activo?.tipo === "sucursal" &&
+                  activo.sucursalId === s.id &&
+                  activo.seccion === "inventario" &&
+                  !activo.categoriaInventario
+                }
+              />
+              {activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
-                activo.seccion === "inventario"
-              }
-            />
+                activo.seccion === "inventario" &&
+                ORDEN_CATEGORIAS_INVENTARIO.map((cat) => (
+                  <SubSubTab
+                    key={cat}
+                    href={`/sucursales/${s.id}/inventario?categoria=${cat}`}
+                    label={ETIQUETA_CATEGORIA_INVENTARIO[cat]}
+                    activo={activo.categoriaInventario === cat}
+                  />
+                ))}
+            </>
           )}
           {ROLES_RENDICIONES.includes(perfil.rol) && areaActual === "administrativa" && (
             <SubTab

@@ -159,17 +159,12 @@ function FormularioNuevoInsumo({ onCreado }: { onCreado: () => void }) {
 
 export function InventarioTable({ insumos, esAdmin }: Props) {
   const [busqueda, setBusqueda] = useState("");
-  const [categoriaFiltro, setCategoriaFiltro] = useState<CategoriaInsumo | "">("");
   const [mostrarNuevo, setMostrarNuevo] = useState(false);
 
   const filtrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
-    return insumos.filter((i) => {
-      const coincideTexto = !texto || i.nombre.toLowerCase().includes(texto);
-      const coincideCategoria = !categoriaFiltro || i.categoria === categoriaFiltro;
-      return coincideTexto && coincideCategoria;
-    });
-  }, [insumos, busqueda, categoriaFiltro]);
+    return insumos.filter((i) => !texto || i.nombre.toLowerCase().includes(texto));
+  }, [insumos, busqueda]);
 
   async function manejarEliminar(id: string, nombre: string) {
     if (!window.confirm(`¿Eliminar "${nombre}" del catálogo de insumos?`)) return;
@@ -186,18 +181,6 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
           onChange={(e) => setBusqueda(e.target.value)}
           className="w-64 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none"
         />
-        <select
-          value={categoriaFiltro}
-          onChange={(e) => setCategoriaFiltro(e.target.value as CategoriaInsumo | "")}
-          className="rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none"
-        >
-          <option value="">Todas las categorías</option>
-          {ORDEN_CATEGORIAS.map((cat) => (
-            <option key={cat} value={cat}>
-              {ETIQUETA_CATEGORIA[cat]}
-            </option>
-          ))}
-        </select>
         {esAdmin && (
           <button
             type="button"
