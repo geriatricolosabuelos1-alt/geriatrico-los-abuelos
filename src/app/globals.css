@@ -39,27 +39,10 @@
   --relieve-brass: 3px 3px 9px rgb(14 107 94 / 0.35), -2px -2px 7px rgb(255 255 255 / 0.50);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-panel: #131b18;
-    --color-panel-deep: #17201c;
-    --color-card: #1b241f;
-    --color-edge: #2a352e;
-    --color-ink: #edf1ec;
-    --color-ink-soft: #9aa79f;
-    --color-brass: #4fbfa0;
-    --color-brass-soft: rgb(79 191 160 / 0.16);
-    --color-tab: rgb(79 191 160 / 0.16);
-    --color-btn-ink: #0c1512;
-    --color-warn: #3a2a18;
-
-    --relieve: 6px 6px 16px rgb(0 0 0 / 0.45), -4px -4px 12px rgb(255 255 255 / 0.04);
-    --relieve-sm: 3px 3px 9px rgb(0 0 0 / 0.45), -2px -2px 7px rgb(255 255 255 / 0.04);
-    --hueco: inset 3px 3px 8px rgb(0 0 0 / 0.5), inset -2px -2px 6px rgb(255 255 255 / 0.04);
-    --relieve-brass: 3px 3px 10px rgb(0 0 0 / 0.5), -2px -2px 7px rgb(255 255 255 / 0.06);
-  }
-}
-
+/* La app siempre usa la paleta clara, sin importar el modo oscuro
+   del sistema operativo/navegador de quien la abra. El bloque de
+   abajo solo se activa si en algun momento se agrega un boton para
+   elegir tema a mano (data-theme="dark" en el <html>). */
 :root[data-theme="dark"] {
   --color-panel: #131b18;
   --color-panel-deep: #17201c;
