@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
@@ -105,13 +106,23 @@ export default async function InventarioSucursalPage({
       />
 
       <main className="flex-1 space-y-6 px-9 py-8">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-brass">
-            {sucursal!.nombre}
-          </p>
-          <h1 className="font-display text-2xl font-bold text-ink">
-            Inventario{categoria ? ` — ${ETIQUETA_CATEGORIA[categoria]}` : ""}
-          </h1>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-brass">
+              {sucursal!.nombre}
+            </p>
+            <h1 className="font-display text-2xl font-bold text-ink">
+              Inventario{categoria ? ` — ${ETIQUETA_CATEGORIA[categoria]}` : ""}
+            </h1>
+          </div>
+          {esAdmin && (
+            <Link
+              href={`/sucursales/${id}/inventario/carga-inicial`}
+              className="inline-block rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
+            >
+              Carga inicial de stock
+            </Link>
+          )}
         </div>
 
         <InventarioForm sucursalId={id} insumos={listaInsumos} />

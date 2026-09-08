@@ -44,6 +44,53 @@ export async function registrarMovimiento(
   return { error: null };
 }
 
+export type CargaInicialEstado = { error: string | null; guardado: boolean };
+
+export async function cargarStockInicial(
+  sucursalId: string,
+  _estado: CargaInicialEstado,
+  formData: FormData,
+): Promise<CargaInicialEstado> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const itemsRaw = String(formData.get("items") ?? "[]");
+  let items: { insumo_id: string; cantidad: number }[] = [];
+  try {
+    items = JSON.parse(itemsRaw);
+  } catch {
+    items = [];
+  }
+
+  const movimientos = items.filter((i) => i.insumo_id && Number(i.cantidad) > 0);
+
+  if (movimientos.length === 0) {
+    return { error: "Cargá una cantidad mayor a cero en al menos un insumo.", guardado: false };
+  }
+
+  const { error } = await supabase.from("movimientos_inventario").insert(
+    movimientos.map((m) => ({
+      sucursal_id: sucursalId,
+      insumo_id: m.insumo_id,
+      tipo: "entrada" as const,
+      cantidad: m.cantidad,
+      precio: null,
+      importe_total: null,
+      registrado_por: user?.id,
+    })),
+  );
+
+  if (error) {
+    return { error: error.message, guardado: false };
+  }
+
+  revalidatePath(`/sucursales/${sucursalId}/inventario`);
+  return { error: null, guardado: true };
+}
+
 export async function actualizarUnidadInsumo(formData: FormData): Promise<void> {
   const supabase = await createClient();
 
