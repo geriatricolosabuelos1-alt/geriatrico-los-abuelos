@@ -1,55 +1,148 @@
 @import "tailwindcss";
 
-@theme inline {
-  --font-sans: var(--font-inter), -apple-system, "SF Pro Text", "Segoe UI", Roboto, ui-sans-serif, system-ui, sans-serif;
-  --font-display: Georgia, "Times New Roman", Times, serif;
-  --font-karla: var(--font-inter), -apple-system, "SF Pro Text", "Segoe UI", Roboto, ui-sans-serif, system-ui, sans-serif;
+/* ─────────────────────────────────────────────────────────────
+   Estilo "Táctil": crema en relieve, verde profundo de marca.
+   Los nombres de token son los mismos de antes, así que ningún
+   componente necesita cambios: solo cambian los valores.
+   ───────────────────────────────────────────────────────────── */
 
-  --color-panel: #efe7d7;
-  --color-panel-deep: #f2ead9;
-  --color-card: #fffdf8;
-  --color-edge: #e3d6bc;
-  --color-ink: #211c15;
-  --color-ink-soft: #786c58;
-  --color-brass: #1c5c4c;
-  --color-brass-soft: rgb(28 92 76 / 0.14);
-  --color-tab: rgb(28 92 76 / 0.14);
-  --color-btn-ink: #f6f1e4;
-  --color-warn: #f5d3a8;
+@theme inline {
+  --font-sans: var(--font-manrope), -apple-system, "SF Pro Text", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-manrope), -apple-system, "SF Pro Text", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-karla: var(--font-manrope), -apple-system, "SF Pro Text", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Tokens de color en un @theme sin "inline": las utilidades de Tailwind
+   quedan como var(--color-x), asi la sobreescritura en modo oscuro
+   (mas abajo) realmente cambia lo que se ve. Con "inline" Tailwind
+   graba el valor de modo claro directo en cada clase .text-ink/.bg-card
+   y el modo oscuro del sistema queda ilegible. */
+@theme {
+  --color-panel: #e9e3d9;
+  --color-panel-deep: #eae3d7;
+  --color-card: #f4efe6;
+  --color-edge: #dbd1c0;
+  --color-ink: #241f1a;
+  --color-ink-soft: #6a6157;
+  --color-brass: #0e6b5e;
+  --color-brass-soft: rgb(14 107 94 / 0.14);
+  --color-tab: rgb(14 107 94 / 0.14);
+  --color-btn-ink: #f6f2ea;
+  --color-warn: #f6dfc9;
+}
+
+/* Sombras del relieve (se redefinen en modo oscuro) */
+:root {
+  --relieve: 6px 6px 16px rgb(150 135 115 / 0.28), -5px -5px 14px rgb(255 255 255 / 0.85);
+  --relieve-sm: 3px 3px 8px rgb(150 135 115 / 0.32), -3px -3px 8px rgb(255 255 255 / 0.85);
+  --hueco: inset 3px 3px 7px rgb(150 135 115 / 0.30), inset -3px -3px 7px rgb(255 255 255 / 0.80);
+  --relieve-brass: 3px 3px 9px rgb(14 107 94 / 0.35), -2px -2px 7px rgb(255 255 255 / 0.50);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-panel: #14180f;
-    --color-panel-deep: #191f17;
-    --color-card: #1e251c;
-    --color-edge: #2e362a;
-    --color-ink: #ede6d6;
-    --color-ink-soft: #a79c87;
-    --color-brass: #59c29e;
-    --color-brass-soft: rgb(89 194 158 / 0.16);
-    --color-tab: rgb(89 194 158 / 0.16);
-    --color-btn-ink: #0f1a15;
-    --color-warn: #4a3419;
+    --color-panel: #131b18;
+    --color-panel-deep: #17201c;
+    --color-card: #1b241f;
+    --color-edge: #2a352e;
+    --color-ink: #edf1ec;
+    --color-ink-soft: #9aa79f;
+    --color-brass: #4fbfa0;
+    --color-brass-soft: rgb(79 191 160 / 0.16);
+    --color-tab: rgb(79 191 160 / 0.16);
+    --color-btn-ink: #0c1512;
+    --color-warn: #3a2a18;
+
+    --relieve: 6px 6px 16px rgb(0 0 0 / 0.45), -4px -4px 12px rgb(255 255 255 / 0.04);
+    --relieve-sm: 3px 3px 9px rgb(0 0 0 / 0.45), -2px -2px 7px rgb(255 255 255 / 0.04);
+    --hueco: inset 3px 3px 8px rgb(0 0 0 / 0.5), inset -2px -2px 6px rgb(255 255 255 / 0.04);
+    --relieve-brass: 3px 3px 10px rgb(0 0 0 / 0.5), -2px -2px 7px rgb(255 255 255 / 0.06);
   }
 }
 
 :root[data-theme="dark"] {
-  --color-panel: #14180f;
-  --color-panel-deep: #191f17;
-  --color-card: #1e251c;
-  --color-edge: #2e362a;
-  --color-ink: #ede6d6;
-  --color-ink-soft: #a79c87;
-  --color-brass: #59c29e;
-  --color-brass-soft: rgb(89 194 158 / 0.16);
-  --color-tab: rgb(89 194 158 / 0.16);
-  --color-btn-ink: #0f1a15;
-  --color-warn: #4a3419;
+  --color-panel: #131b18;
+  --color-panel-deep: #17201c;
+  --color-card: #1b241f;
+  --color-edge: #2a352e;
+  --color-ink: #edf1ec;
+  --color-ink-soft: #9aa79f;
+  --color-brass: #4fbfa0;
+  --color-brass-soft: rgb(79 191 160 / 0.16);
+  --color-tab: rgb(79 191 160 / 0.16);
+  --color-btn-ink: #0c1512;
+  --color-warn: #3a2a18;
+
+  --relieve: 6px 6px 16px rgb(0 0 0 / 0.45), -4px -4px 12px rgb(255 255 255 / 0.04);
+  --relieve-sm: 3px 3px 9px rgb(0 0 0 / 0.45), -2px -2px 7px rgb(255 255 255 / 0.04);
+  --hueco: inset 3px 3px 8px rgb(0 0 0 / 0.5), inset -2px -2px 6px rgb(255 255 255 / 0.04);
+  --relieve-brass: 3px 3px 10px rgb(0 0 0 / 0.5), -2px -2px 7px rgb(255 255 255 / 0.06);
+}
+
+/* Utilidades nuevas, por si querés aplicarlas a mano */
+@utility relieve {
+  box-shadow: var(--relieve);
+}
+@utility hueco {
+  box-shadow: var(--hueco);
 }
 
 body {
   background: var(--color-panel);
+}
+
+/* Títulos: Manrope pesado en vez de serif */
+.font-display {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+/* ── Relieve automático sobre las clases que ya usan las pantallas ── */
+.bg-card {
+  box-shadow: var(--relieve);
+}
+.bg-panel-deep {
+  box-shadow: var(--hueco);
+}
+.bg-brass {
+  box-shadow: var(--relieve-brass);
+}
+/* Filas y celdas dentro de una tarjeta no deben repetir la sombra */
+.bg-card .bg-card,
+table .bg-card,
+tr.bg-card,
+td .bg-card,
+th .bg-card {
+  box-shadow: none;
+}
+
+/* Geometría squircle */
+.rounded-md {
+  border-radius: 11px;
+}
+.rounded-lg {
+  border-radius: 14px;
+}
+.rounded-xl {
+  border-radius: 18px;
+}
+.rounded-2xl {
+  border-radius: 24px;
+}
+
+/* Campos: pozos hundidos */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+select,
+textarea {
+  background: var(--color-panel-deep);
+  border-radius: 14px;
+  box-shadow: var(--hueco);
+}
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-brass);
+  outline-offset: 1px;
 }
 
 select {
