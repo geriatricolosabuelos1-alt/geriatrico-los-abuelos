@@ -2,8 +2,13 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { ListaAranceles } from "@/components/ListaAranceles";
-import { calcularResumenCuenta, type PagoResumen } from "@/lib/aranceles";
+import { calcularResumenCuenta, diasDeAtraso, type PagoResumen } from "@/lib/aranceles";
 import type { Perfil } from "@/lib/types";
+
+const MESES = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
 
 type Params = { id: string };
 
@@ -65,6 +70,52 @@ export default async function CuotasSucursalPage({
     .eq("sucursal_id", id)
     .returns<(PagoResumen & { residente_id: string })[]>();
 
+  const todosPagos = pagos ?? [];
+  const diaVencimientoPorResidente = new Map<string, number>(
+    (residentes ?? []).map((r) => [
+      r.id,
+      r.ficha_administrativa?.fecha_vencimiento_cuota
+        ? new Date(r.ficha_administrativa.fecha_vencimiento_cuota + "T00:00:00").getDate()
+        : 10,
+    ]),
+  );
+
+  const ahora = new Date();
+  const mesActual = ahora.getMonth() + 1;
+  const anioActual = ahora.getFullYear();
+  const mesAnteriorFecha = new Date(anioActual, mesActual - 2, 1);
+
+  function promedioCuota(mes: number, anio: number): number {
+    const delMes = todosPagos.filter((p) => p.mes === mes && p.anio === anio);
+    if (delMes.length === 0) return 0;
+    return delMes.reduce((acc, p) => acc + p.monto, 0) / delMes.length;
+  }
+
+  const pagosMes = todosPagos.filter((p) => p.mes === mesActual && p.anio === anioActual);
+  const pendientesMes = pagosMes.filter((p) => p.estado !== "pagado");
+  const cuotaPromedio = promedioCuota(mesActual, anioActual);
+  const cuotaPromedioAnterior = promedioCuota(
+    mesAnteriorFecha.getMonth() + 1,
+    mesAnteriorFecha.getFullYear(),
+  );
+
+  const resumenMes = {
+    mesLabel: MESES[mesActual - 1],
+    cobrado: pagosMes.reduce((acc, p) => acc + p.monto_pagado, 0),
+    cuotasPagadas: pagosMes.filter((p) => p.estado === "pagado").length,
+    cuotasTotales: pagosMes.length,
+    montoPendiente: pendientesMes.reduce((acc, p) => acc + (p.monto - p.monto_pagado), 0),
+    cantidadPendientes: pendientesMes.length,
+    cantidadVencidas: pendientesMes.filter(
+      (p) => diasDeAtraso(p, diaVencimientoPorResidente.get(p.residente_id) ?? 10) > 0,
+    ).length,
+    cuotaPromedio,
+    variacionPromedio:
+      cuotaPromedioAnterior > 0
+        ? ((cuotaPromedio - cuotaPromedioAnterior) / cuotaPromedioAnterior) * 100
+        : null,
+  };
+
   return (
     <div className="flex min-h-screen w-full">
       <Sidebar
@@ -89,6 +140,7 @@ export default async function CuotasSucursalPage({
           <ListaAranceles
             sucursalNombre={sucursal.nombre}
             sucursalId={id}
+            resumenMes={resumenMes}
             items={(residentes ?? []).map((r) => {
               const pagosDelResidente = (pagos ?? []).filter((p) => p.residente_id === r.id);
               const diaVencimiento = r.ficha_administrativa?.fecha_vencimiento_cuota

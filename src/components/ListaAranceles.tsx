@@ -19,15 +19,58 @@ type ItemArancel = {
   resumen: ResumenCuentaCorriente;
 };
 
+type ResumenMes = {
+  mesLabel: string;
+  cobrado: number;
+  cuotasPagadas: number;
+  cuotasTotales: number;
+  montoPendiente: number;
+  cantidadPendientes: number;
+  cantidadVencidas: number;
+  cuotaPromedio: number;
+  variacionPromedio: number | null;
+};
+
 type Props = {
   items: ItemArancel[];
   sucursalNombre: string;
   sucursalId: string;
+  resumenMes: ResumenMes;
 };
 
 type Filtro = "todos" | "al_dia" | "deben";
 
-export function ListaAranceles({ items, sucursalNombre, sucursalId }: Props) {
+function formatearMonto(monto: number): string {
+  return `$${Math.round(monto).toLocaleString("es-AR")}`;
+}
+
+function TarjetaResumen({
+  etiqueta,
+  valor,
+  detalle,
+  destacado,
+}: {
+  etiqueta: string;
+  valor: string;
+  detalle: string;
+  destacado?: boolean;
+}) {
+  return (
+    <div
+      className={`rounded-2xl border p-5 ${
+        destacado ? "border-transparent bg-warn" : "border-edge bg-card"
+      }`}
+    >
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+        {etiqueta}
+      </p>
+      <p className="font-display text-2xl font-bold text-ink">{valor}</p>
+      <p className="mt-1 text-xs text-ink-soft">{detalle}</p>
+    </div>
+  );
+}
+
+export function ListaAranceles({ items, sucursalNombre, sucursalId, resumenMes }: Props) {
   const [filtro, setFiltro] = useState<Filtro>("todos");
 
   const filtrados = useMemo(() => {
@@ -84,6 +127,33 @@ export function ListaAranceles({ items, sucursalNombre, sucursalId }: Props) {
             </button>
           ))}
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
+        <TarjetaResumen
+          etiqueta={`Cobrado en ${resumenMes.mesLabel}`}
+          valor={formatearMonto(resumenMes.cobrado)}
+          detalle={`${resumenMes.cuotasPagadas} de ${resumenMes.cuotasTotales} cuotas`}
+        />
+        <TarjetaResumen
+          destacado
+          etiqueta="Pendiente"
+          valor={formatearMonto(resumenMes.montoPendiente)}
+          detalle={
+            resumenMes.cantidadVencidas > 0
+              ? `${resumenMes.cantidadPendientes} cuota${resumenMes.cantidadPendientes === 1 ? "" : "s"}, ${resumenMes.cantidadVencidas} vencida${resumenMes.cantidadVencidas === 1 ? "" : "s"}`
+              : `${resumenMes.cantidadPendientes} cuota${resumenMes.cantidadPendientes === 1 ? "" : "s"}`
+          }
+        />
+        <TarjetaResumen
+          etiqueta="Cuota promedio"
+          valor={formatearMonto(resumenMes.cuotaPromedio)}
+          detalle={
+            resumenMes.variacionPromedio == null
+              ? "Sin datos del mes anterior"
+              : `${resumenMes.variacionPromedio >= 0 ? "+" : ""}${resumenMes.variacionPromedio.toFixed(0)}% vs. mes anterior`
+          }
+        />
       </div>
 
       <div className="space-y-3">
