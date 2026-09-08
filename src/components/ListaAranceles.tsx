@@ -64,7 +64,7 @@ function TarjetaResumen({
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
         {etiqueta}
       </p>
-      <p className="font-display text-[32px] font-semibold tabular-nums text-ink">{valor}</p>
+      <p className="font-display text-[32px] font-semibold tabular-nums lining-nums text-ink">{valor}</p>
       <p className="mt-1 text-xs text-ink-soft">{detalle}</p>
     </div>
   );

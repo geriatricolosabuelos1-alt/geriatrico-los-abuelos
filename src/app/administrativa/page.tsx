@@ -81,7 +81,7 @@ export default async function DashboardPage() {
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   Residentes activos
                 </p>
-                <p className="font-display text-3xl font-semibold tabular-nums text-ink">
+                <p className="font-display text-3xl font-semibold tabular-nums lining-nums text-ink">
                   {totalResidentesGlobal}
                 </p>
               </div>
@@ -89,7 +89,7 @@ export default async function DashboardPage() {
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   Pagos pendientes
                 </p>
-                <p className="font-display text-3xl font-semibold tabular-nums text-ink">
+                <p className="font-display text-3xl font-semibold tabular-nums lining-nums text-ink">
                   {totalPagosPendientesGlobal}
                 </p>
               </div>
@@ -119,7 +119,7 @@ export default async function DashboardPage() {
                       <p className="text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
                         Residentes
                       </p>
-                      <p className="font-display text-xl font-semibold tabular-nums text-brass">
+                      <p className="font-display text-xl font-semibold tabular-nums lining-nums text-brass">
                         {r.totalResidentes}
                       </p>
                     </div>
@@ -127,7 +127,7 @@ export default async function DashboardPage() {
                       <p className="text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
                         Pagos pendientes
                       </p>
-                      <p className="font-display text-xl font-semibold tabular-nums text-brass">
+                      <p className="font-display text-xl font-semibold tabular-nums lining-nums text-brass">
                         {r.pagosPendientes}
                       </p>
                     </div>
