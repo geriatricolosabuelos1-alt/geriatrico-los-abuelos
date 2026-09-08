@@ -103,6 +103,18 @@ export async function actualizarUnidadInsumo(formData: FormData): Promise<void> 
   revalidatePath("/sucursales/[id]/inventario", "page");
 }
 
+export async function actualizarNombreInsumo(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+
+  const insumoId = String(formData.get("insumo_id") ?? "");
+  const nombre = String(formData.get("nombre") ?? "").trim();
+  if (!insumoId || !nombre) return;
+
+  await supabase.from("insumos").update({ nombre }).eq("id", insumoId);
+
+  revalidatePath("/sucursales/[id]/inventario", "page");
+}
+
 export async function actualizarCategoriaInsumo(formData: FormData): Promise<void> {
   const supabase = await createClient();
 

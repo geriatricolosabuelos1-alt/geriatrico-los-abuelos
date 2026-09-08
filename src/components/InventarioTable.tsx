@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   actualizarCategoriaInsumo,
+  actualizarNombreInsumo,
   actualizarUnidadInsumo,
   crearInsumo,
   eliminarInsumo,
@@ -29,6 +30,39 @@ const ETIQUETA_CATEGORIA: Record<CategoriaInsumo, string> = {
 };
 
 const ORDEN_CATEGORIAS: CategoriaInsumo[] = ["medicos", "varios"];
+
+function FilaNombre({ insumo }: { insumo: FilaInsumo }) {
+  const [nombre, setNombre] = useState(insumo.nombre);
+  const [enviando, setEnviando] = useState(false);
+
+  async function manejarSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setEnviando(true);
+    const formData = new FormData(e.currentTarget);
+    await actualizarNombreInsumo(formData);
+    setEnviando(false);
+  }
+
+  return (
+    <form onSubmit={manejarSubmit} className="flex items-center gap-1.5">
+      <input type="hidden" name="insumo_id" value={insumo.id} />
+      <input
+        type="text"
+        name="nombre"
+        value={nombre}
+        onChange={(e) => setNombre(e.target.value)}
+        className="w-40 rounded-md border border-edge bg-panel-deep px-2 py-1 text-sm font-medium text-ink focus:border-brass focus:outline-none"
+      />
+      <button
+        type="submit"
+        disabled={enviando}
+        className="text-xs font-medium text-brass hover:text-ink disabled:opacity-50"
+      >
+        {enviando ? "..." : "Guardar"}
+      </button>
+    </form>
+  );
+}
 
 function FilaCategoria({ insumo }: { insumo: FilaInsumo }) {
   const [categoria, setCategoria] = useState<CategoriaInsumo>(insumo.categoria);
@@ -223,7 +257,7 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
                   {items.map((i) => (
                     <tr key={i.id} className="border-b border-edge last:border-0">
                       <td className="px-4 py-3 font-medium text-ink whitespace-nowrap">
-                        {i.nombre}
+                        {esAdmin ? <FilaNombre insumo={i} /> : i.nombre}
                       </td>
                       <td className="px-4 py-3">
                         <span
