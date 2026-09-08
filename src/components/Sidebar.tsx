@@ -12,6 +12,7 @@ type Props = {
     sucursalId: string;
     seccion: Seccion;
     categoriaInventario?: CategoriaInsumo;
+    area?: "administrativa" | "medicina";
   };
 };
 
@@ -174,11 +175,7 @@ export async function Sidebar({ perfil, activo }: Props) {
   const puedeMedicina = ROLES_MEDICINA.includes(perfil.rol);
   const sucursalMedicina = perfil.sucursal_id ?? todasSucursales?.[0]?.id ?? null;
   const areaActual: "administrativa" | "medicina" =
-    activo?.tipo === "dashboard" ||
-    activo?.tipo === "empleados" ||
-    (activo?.tipo === "sucursal" && activo.seccion !== "residentes")
-      ? "administrativa"
-      : "medicina";
+    activo?.tipo === "sucursal" && activo.area === "medicina" ? "medicina" : "administrativa";
 
   return (
     <aside className="flex w-56 flex-shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-edge bg-panel-deep p-4">
@@ -206,7 +203,7 @@ export async function Sidebar({ perfil, activo }: Props) {
             Administrativa
           </Link>
           <Link
-            href={sucursalMedicina ? `/sucursales/${sucursalMedicina}/residentes` : "#"}
+            href={sucursalMedicina ? `/sucursales/${sucursalMedicina}/residentes?vista=medicina` : "#"}
             className={`flex-1 rounded-md py-1.5 text-center ${
               areaActual === "medicina"
                 ? "bg-tab text-ink"

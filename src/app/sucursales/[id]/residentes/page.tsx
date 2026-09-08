@@ -6,6 +6,7 @@ import { ResidentesTable } from "@/components/ResidentesTable";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
+type SearchParams = { vista?: string };
 
 type FilaResidente = {
   id: string;
@@ -23,10 +24,13 @@ type FilaResidente = {
 
 export default async function ResidentesSucursalPage({
   params,
+  searchParams,
 }: {
   params: Promise<Params>;
+  searchParams: Promise<SearchParams>;
 }) {
   const { id } = await params;
+  const { vista } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -66,7 +70,12 @@ export default async function ResidentesSucursalPage({
     <div className="flex min-h-screen w-full">
       <Sidebar
         perfil={perfil}
-        activo={{ tipo: "sucursal", sucursalId: id, seccion: "residentes" }}
+        activo={{
+          tipo: "sucursal",
+          sucursalId: id,
+          seccion: "residentes",
+          area: vista === "medicina" ? "medicina" : "administrativa",
+        }}
       />
 
       <main className="flex-1 space-y-6 px-9 py-8">
