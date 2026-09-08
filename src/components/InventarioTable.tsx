@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import {
+  actualizarCategoriaInsumo,
   actualizarUnidadInsumo,
   crearInsumo,
   eliminarInsumo,
@@ -23,12 +24,42 @@ type Props = {
 };
 
 const ETIQUETA_CATEGORIA: Record<CategoriaInsumo, string> = {
-  general: "General",
-  carnes: "Carnes",
-  verduras: "Verduras",
+  medicos: "Insumos médicos",
+  varios: "Insumos varios",
 };
 
-const ORDEN_CATEGORIAS: CategoriaInsumo[] = ["general", "carnes", "verduras"];
+const ORDEN_CATEGORIAS: CategoriaInsumo[] = ["medicos", "varios"];
+
+function FilaCategoria({ insumo }: { insumo: FilaInsumo }) {
+  const [categoria, setCategoria] = useState<CategoriaInsumo>(insumo.categoria);
+  const [enviando, setEnviando] = useState(false);
+
+  async function manejarCambio(e: React.ChangeEvent<HTMLSelectElement>) {
+    const nuevaCategoria = e.target.value as CategoriaInsumo;
+    setCategoria(nuevaCategoria);
+    setEnviando(true);
+    const formData = new FormData();
+    formData.set("insumo_id", insumo.id);
+    formData.set("categoria", nuevaCategoria);
+    await actualizarCategoriaInsumo(formData);
+    setEnviando(false);
+  }
+
+  return (
+    <select
+      value={categoria}
+      onChange={manejarCambio}
+      disabled={enviando}
+      className="rounded-md border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none disabled:opacity-50"
+    >
+      {ORDEN_CATEGORIAS.map((cat) => (
+        <option key={cat} value={cat}>
+          {ETIQUETA_CATEGORIA[cat]}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 function FilaUnidad({ insumo }: { insumo: FilaInsumo }) {
   const [unidad, setUnidad] = useState(insumo.unidad);
@@ -100,7 +131,7 @@ function FormularioNuevoInsumo({ onCreado }: { onCreado: () => void }) {
         <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
           Categoría
         </label>
-        <select name="categoria" required defaultValue="general" className={CAMPO}>
+        <select name="categoria" required defaultValue="varios" className={CAMPO}>
           {ORDEN_CATEGORIAS.map((cat) => (
             <option key={cat} value={cat}>
               {ETIQUETA_CATEGORIA[cat]}
@@ -201,6 +232,7 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
                     <th className="px-4 py-3">Insumo</th>
                     <th className="px-4 py-3">Stock</th>
                     <th className="px-4 py-3">Unidad</th>
+                    {esAdmin && <th className="px-4 py-3">Categoría</th>}
                     {esAdmin && <th className="px-4 py-3"></th>}
                   </tr>
                 </thead>
@@ -224,6 +256,11 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
                       <td className="px-4 py-3 text-ink-soft">
                         {esAdmin ? <FilaUnidad insumo={i} /> : i.unidad}
                       </td>
+                      {esAdmin && (
+                        <td className="px-4 py-3">
+                          <FilaCategoria insumo={i} />
+                        </td>
+                      )}
                       {esAdmin && (
                         <td className="px-4 py-3 text-right">
                           <button

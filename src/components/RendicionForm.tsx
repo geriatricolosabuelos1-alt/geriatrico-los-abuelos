@@ -22,9 +22,8 @@ const CAMPO =
 const ETIQUETA = "mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft";
 
 const ETIQUETA_CATEGORIA: Record<CategoriaInsumo, string> = {
-  general: "General",
-  carnes: "Carnes",
-  verduras: "Verduras",
+  medicos: "Insumos médicos",
+  varios: "Insumos varios",
 };
 
 const ANCHO_MAXIMO = 1400;

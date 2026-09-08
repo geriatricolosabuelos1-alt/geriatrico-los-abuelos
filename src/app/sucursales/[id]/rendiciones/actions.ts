@@ -56,12 +56,12 @@ export async function leerTicketConIA(formData: FormData): Promise<ResultadoLect
 
   const prompt = `Sos un asistente que lee tickets y facturas de compra de mercadería para un geriátrico.
 Analizá la imagen y devolvé SOLO un objeto JSON, sin texto adicional ni markdown, con este formato exacto:
-{"total": <número o null>, "items": [{"nombre": "<nombre del producto tal como lo entendiste, normalizado y corto>", "categoria": "<general|carnes|verduras>", "cantidad": <número>}]}
+{"total": <número o null>, "items": [{"nombre": "<nombre del producto tal como lo entendiste, normalizado y corto>", "categoria": "<medicos|varios>", "cantidad": <número>}]}
 
 Reglas:
 - Transcribí TODOS los productos/mercadería que reconozcas en el ticket, no solo algunos.
 - Usá nombres cortos y genéricos (ej: "Arroz" en vez de "ARROZ GALLO 1KG OFERTA").
-- "categoria": clasificá cada producto en general (limpieza, almacén, higiene), carnes, o verduras (incluye frutas).
+- "categoria": clasificá cada producto en medicos (medicamentos, insumos médicos, higiene sanitaria) o varios (todo lo demás: almacén, limpieza, mercadería general).
 - Si no podés determinar la cantidad, poné 1.
 - "total" es el importe TOTAL a pagar del ticket (no el subtotal). Si no lo encontrás, poné null.
 - No incluyas renglones que no sean productos (descuentos, impuestos, vuelto, etc.).`;
@@ -109,7 +109,7 @@ Reglas:
     return { total: null, items: [], error: "No se pudo interpretar la lectura del ticket." };
   }
 
-  const categoriasValidas: CategoriaInsumo[] = ["general", "carnes", "verduras"];
+  const categoriasValidas: CategoriaInsumo[] = ["medicos", "varios"];
   const catalogoNormalizado = catalogo.map((i) => ({ ...i, norm: normalizar(i.nombre) }));
 
   const items: ItemLeido[] = (parseado.items ?? [])
@@ -121,7 +121,7 @@ Reglas:
       );
       const categoria = categoriasValidas.includes(it.categoria as CategoriaInsumo)
         ? (it.categoria as CategoriaInsumo)
-        : "general";
+        : "varios";
 
       return {
         insumo_id: coincidencia?.id ?? null,

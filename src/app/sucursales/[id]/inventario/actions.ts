@@ -52,6 +52,18 @@ export async function actualizarUnidadInsumo(formData: FormData): Promise<void> 
   revalidatePath("/sucursales/[id]/inventario", "page");
 }
 
+export async function actualizarCategoriaInsumo(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+
+  const insumoId = String(formData.get("insumo_id") ?? "");
+  const categoria = String(formData.get("categoria") ?? "");
+  if (!insumoId || !["medicos", "varios"].includes(categoria)) return;
+
+  await supabase.from("insumos").update({ categoria }).eq("id", insumoId);
+
+  revalidatePath("/sucursales/[id]/inventario", "page");
+}
+
 export type CrearInsumoEstado = { error: string | null };
 
 export async function crearInsumo(
@@ -64,7 +76,7 @@ export async function crearInsumo(
   const categoria = String(formData.get("categoria") ?? "");
   const unidad = String(formData.get("unidad") ?? "").trim() || "unidades";
 
-  if (!nombre || !["general", "carnes", "verduras"].includes(categoria)) {
+  if (!nombre || !["medicos", "varios"].includes(categoria)) {
     return { error: "Completá nombre y categoría." };
   }
 

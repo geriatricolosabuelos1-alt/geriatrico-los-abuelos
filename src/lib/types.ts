@@ -129,7 +129,7 @@ export interface GastoFijoCatalogo {
   activo: boolean;
 }
 
-export type CategoriaInsumo = "general" | "carnes" | "verduras";
+export type CategoriaInsumo = "medicos" | "varios";
 
 export interface Insumo {
   id: string;

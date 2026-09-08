@@ -19,16 +19,15 @@ const CAMPO =
 const ETIQUETA = "mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft";
 
 const ETIQUETA_CATEGORIA: Record<CategoriaInsumo, string> = {
-  general: "General",
-  carnes: "Carnes",
-  verduras: "Verduras",
+  medicos: "Insumos médicos",
+  varios: "Insumos varios",
 };
 
 export function InventarioForm({ sucursalId, insumos }: Props) {
   const accionConSucursal = registrarMovimiento.bind(null, sucursalId);
   const [estado, formAction, enviando] = useActionState(accionConSucursal, ESTADO_INICIAL);
 
-  const categorias: CategoriaInsumo[] = ["general", "carnes", "verduras"];
+  const categorias: CategoriaInsumo[] = ["medicos", "varios"];
 
   return (
     <form
