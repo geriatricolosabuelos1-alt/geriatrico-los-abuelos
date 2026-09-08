@@ -21,6 +21,7 @@ export async function actualizarLegajo(
   const fecha_ingreso = String(formData.get("fecha_ingreso") ?? "") || null;
   const fecha_egreso = String(formData.get("fecha_egreso") ?? "") || null;
   const habitacion = String(formData.get("habitacion") ?? "").trim() || null;
+  const nivel_cuidado = String(formData.get("nivel_cuidado") ?? "").trim() || null;
   const activo = formData.get("activo") === "on";
   const contacto_familiar = String(formData.get("contacto_familiar") ?? "").trim() || null;
   const telefono_familiar = String(formData.get("telefono_familiar") ?? "").trim() || null;
@@ -52,6 +53,7 @@ export async function actualizarLegajo(
       fecha_ingreso,
       fecha_egreso,
       habitacion,
+      nivel_cuidado,
       activo,
       contacto_familiar,
       telefono_familiar,

@@ -22,6 +22,8 @@ export interface Perfil {
   activo: boolean;
 }
 
+export type NivelCuidado = "autovalido" | "asistido" | "dependiente";
+
 export interface Residente {
   id: string;
   sucursal_id: string;
@@ -38,6 +40,7 @@ export interface Residente {
   observaciones_medicas: string | null;
   foto_url: string | null;
   activo: boolean;
+  nivel_cuidado: NivelCuidado | null;
 }
 
 export interface FichaAdministrativa {

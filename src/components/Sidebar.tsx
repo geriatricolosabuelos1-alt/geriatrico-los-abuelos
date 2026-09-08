@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { cerrarSesion } from "@/app/actions";
 import type { CategoriaInsumo, Perfil, RolUsuario, Sucursal } from "@/lib/types";
 
-type Seccion = "residentes" | "cuotas" | "inventario" | "rendiciones" | "gastos";
+type Seccion = "residentes" | "cuotas" | "inventario" | "rendiciones" | "gastos" | "reportes";
 
 type Props = {
   perfil: Perfil;
@@ -35,6 +35,7 @@ const ROLES_RESIDENTES: RolUsuario[] = [
 const ROLES_CUOTAS: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_RENDICIONES: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_GASTOS: RolUsuario[] = ["admin", "administrativo"];
+const ROLES_REPORTES: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_INVENTARIO: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_EMPLEADOS: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_DASHBOARD: RolUsuario[] = ["admin", "administrativo"];
@@ -266,6 +267,17 @@ export async function Sidebar({ perfil, activo }: Props) {
                 activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
                 activo.seccion === "gastos"
+              }
+            />
+          )}
+          {ROLES_REPORTES.includes(perfil.rol) && areaActual === "administrativa" && (
+            <SubTab
+              href={`/sucursales/${s.id}/reportes`}
+              label="Reportes"
+              activo={
+                activo?.tipo === "sucursal" &&
+                activo.sucursalId === s.id &&
+                activo.seccion === "reportes"
               }
             />
           )}

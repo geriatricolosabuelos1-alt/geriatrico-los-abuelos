@@ -135,6 +135,19 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
               defaultValue={residente.fecha_egreso}
             />
             <Campo label="Habitación" name="habitacion" defaultValue={residente.habitacion} />
+            <div>
+              <label className={ETIQUETA}>Nivel de cuidado</label>
+              <select
+                name="nivel_cuidado"
+                defaultValue={residente.nivel_cuidado ?? ""}
+                className={CAMPO}
+              >
+                <option value="">Sin definir</option>
+                <option value="autovalido">Autoválido</option>
+                <option value="asistido">Asistido</option>
+                <option value="dependiente">Dependiente</option>
+              </select>
+            </div>
             <label className="flex items-center gap-2 text-sm text-ink-soft">
               <input
                 type="checkbox"
