@@ -72,7 +72,7 @@ export default async function EvolucionResidentePage({
           <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft">
             Evolución
           </p>
-          <h1 className="font-display text-[32px] font-bold text-ink">
+          <h1 className="font-display text-[32px] font-semibold text-ink">
             {residente.apellido}, {residente.nombre}
           </h1>
         </div>

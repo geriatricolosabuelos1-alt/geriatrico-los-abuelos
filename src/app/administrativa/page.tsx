@@ -67,7 +67,7 @@ export default async function DashboardPage() {
       <Sidebar perfil={perfil!} activo={{ tipo: "dashboard" }} />
 
       <main className="flex-1 px-9 py-8">
-        <h1 className="mb-6 font-display text-[32px] font-bold text-ink">
+        <h1 className="mb-6 font-display text-[32px] font-semibold text-ink">
           Dashboard
         </h1>
 
@@ -81,7 +81,7 @@ export default async function DashboardPage() {
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   Residentes activos
                 </p>
-                <p className="font-display text-3xl font-bold text-ink">
+                <p className="font-display text-3xl font-semibold tabular-nums text-ink">
                   {totalResidentesGlobal}
                 </p>
               </div>
@@ -89,7 +89,7 @@ export default async function DashboardPage() {
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   Pagos pendientes
                 </p>
-                <p className="font-display text-3xl font-bold text-ink">
+                <p className="font-display text-3xl font-semibold tabular-nums text-ink">
                   {totalPagosPendientesGlobal}
                 </p>
               </div>
@@ -119,7 +119,7 @@ export default async function DashboardPage() {
                       <p className="text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
                         Residentes
                       </p>
-                      <p className="font-display text-xl font-bold text-brass">
+                      <p className="font-display text-xl font-semibold tabular-nums text-brass">
                         {r.totalResidentes}
                       </p>
                     </div>
@@ -127,7 +127,7 @@ export default async function DashboardPage() {
                       <p className="text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
                         Pagos pendientes
                       </p>
-                      <p className="font-display text-xl font-bold text-brass">
+                      <p className="font-display text-xl font-semibold tabular-nums text-brass">
                         {r.pagosPendientes}
                       </p>
                     </div>

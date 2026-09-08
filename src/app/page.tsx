@@ -29,7 +29,7 @@ function Tarjeta({
   const contenido = (
     <>
       <span className="text-3xl">{icono}</span>
-      <p className="mt-4 font-display text-lg font-bold text-ink">{titulo}</p>
+      <p className="mt-4 font-display text-lg font-semibold text-ink">{titulo}</p>
       <p className="mt-1 text-sm text-ink-soft">{subtitulo}</p>
       {!habilitada && (
         <span className="mt-4 rounded-full bg-white/5 px-3 py-1 text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
@@ -91,7 +91,7 @@ export default async function SeleccionarAreaPage() {
         <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-brass">
           Los Abuelos
         </p>
-        <h1 className="mt-1 font-display text-[32px] font-bold text-ink">
+        <h1 className="mt-1 font-display text-[32px] font-semibold text-ink">
           ¿A qué área querés entrar?
         </h1>
         <p className="mt-1 text-sm text-ink-soft">{perfil?.nombre_completo}</p>

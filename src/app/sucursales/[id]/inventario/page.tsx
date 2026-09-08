@@ -128,7 +128,7 @@ export default async function InventarioSucursalPage({
             <p className="text-xs font-semibold uppercase tracking-widest text-brass">
               {sucursal!.nombre}
             </p>
-            <h1 className="font-display text-[32px] font-bold text-ink">
+            <h1 className="font-display text-[32px] font-semibold text-ink">
               Inventario{categoria ? ` — ${ETIQUETA_CATEGORIA[categoria]}` : ""}
             </h1>
           </div>

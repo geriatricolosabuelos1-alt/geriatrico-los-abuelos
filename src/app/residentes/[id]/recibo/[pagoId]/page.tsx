@@ -81,7 +81,7 @@ export default async function ReciboPage({
       <div className="w-full max-w-[720px] overflow-hidden rounded-2xl border border-edge bg-card shadow-2xl print:max-w-none print:rounded-none print:border-0 print:bg-white print:shadow-none print:text-black">
         <div className="flex items-start justify-between bg-gradient-to-r from-brass/20 via-brass/5 to-transparent px-8 py-6 print:bg-white print:px-0 print:pb-4">
           <div>
-            <p className="font-display text-2xl font-bold tracking-tight text-ink print:text-black">
+            <p className="font-display text-2xl font-semibold tracking-tight text-ink print:text-black">
               Los Abuelos
             </p>
             <p className="mt-0.5 text-xs uppercase tracking-widest text-ink-soft print:text-neutral-600">
@@ -159,7 +159,7 @@ export default async function ReciboPage({
             <p className="text-xs font-semibold uppercase tracking-widest text-ink print:text-black">
               Total recibido
             </p>
-            <p className="font-display text-3xl font-bold text-brass print:text-black">
+            <p className="font-display text-3xl font-semibold text-brass print:text-black">
               {formatearImporte(importe)}
             </p>
           </div>

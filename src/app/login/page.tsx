@@ -39,7 +39,7 @@ export default function LoginPage() {
         <p className="mb-1 text-[0.65rem] font-semibold uppercase tracking-widest text-brass">
           Suite de cuidado
         </p>
-        <h1 className="mb-1 font-display text-xl font-bold text-ink">
+        <h1 className="mb-1 font-display text-xl font-semibold text-ink">
           Los Abuelos
         </h1>
         <p className="mb-6 text-sm text-ink-soft">Iniciá sesión para continuar</p>

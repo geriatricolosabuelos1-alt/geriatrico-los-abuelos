@@ -64,7 +64,7 @@ export default async function RendicionesSucursalPage({
           <p className="text-xs font-semibold uppercase tracking-widest text-brass">
             {sucursal!.nombre}
           </p>
-          <h1 className="font-display text-[32px] font-bold text-ink">Rendiciones</h1>
+          <h1 className="font-display text-[32px] font-semibold text-ink">Rendiciones</h1>
         </div>
 
         <RendicionForm sucursalId={id} />
@@ -82,7 +82,7 @@ export default async function RendicionesSucursalPage({
                   rel="noopener noreferrer"
                   className="flex h-36 w-full flex-col items-center justify-center gap-1 bg-panel-deep text-brass"
                 >
-                  <span className="font-display text-2xl font-bold">PDF</span>
+                  <span className="font-display text-2xl font-semibold">PDF</span>
                   <span className="text-xs text-ink-soft">Ver documento</span>
                 </a>
               ) : (

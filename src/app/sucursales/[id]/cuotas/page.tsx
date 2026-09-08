@@ -130,7 +130,7 @@ export default async function CuotasSucursalPage({
               <p className="text-xs font-semibold uppercase tracking-widest text-brass">
                 {sucursal.nombre}
               </p>
-              <h1 className="font-display text-[32px] font-bold text-ink">Aranceles</h1>
+              <h1 className="font-display text-[32px] font-semibold text-ink">Aranceles</h1>
             </div>
             <p className="rounded-2xl border border-edge bg-card p-6 text-center text-ink-soft">
               No hay residentes activos en esta sucursal.

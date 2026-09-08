@@ -92,7 +92,7 @@ export default async function InformeDeudoresPage({
       <div className="w-full max-w-[860px] overflow-hidden rounded-2xl border border-edge bg-card p-8 shadow-2xl print:max-w-none print:rounded-none print:border-0 print:bg-white print:p-0 print:text-black print:shadow-none">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <p className="font-display text-xl font-bold text-ink print:text-black">Los Abuelos</p>
+            <p className="font-display text-xl font-semibold text-ink print:text-black">Los Abuelos</p>
             <p className="text-xs uppercase tracking-widest text-ink-soft print:text-neutral-600">
               Informe de deudores · {sucursal.nombre}
             </p>

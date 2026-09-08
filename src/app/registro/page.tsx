@@ -50,7 +50,7 @@ export default function RegistroPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-panel px-4">
       <div className="w-full max-w-sm rounded-2xl border border-edge bg-card p-8">
-        <h1 className="mb-1 font-display text-xl font-bold text-ink">
+        <h1 className="mb-1 font-display text-xl font-semibold text-ink">
           Crear cuenta
         </h1>
         <p className="mb-6 text-sm text-ink-soft">

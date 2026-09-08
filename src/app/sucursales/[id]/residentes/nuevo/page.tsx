@@ -46,7 +46,7 @@ export default async function NuevoResidentePage({
           <p className="text-xs font-semibold uppercase tracking-widest text-brass">
             {sucursal.nombre}
           </p>
-          <h1 className="font-display text-[32px] font-bold text-ink">Nuevo residente</h1>
+          <h1 className="font-display text-[32px] font-semibold text-ink">Nuevo residente</h1>
         </div>
 
         <NuevoResidenteForm sucursalId={id} />

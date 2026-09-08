@@ -58,7 +58,7 @@ export default async function CargaInicialPage({
           <p className="text-xs font-semibold uppercase tracking-widest text-brass">
             {sucursal!.nombre}
           </p>
-          <h1 className="font-display text-[32px] font-bold text-ink">Carga inicial de stock</h1>
+          <h1 className="font-display text-[32px] font-semibold text-ink">Carga inicial de stock</h1>
           <p className="mt-1 text-sm text-ink-soft">
             Cargá la cantidad que ya tenés de cada insumo. Se registra como ingreso sin precio,
             para no afectar el costo histórico.

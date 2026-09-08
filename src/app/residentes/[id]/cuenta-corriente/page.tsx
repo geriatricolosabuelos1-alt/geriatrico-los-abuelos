@@ -119,7 +119,7 @@ export default async function CuentaCorrientePage({
 
       <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-9 py-8 print:max-w-none print:space-y-4 print:px-0 print:py-0">
         <div className="hidden print:block">
-          <p className="font-display text-lg font-bold text-black">Los Abuelos</p>
+          <p className="font-display text-lg font-semibold text-black">Los Abuelos</p>
           <p className="text-xs uppercase tracking-widest text-neutral-600">
             Informe de cuenta corriente
           </p>
@@ -133,7 +133,7 @@ export default async function CuentaCorrientePage({
             <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft print:text-neutral-600">
               Cuenta corriente
             </p>
-            <h1 className="font-display text-2xl font-bold text-ink print:text-black">
+            <h1 className="font-display text-2xl font-semibold text-ink print:text-black">
               {residente.apellido}, {residente.nombre}
             </h1>
           </div>
