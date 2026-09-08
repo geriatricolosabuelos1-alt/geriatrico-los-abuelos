@@ -111,7 +111,7 @@ export function AccionesPago({
             className="rounded-md border border-edge bg-panel-deep px-1.5 py-1 text-xs text-ink"
           />
         </div>
-        {error && <p className="text-[0.65rem] text-red-400">{error}</p>}
+        {error && <p className="text-[0.65rem] text-red-700">{error}</p>}
         <div className="flex gap-2">
           <button
             type="button"
@@ -151,7 +151,7 @@ export function AccionesPago({
           className="w-[84px] shrink-0 rounded-md border border-edge bg-panel-deep px-1 py-1 text-[11px] text-ink"
         >
           {METODOS.map((m) => (
-            <option key={m.valor} value={m.valor} style={{ backgroundColor: "#0b0a14" }}>
+            <option key={m.valor} value={m.valor} style={{ backgroundColor: "var(--color-card)" }}>
               {m.etiqueta}
             </option>
           ))}
@@ -202,7 +202,7 @@ export function AccionesPago({
       <button
         type="button"
         onClick={borrar}
-        className="text-xs text-red-400 underline decoration-red-400/40 underline-offset-2 hover:text-red-300"
+        className="text-xs text-red-700 underline decoration-red-600/40 underline-offset-2 hover:text-red-500"
       >
         Eliminar
       </button>

@@ -80,11 +80,11 @@ function FilaEditable({ insumo }: { insumo: FilaInsumo }) {
       </td>
       <td className="px-4 py-3 text-ink-soft">{insumo.stockInicial}</td>
       <td className="px-4 py-3 text-brass">+{insumo.ingreso}</td>
-      <td className="px-4 py-3 text-red-400">-{insumo.egreso}</td>
+      <td className="px-4 py-3 text-red-700">-{insumo.egreso}</td>
       <td className="px-4 py-3">
         <span
           className={
-            insumo.stockFinal <= 0 ? "font-semibold text-red-400" : "font-semibold text-brass"
+            insumo.stockFinal <= 0 ? "font-semibold text-red-700" : "font-semibold text-brass"
           }
         >
           {insumo.stockFinal}
@@ -104,7 +104,7 @@ function FilaEditable({ insumo }: { insumo: FilaInsumo }) {
       </td>
       <td className="px-4 py-3">
         {tieneAlerta(insumo) && (
-          <span className="rounded-full bg-red-400/15 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-red-400">
+          <span className="rounded-full bg-red-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-red-700">
             Comprar
           </span>
         )}
@@ -124,7 +124,7 @@ function FilaEditable({ insumo }: { insumo: FilaInsumo }) {
         <button
           type="button"
           onClick={manejarEliminar}
-          className="text-xs text-red-400 underline decoration-red-400/40 underline-offset-2 hover:text-red-300"
+          className="text-xs text-red-700 underline decoration-red-600/40 underline-offset-2 hover:text-red-500"
         >
           Eliminar
         </button>
@@ -184,7 +184,7 @@ function FormularioNuevoInsumo({ onCreado }: { onCreado: () => void }) {
         </label>
         <input name="unidad" className={CAMPO} placeholder="unidades" />
       </div>
-      {estado.error && <p className="text-xs text-red-400">{estado.error}</p>}
+      {estado.error && <p className="text-xs text-red-700">{estado.error}</p>}
       <button
         type="submit"
         disabled={enviando}
@@ -241,7 +241,7 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
             </p>
             <div
               className="max-h-[420px] overflow-y-auto border border-edge"
-              style={{ background: "rgb(255 255 255 / 0.05)" }}
+              style={{ background: "var(--color-card)" }}
             >
               <table className="w-full text-left text-sm">
                 <thead className="sticky top-0 border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
@@ -271,12 +271,12 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
                         <td className="px-4 py-3 text-ink-soft">{i.unidad}</td>
                         <td className="px-4 py-3 text-ink-soft">{i.stockInicial}</td>
                         <td className="px-4 py-3 text-brass">+{i.ingreso}</td>
-                        <td className="px-4 py-3 text-red-400">-{i.egreso}</td>
+                        <td className="px-4 py-3 text-red-700">-{i.egreso}</td>
                         <td className="px-4 py-3">
                           <span
                             className={
                               i.stockFinal <= 0
-                                ? "font-semibold text-red-400"
+                                ? "font-semibold text-red-700"
                                 : "font-semibold text-brass"
                             }
                           >
@@ -286,7 +286,7 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
                         <td className="px-4 py-3 text-ink-soft">{i.stockMinimo}</td>
                         <td className="px-4 py-3">
                           {tieneAlerta(i) && (
-                            <span className="rounded-full bg-red-400/15 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-red-400">
+                            <span className="rounded-full bg-red-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-red-700">
                               Comprar
                             </span>
                           )}

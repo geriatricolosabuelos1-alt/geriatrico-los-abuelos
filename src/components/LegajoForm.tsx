@@ -202,7 +202,7 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
         <DocumentosResidente residenteId={residente.id} />
       </div>
 
-      {estado.error && <p className="text-base text-red-400">{estado.error}</p>}
+      {estado.error && <p className="text-base text-red-700">{estado.error}</p>}
 
       <button
         type="submit"

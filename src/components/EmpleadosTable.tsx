@@ -123,7 +123,7 @@ function FilaEdicion({
             Activo
           </label>
 
-          {error && <p className="col-span-full text-xs text-red-400">{error}</p>}
+          {error && <p className="col-span-full text-xs text-red-700">{error}</p>}
 
           <div className="col-span-full flex gap-2">
             <button
@@ -256,7 +256,7 @@ export function EmpleadosTable({ empleados, sucursales, puedeBorrar }: Props) {
                     {puedeBorrar && (
                       <button
                         onClick={() => manejarBorrar(e.id, e.nombre_completo)}
-                        className="text-xs text-red-400 underline decoration-red-400/40 underline-offset-2 hover:text-red-300"
+                        className="text-xs text-red-700 underline decoration-red-600/40 underline-offset-2 hover:text-red-500"
                       >
                         Eliminar
                       </button>

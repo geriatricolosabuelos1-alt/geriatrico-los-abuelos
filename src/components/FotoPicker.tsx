@@ -96,7 +96,7 @@ export function FotoPicker({ residenteId, sucursalId, fotoActual }: Props) {
         {foto ? "Cambiar foto" : "Elegir foto"}
       </button>
 
-      {error && <p className="text-xs text-red-400">{error}</p>}
+      {error && <p className="text-xs text-red-700">{error}</p>}
 
       {abierto && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6">
@@ -130,7 +130,7 @@ export function FotoPicker({ residenteId, sucursalId, fotoActual }: Props) {
                 <button
                   type="button"
                   onClick={quitarFoto}
-                  className="text-xs text-red-400 underline decoration-red-400/40 underline-offset-2 hover:text-red-300"
+                  className="text-xs text-red-700 underline decoration-red-600/40 underline-offset-2 hover:text-red-500"
                 >
                   Quitar foto actual
                 </button>

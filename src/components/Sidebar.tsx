@@ -59,16 +59,6 @@ const ETIQUETA_ROL: Record<string, string> = {
   kinesiologo: "Kinesiólogo/a",
 };
 
-const PILDORA_RGB: Record<string, string> = {
-  Dashboard: "56 189 248",
-  Residentes: "244 114 182",
-  Aranceles: "196 181 253",
-  Inventario: "45 212 191",
-  Rendiciones: "252 211 77",
-  Gastos: "110 231 183",
-  Empleados: "251 146 60",
-};
-
 const PILDORA_ICONO: Record<string, string> = {
   Dashboard: "📊",
   Residentes: "❤️",
@@ -79,29 +69,32 @@ const PILDORA_ICONO: Record<string, string> = {
   Empleados: "👥",
 };
 
-function Pildora({
+function NavRow({
+  href,
   label,
   activo,
 }: {
+  href: string;
   label: string;
   activo: boolean;
 }) {
-  const rgb = PILDORA_RGB[label] ?? "167 139 250";
   const icono = PILDORA_ICONO[label];
   return (
-    <span
-      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-karla text-[0.8rem] font-semibold transition-all duration-150"
-      style={{
-        backgroundColor: `rgb(${rgb} / ${activo ? 0.22 : 0.13})`,
-        color: `rgb(${rgb})`,
-        boxShadow: activo
-          ? `0 0 0 1px rgb(${rgb} / 0.6), 0 0 16px rgb(${rgb} / 0.5)`
-          : `0 0 0 1px rgb(${rgb} / 0.22)`,
-      }}
+    <Link
+      href={href}
+      className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[0.83rem] font-medium transition-colors ${
+        activo
+          ? "bg-brass text-btn-ink"
+          : "text-ink-soft hover:bg-panel-deep hover:text-ink"
+      }`}
     >
-      {icono && <span aria-hidden="true">{icono}</span>}
+      {icono && (
+        <span aria-hidden="true" className="text-[0.9rem] leading-none">
+          {icono}
+        </span>
+      )}
       {label}
-    </span>
+    </Link>
   );
 }
 
@@ -114,11 +107,7 @@ function TabPrincipal({
   label: string;
   activo: boolean;
 }) {
-  return (
-    <Link href={href} className="block hover:brightness-125">
-      <Pildora label={label} activo={activo} />
-    </Link>
-  );
+  return <NavRow href={href} label={label} activo={activo} />;
 }
 
 function SubTab({
@@ -130,11 +119,7 @@ function SubTab({
   label: string;
   activo: boolean;
 }) {
-  return (
-    <Link href={href} className="block hover:brightness-125">
-      <Pildora label={label} activo={activo} />
-    </Link>
-  );
+  return <NavRow href={href} label={label} activo={activo} />;
 }
 
 function SubSubTab({
@@ -149,7 +134,7 @@ function SubSubTab({
   return (
     <Link
       href={href}
-      className={`block rounded-md py-1 pl-10 pr-2.5 font-karla text-[0.75rem] ${
+      className={`block rounded-md py-1.5 pl-10 pr-2.5 text-[0.75rem] ${
         activo ? "font-semibold text-brass" : "text-ink-soft hover:text-ink"
       }`}
     >
@@ -178,20 +163,23 @@ export async function Sidebar({ perfil, activo }: Props) {
     activo?.tipo === "sucursal" && activo.area === "medicina" ? "medicina" : "administrativa";
 
   return (
-    <aside className="flex w-56 flex-shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-edge bg-panel-deep p-4">
-      <div className="mb-6 px-1">
-        <Link href="/" className="block">
-          <p className="font-display text-base font-bold tracking-tight text-ink">
-            Los Abuelos
-          </p>
-          <p className="mt-1 text-[0.65rem] font-medium uppercase tracking-widest text-brass">
-            Suite de cuidado
-          </p>
+    <aside className="flex w-60 flex-shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-edge bg-panel-deep p-4">
+      <div className="mb-6 flex items-center gap-3 px-1">
+        <Link href="/" className="flex items-center gap-3">
+          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-brass font-display text-[0.9rem] font-bold text-btn-ink">
+            LA
+          </span>
+          <span>
+            <p className="font-display text-[0.95rem] font-bold leading-tight tracking-tight text-ink">
+              Los Abuelos
+            </p>
+            <p className="text-[0.7rem] text-ink-soft">Residencia geriátrica</p>
+          </span>
         </Link>
       </div>
 
       {puedeAdministrativa && puedeMedicina && (
-        <div className="mb-4 flex rounded-lg border border-edge bg-panel-deep p-1 text-xs font-medium">
+        <div className="mb-4 flex rounded-lg border border-edge bg-card p-1 text-xs font-medium">
           <Link
             href="/administrativa"
             className={`flex-1 rounded-md py-1.5 text-center ${
@@ -310,12 +298,26 @@ export async function Sidebar({ perfil, activo }: Props) {
         </div>
       )}
 
-      <div className="mt-auto border-t border-edge pt-4 text-xs leading-tight text-ink-soft">
-        <p className="font-display font-semibold text-ink">
-          {perfil.nombre_completo}
-        </p>
-        <p>{ETIQUETA_ROL[perfil.rol] ?? perfil.rol}</p>
-        <form action={cerrarSesion} className="mt-3">
+      <div className="mt-auto flex flex-col gap-3 border-t border-edge pt-4">
+        <div className="flex items-center gap-2.5 px-1">
+          <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-brass-soft text-[0.7rem] font-bold text-brass">
+            {perfil.nombre_completo
+              .split(" ")
+              .slice(0, 2)
+              .map((p) => p[0])
+              .join("")
+              .toUpperCase()}
+          </span>
+          <span className="min-w-0 leading-tight">
+            <p className="truncate text-[0.8rem] font-semibold text-ink">
+              {perfil.nombre_completo}
+            </p>
+            <p className="text-[0.7rem] text-ink-soft">
+              {ETIQUETA_ROL[perfil.rol] ?? perfil.rol}
+            </p>
+          </span>
+        </div>
+        <form action={cerrarSesion}>
           <button
             type="submit"
             className="w-full rounded-lg border border-edge px-3 py-1.5 text-left text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"

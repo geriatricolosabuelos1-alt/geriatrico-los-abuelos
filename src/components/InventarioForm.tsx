@@ -126,7 +126,7 @@ export function InventarioForm({ sucursalId, insumos }: Props) {
         </button>
       </div>
 
-      {estado.error && <p className="text-sm text-red-400">{estado.error}</p>}
+      {estado.error && <p className="text-sm text-red-700">{estado.error}</p>}
     </form>
   );
 }

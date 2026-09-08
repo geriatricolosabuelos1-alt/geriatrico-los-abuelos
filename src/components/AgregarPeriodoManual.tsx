@@ -101,7 +101,7 @@ export function AgregarPeriodoManual({ residenteId, sucursalId }: Props) {
         <input type="number" step="0.01" name="monto" required className={CAMPO} />
       </div>
 
-      {estado.error && <p className="text-sm text-red-400">{estado.error}</p>}
+      {estado.error && <p className="text-sm text-red-700">{estado.error}</p>}
 
       <button
         type="submit"

@@ -66,7 +66,7 @@ export function HistorialPagos({ montoTotal, montoPagado, historial }: Props) {
             <td className="px-3 py-1 text-ink-soft whitespace-nowrap print:text-neutral-700">
               {f.metodo_pago ? ETIQUETA_METODO[f.metodo_pago] : "—"}
             </td>
-            <td className="px-3 py-1 font-medium text-amber-400 print:text-black">
+            <td className="px-3 py-1 font-medium text-amber-700 print:text-black">
               {f.restante > 0 ? `$${f.restante.toLocaleString("es-AR")}` : "—"}
             </td>
           </tr>

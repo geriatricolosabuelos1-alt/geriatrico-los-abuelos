@@ -102,7 +102,7 @@ function FilaEdicion({
               Cancelar
             </button>
           </div>
-          {error && <p className="col-span-full text-xs text-red-400">{error}</p>}
+          {error && <p className="col-span-full text-xs text-red-700">{error}</p>}
         </form>
       </td>
     </tr>
@@ -152,7 +152,7 @@ export function GastosVariables({ sucursalId, gastos }: Props) {
           <input name="descripcion" className={CAMPO} placeholder="Opcional" />
         </div>
 
-        {estado.error && <p className="col-span-full text-sm text-red-400">{estado.error}</p>}
+        {estado.error && <p className="col-span-full text-sm text-red-700">{estado.error}</p>}
 
         <div className="col-span-full">
           <button
@@ -208,7 +208,7 @@ export function GastosVariables({ sucursalId, gastos }: Props) {
                     <button
                       onClick={() => manejarEliminar(g.id)}
                       disabled={borrandoId === g.id}
-                      className="text-xs text-red-400 underline decoration-red-400/40 underline-offset-2 hover:text-red-300 disabled:opacity-50"
+                      className="text-xs text-red-700 underline decoration-red-600/40 underline-offset-2 hover:text-red-500 disabled:opacity-50"
                     >
                       Eliminar
                     </button>

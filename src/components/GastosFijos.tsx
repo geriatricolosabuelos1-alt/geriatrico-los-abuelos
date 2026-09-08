@@ -222,7 +222,7 @@ export function GastosFijos({ sucursalId, mes, anio, catalogo, gastosDelMes }: P
               placeholder="Opcional"
             />
           </div>
-          {estado.error && <p className="text-xs text-red-400">{estado.error}</p>}
+          {estado.error && <p className="text-xs text-red-700">{estado.error}</p>}
           <button
             type="submit"
             disabled={enviandoNuevo}
@@ -283,14 +283,14 @@ export function GastosFijos({ sucursalId, mes, anio, catalogo, gastosDelMes }: P
                       {gastosPorCatalogoId.get(c.id) && (
                         <button
                           onClick={() => manejarEliminar(gastosPorCatalogoId.get(c.id)!.id)}
-                          className="mr-3 text-xs text-red-400 underline decoration-red-400/40 underline-offset-2 hover:text-red-300"
+                          className="mr-3 text-xs text-red-700 underline decoration-red-600/40 underline-offset-2 hover:text-red-500"
                         >
                           Eliminar de este mes
                         </button>
                       )}
                       <button
                         onClick={() => manejarDesactivarCatalogo(c.id, c.nombre)}
-                        className="text-xs text-red-400 underline decoration-red-400/40 underline-offset-2 hover:text-red-300"
+                        className="text-xs text-red-700 underline decoration-red-600/40 underline-offset-2 hover:text-red-500"
                       >
                         Dar de baja
                       </button>

@@ -97,7 +97,7 @@ export function EditorArancel({
         >
           {enviando ? "Guardando..." : "Guardar"}
         </button>
-        {estado.error && <p className="text-xs text-red-400">{estado.error}</p>}
+        {estado.error && <p className="text-xs text-red-700">{estado.error}</p>}
       </div>
     </form>
   );

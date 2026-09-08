@@ -32,7 +32,7 @@ const ETIQUETA_ESTADO: Record<FilaPago["estado"], string> = {
 
 const CLASE_ESTADO: Record<FilaPago["estado"], string> = {
   pendiente: "bg-edge text-ink-soft",
-  parcial: "bg-amber-500/15 text-amber-400",
+  parcial: "bg-amber-100 text-amber-700",
   pagado: "bg-brass-soft text-brass",
 };
 
@@ -211,7 +211,7 @@ export default async function CuentaCorrientePage({
                     </td>
                     <td className="px-3 py-2.5 text-ink-soft print:text-neutral-700">
                       {atraso > 0 ? (
-                        <span className="text-red-400 print:text-black">{atraso} días</span>
+                        <span className="text-red-700 print:text-black">{atraso} días</span>
                       ) : (
                         "—"
                       )}

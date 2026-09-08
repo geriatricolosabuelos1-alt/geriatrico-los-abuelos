@@ -40,7 +40,7 @@ export function GenerarPeriodoForm({ sucursalId }: Props) {
           {enviando ? "Generando..." : "Generar período"}
         </button>
       </div>
-      {estado.error && <p className="text-xs text-red-400">{estado.error}</p>}
+      {estado.error && <p className="text-xs text-red-700">{estado.error}</p>}
       {!estado.error && (estado.generados > 0 || estado.omitidos > 0) && (
         <p className="text-xs text-ink-soft">
           {estado.generados} generado(s), {estado.omitidos} ya existían.

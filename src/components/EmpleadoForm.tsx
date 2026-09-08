@@ -92,7 +92,7 @@ export function EmpleadoForm({ sucursales }: Props) {
       </div>
 
       {estado.error && (
-        <p className="col-span-full text-sm text-red-400">{estado.error}</p>
+        <p className="col-span-full text-sm text-red-700">{estado.error}</p>
       )}
 
       <div className="col-span-full">

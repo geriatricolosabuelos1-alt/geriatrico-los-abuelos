@@ -234,7 +234,7 @@ export function ResidentesTable({
                     {puedeBorrar && (
                       <button
                         onClick={() => manejarBorrar(r.id, `${r.nombre} ${r.apellido}`)}
-                        className="text-xs text-red-400 underline decoration-red-400/40 underline-offset-2 hover:text-red-300"
+                        className="text-xs text-red-700 underline decoration-red-600/40 underline-offset-2 hover:text-red-500"
                       >
                         Eliminar
                       </button>

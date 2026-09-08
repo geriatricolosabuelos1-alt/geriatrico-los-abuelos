@@ -78,7 +78,7 @@ export function DocumentosResidente({ residenteId }: Props) {
     <section className="rounded-2xl border border-edge bg-card p-5 lg:col-span-2 xl:col-span-3">
       <h2 className="mb-3 font-display text-base font-semibold text-ink">Documentos</h2>
 
-      {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
+      {error && <p className="mb-3 text-sm text-red-700">{error}</p>}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {TIPOS.map((t) => {
@@ -128,7 +128,7 @@ export function DocumentosResidente({ residenteId }: Props) {
                       <button
                         type="button"
                         onClick={() => manejarBorrar(doc)}
-                        className="flex-shrink-0 text-red-400 hover:text-red-300"
+                        className="flex-shrink-0 text-red-700 hover:text-red-500"
                       >
                         Eliminar
                       </button>

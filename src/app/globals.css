@@ -1,39 +1,59 @@
 @import "tailwindcss";
 
 @theme inline {
-  --font-sans: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-public), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-karla: var(--font-public), ui-sans-serif, system-ui, sans-serif;
 
-  --color-panel: #0b0a14;
-  --color-panel-deep: rgb(255 255 255 / 0.04);
-  --color-card: rgb(255 255 255 / 0.05);
-  --color-edge: rgb(255 255 255 / 0.1);
-  --color-ink: #eceafc;
-  --color-ink-soft: #8783a8;
-  --color-brass: #67e8f9;
-  --color-brass-soft: rgb(103 232 249 / 0.15);
-  --color-tab: rgb(167 139 250 / 0.18);
-  --color-btn-ink: #0b0a14;
+  --color-panel: #efe7d7;
+  --color-panel-deep: #f2ead9;
+  --color-card: #fffdf8;
+  --color-edge: #e3d6bc;
+  --color-ink: #211c15;
+  --color-ink-soft: #786c58;
+  --color-brass: #1c5c4c;
+  --color-brass-soft: rgb(28 92 76 / 0.14);
+  --color-tab: rgb(28 92 76 / 0.14);
+  --color-btn-ink: #f6f1e4;
 }
 
-.bg-panel {
-  background:
-    radial-gradient(ellipse 900px 600px at 15% 0%, rgb(124 92 255 / 0.35), transparent 60%),
-    radial-gradient(ellipse 750px 600px at 90% 20%, rgb(45 212 191 / 0.22), transparent 55%),
-    radial-gradient(ellipse 1000px 750px at 50% 100%, rgb(255 90 150 / 0.15), transparent 60%),
-    var(--color-panel);
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-panel: #14180f;
+    --color-panel-deep: #191f17;
+    --color-card: #1e251c;
+    --color-edge: #2e362a;
+    --color-ink: #ede6d6;
+    --color-ink-soft: #a79c87;
+    --color-brass: #59c29e;
+    --color-brass-soft: rgb(89 194 158 / 0.16);
+    --color-tab: rgb(89 194 158 / 0.16);
+    --color-btn-ink: #0f1a15;
+  }
 }
 
-.bg-card,
-.bg-panel-deep {
-  backdrop-filter: blur(16px);
+:root[data-theme="dark"] {
+  --color-panel: #14180f;
+  --color-panel-deep: #191f17;
+  --color-card: #1e251c;
+  --color-edge: #2e362a;
+  --color-ink: #ede6d6;
+  --color-ink-soft: #a79c87;
+  --color-brass: #59c29e;
+  --color-brass-soft: rgb(89 194 158 / 0.16);
+  --color-tab: rgb(89 194 158 / 0.16);
+  --color-btn-ink: #0f1a15;
+}
+
+body {
+  background: var(--color-panel);
 }
 
 select {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 select option {
-  background-color: var(--color-panel);
+  background-color: var(--color-card);
   color: var(--color-ink);
 }

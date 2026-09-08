@@ -72,7 +72,7 @@ export function CargaInicialForm({ sucursalId, insumos }: Props) {
       </div>
 
       {estado.error && (
-        <p className="rounded-lg border border-red-400/30 bg-red-400/10 px-4 py-2 text-sm text-red-400">
+        <p className="rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700">
           {estado.error}
         </p>
       )}
@@ -88,7 +88,7 @@ export function CargaInicialForm({ sucursalId, insumos }: Props) {
             </p>
             <div
               className="max-h-[420px] overflow-y-auto border border-edge"
-              style={{ background: "rgb(255 255 255 / 0.05)" }}
+              style={{ background: "var(--color-card)" }}
             >
               <table className="w-full text-left text-sm">
                 <thead className="sticky top-0 border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">

@@ -144,7 +144,7 @@ export function RendicionForm({ sucursalId }: Props) {
       {ocrIntentado && !leyendo && (
         <div className="col-span-full rounded-lg border border-edge bg-panel-deep p-3">
           {ocrError ? (
-            <p className="text-xs text-red-400">{ocrError}</p>
+            <p className="text-xs text-red-700">{ocrError}</p>
           ) : (
             <>
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-soft">
@@ -252,7 +252,7 @@ export function RendicionForm({ sucursalId }: Props) {
       </div>
 
       {estado.error && (
-        <p className="col-span-full text-sm text-red-400">{estado.error}</p>
+        <p className="col-span-full text-sm text-red-700">{estado.error}</p>
       )}
 
       <div className="col-span-full">

@@ -38,7 +38,7 @@ export function NotaEvolucionForm({ residenteId, mostrarSelectorTipo }: Props) {
         <textarea name="contenido" required rows={3} className={CAMPO} />
       </div>
 
-      {estado.error && <p className="text-sm text-red-400">{estado.error}</p>}
+      {estado.error && <p className="text-sm text-red-700">{estado.error}</p>}
 
       <button
         type="submit"

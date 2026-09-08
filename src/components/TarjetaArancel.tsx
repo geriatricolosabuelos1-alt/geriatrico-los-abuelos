@@ -70,7 +70,7 @@ export function TarjetaArancel({ residente, obraSocial, resumen }: Props) {
       </Dato>
 
       <Dato etiqueta="Pendientes">
-        <span className={resumen.cantidadPendientes > 0 ? "text-red-400" : "text-ink"}>
+        <span className={resumen.cantidadPendientes > 0 ? "text-red-700" : "text-ink"}>
           {resumen.cantidadPendientes > 0 ? `${resumen.cantidadPendientes}` : "Al día"}
         </span>
       </Dato>
@@ -82,7 +82,7 @@ export function TarjetaArancel({ residente, obraSocial, resumen }: Props) {
       </Dato>
 
       <Dato etiqueta="Mora">
-        <span className={resumen.totalMora > 0 ? "text-red-400" : "text-ink"}>
+        <span className={resumen.totalMora > 0 ? "text-red-700" : "text-ink"}>
           {resumen.totalMora > 0 ? formatearMonto(resumen.totalMora) : "—"}
         </span>
       </Dato>
