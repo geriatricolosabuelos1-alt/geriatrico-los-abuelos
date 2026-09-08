@@ -147,6 +147,8 @@ export interface MovimientoInventario {
   insumo_id: string;
   tipo: TipoMovimiento;
   cantidad: number;
+  precio: number | null;
+  importe_total: number | null;
   fecha: string;
 }
 

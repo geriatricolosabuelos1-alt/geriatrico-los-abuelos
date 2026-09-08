@@ -19,6 +19,8 @@ export async function registrarMovimiento(
   const insumo_id = String(formData.get("insumo_id") ?? "");
   const tipo = String(formData.get("tipo") ?? "");
   const cantidad = Number(formData.get("cantidad") ?? 0);
+  const precioRaw = String(formData.get("precio") ?? "");
+  const precio = precioRaw ? Number(precioRaw) : null;
 
   if (!insumo_id || (tipo !== "entrada" && tipo !== "salida") || !cantidad || cantidad <= 0) {
     return { error: "Completá insumo, tipo y una cantidad mayor a cero." };
@@ -29,6 +31,8 @@ export async function registrarMovimiento(
     insumo_id,
     tipo,
     cantidad,
+    precio,
+    importe_total: precio ? precio * cantidad : null,
     registrado_por: user?.id,
   });
 

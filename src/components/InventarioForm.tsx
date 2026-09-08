@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import {
   registrarMovimiento,
   type RegistrarMovimientoEstado,
@@ -23,59 +23,100 @@ const ETIQUETA_CATEGORIA: Record<CategoriaInsumo, string> = {
   varios: "Insumos varios",
 };
 
+const FORMATO_MONEDA = new Intl.NumberFormat("es-AR", {
+  style: "currency",
+  currency: "ARS",
+});
+
 export function InventarioForm({ sucursalId, insumos }: Props) {
   const accionConSucursal = registrarMovimiento.bind(null, sucursalId);
   const [estado, formAction, enviando] = useActionState(accionConSucursal, ESTADO_INICIAL);
 
+  const [precio, setPrecio] = useState("");
+  const [cantidad, setCantidad] = useState("");
+
   const categorias: CategoriaInsumo[] = ["medicos", "varios"];
+
+  const importeTotal = useMemo(() => {
+    const p = Number(precio);
+    const c = Number(cantidad);
+    if (!p || !c) return 0;
+    return p * c;
+  }, [precio, cantidad]);
 
   return (
     <form
       action={formAction}
-      className="grid grid-cols-1 gap-4 rounded-2xl border border-edge bg-card p-5 sm:grid-cols-3"
+      className="flex flex-col gap-4 rounded-2xl border border-edge bg-card p-5"
     >
-      <h2 className="col-span-full font-display text-sm font-semibold text-ink">
-        Registrar movimiento
-      </h2>
+      <h2 className="font-display text-sm font-semibold text-ink">Registrar movimiento</h2>
 
-      <div className="sm:col-span-2">
-        <label className={ETIQUETA}>Insumo</label>
-        <select name="insumo_id" required className={CAMPO}>
-          <option value="">Seleccionar...</option>
-          {categorias.map((cat) => {
-            const items = insumos.filter((i) => i.categoria === cat);
-            if (items.length === 0) return null;
-            return (
-              <optgroup key={cat} label={ETIQUETA_CATEGORIA[cat]}>
-                {items.map((i) => (
-                  <option key={i.id} value={i.id}>
-                    {i.nombre}
-                  </option>
-                ))}
-              </optgroup>
-            );
-          })}
-        </select>
-      </div>
+      <div className="flex flex-wrap items-end gap-3 overflow-x-auto">
+        <div className="min-w-[220px] flex-1">
+          <label className={ETIQUETA}>Insumo</label>
+          <select name="insumo_id" required className={CAMPO}>
+            <option value="">Seleccionar...</option>
+            {categorias.map((cat) => {
+              const items = insumos.filter((i) => i.categoria === cat);
+              if (items.length === 0) return null;
+              return (
+                <optgroup key={cat} label={ETIQUETA_CATEGORIA[cat]}>
+                  {items.map((i) => (
+                    <option key={i.id} value={i.id}>
+                      {i.nombre}
+                    </option>
+                  ))}
+                </optgroup>
+              );
+            })}
+          </select>
+        </div>
 
-      <div>
-        <label className={ETIQUETA}>Tipo</label>
-        <select name="tipo" required className={CAMPO}>
-          <option value="entrada">Entrada</option>
-          <option value="salida">Salida</option>
-        </select>
-      </div>
+        <div className="w-32">
+          <label className={ETIQUETA}>Tipo</label>
+          <select name="tipo" required className={CAMPO}>
+            <option value="entrada">Ingreso</option>
+            <option value="salida">Salida</option>
+          </select>
+        </div>
 
-      <div>
-        <label className={ETIQUETA}>Cantidad</label>
-        <input type="number" step="0.01" name="cantidad" required className={CAMPO} />
-      </div>
+        <div className="w-32">
+          <label className={ETIQUETA}>Precio</label>
+          <input
+            type="number"
+            step="0.01"
+            min="0"
+            name="precio"
+            value={precio}
+            onChange={(e) => setPrecio(e.target.value)}
+            className={CAMPO}
+          />
+        </div>
 
-      {estado.error && (
-        <p className="col-span-full text-sm text-red-400">{estado.error}</p>
-      )}
+        <div className="w-28">
+          <label className={ETIQUETA}>Cantidad</label>
+          <input
+            type="number"
+            step="0.01"
+            name="cantidad"
+            required
+            value={cantidad}
+            onChange={(e) => setCantidad(e.target.value)}
+            className={CAMPO}
+          />
+        </div>
 
-      <div className="col-span-full">
+        <div className="w-36">
+          <label className={ETIQUETA}>Importe total</label>
+          <input
+            type="text"
+            readOnly
+            tabIndex={-1}
+            value={FORMATO_MONEDA.format(importeTotal)}
+            className={`${CAMPO} cursor-default text-ink-soft`}
+          />
+        </div>
+
         <button
           type="submit"
           disabled={enviando}
@@ -84,6 +125,8 @@ export function InventarioForm({ sucursalId, insumos }: Props) {
           {enviando ? "Guardando..." : "Registrar"}
         </button>
       </div>
+
+      {estado.error && <p className="text-sm text-red-400">{estado.error}</p>}
     </form>
   );
 }
