@@ -68,6 +68,16 @@ const PILDORA_RGB: Record<string, string> = {
   Empleados: "251 146 60",
 };
 
+const PILDORA_ICONO: Record<string, string> = {
+  Dashboard: "📊",
+  Residentes: "❤️",
+  Aranceles: "💲",
+  Inventario: "📦",
+  Rendiciones: "🧾",
+  Gastos: "💸",
+  Empleados: "👥",
+};
+
 function Pildora({
   label,
   activo,
@@ -76,9 +86,10 @@ function Pildora({
   activo: boolean;
 }) {
   const rgb = PILDORA_RGB[label] ?? "167 139 250";
+  const icono = PILDORA_ICONO[label];
   return (
     <span
-      className="inline-block rounded-full px-3 py-1.5 font-karla text-[0.8rem] font-semibold transition-all duration-150"
+      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 font-karla text-[0.8rem] font-semibold transition-all duration-150"
       style={{
         backgroundColor: `rgb(${rgb} / ${activo ? 0.22 : 0.13})`,
         color: `rgb(${rgb})`,
@@ -87,6 +98,7 @@ function Pildora({
           : `0 0 0 1px rgb(${rgb} / 0.22)`,
       }}
     >
+      {icono && <span aria-hidden="true">{icono}</span>}
       {label}
     </span>
   );
