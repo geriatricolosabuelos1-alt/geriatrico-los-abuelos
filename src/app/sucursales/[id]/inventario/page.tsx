@@ -19,6 +19,7 @@ type FilaMovimiento = {
   insumo_id: string;
   tipo: string;
   cantidad: number;
+  es_inicial: boolean;
 };
 
 export default async function InventarioSucursalPage({
@@ -57,13 +58,13 @@ export default async function InventarioSucursalPage({
       .single<{ id: string; nombre: string }>(),
     supabase
       .from("insumos")
-      .select("id, nombre, categoria, unidad, activo")
+      .select("id, nombre, categoria, unidad, stock_minimo, activo")
       .eq("activo", true)
       .order("nombre")
       .returns<Insumo[]>(),
     supabase
       .from("movimientos_inventario")
-      .select("insumo_id, tipo, cantidad")
+      .select("insumo_id, tipo, cantidad, es_inicial")
       .eq("sucursal_id", id)
       .returns<FilaMovimiento[]>(),
   ]);
@@ -72,25 +73,41 @@ export default async function InventarioSucursalPage({
     notFound();
   }
 
-  const stockPorInsumo = new Map<string, number>();
+  type Resumen = { stockInicial: number; ingreso: number; egreso: number };
+  const resumenPorInsumo = new Map<string, Resumen>();
   (movimientos ?? []).forEach((m) => {
-    const actual = stockPorInsumo.get(m.insumo_id) ?? 0;
-    stockPorInsumo.set(
-      m.insumo_id,
-      m.tipo === "entrada" ? actual + m.cantidad : actual - m.cantidad,
-    );
+    const actual = resumenPorInsumo.get(m.insumo_id) ?? {
+      stockInicial: 0,
+      ingreso: 0,
+      egreso: 0,
+    };
+    if (m.tipo === "entrada" && m.es_inicial) {
+      actual.stockInicial += m.cantidad;
+    } else if (m.tipo === "entrada") {
+      actual.ingreso += m.cantidad;
+    } else {
+      actual.egreso += m.cantidad;
+    }
+    resumenPorInsumo.set(m.insumo_id, actual);
   });
 
   const listaInsumos = insumos ?? [];
   const filasInsumo = listaInsumos
     .filter((i) => !categoria || i.categoria === categoria)
-    .map((i) => ({
-      id: i.id,
-      nombre: i.nombre,
-      categoria: i.categoria,
-      unidad: i.unidad,
-      stock: stockPorInsumo.get(i.id) ?? 0,
-    }));
+    .map((i) => {
+      const resumen = resumenPorInsumo.get(i.id) ?? { stockInicial: 0, ingreso: 0, egreso: 0 };
+      return {
+        id: i.id,
+        nombre: i.nombre,
+        categoria: i.categoria,
+        unidad: i.unidad,
+        stockMinimo: i.stock_minimo,
+        stockInicial: resumen.stockInicial,
+        ingreso: resumen.ingreso,
+        egreso: resumen.egreso,
+        stockFinal: resumen.stockInicial + resumen.ingreso - resumen.egreso,
+      };
+    });
   const esAdmin = perfil!.rol === "admin";
 
   return (

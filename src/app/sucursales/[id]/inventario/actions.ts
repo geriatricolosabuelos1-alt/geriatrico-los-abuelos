@@ -79,6 +79,7 @@ export async function cargarStockInicial(
       cantidad: m.cantidad,
       precio: null,
       importe_total: null,
+      es_inicial: true,
       registrado_por: user?.id,
     })),
   );
@@ -91,38 +92,20 @@ export async function cargarStockInicial(
   return { error: null, guardado: true };
 }
 
-export async function actualizarUnidadInsumo(formData: FormData): Promise<void> {
-  const supabase = await createClient();
-
-  const insumoId = String(formData.get("insumo_id") ?? "");
-  const unidad = String(formData.get("unidad") ?? "").trim();
-  if (!insumoId || !unidad) return;
-
-  await supabase.from("insumos").update({ unidad }).eq("id", insumoId);
-
-  revalidatePath("/sucursales/[id]/inventario", "page");
-}
-
-export async function actualizarNombreInsumo(formData: FormData): Promise<void> {
+export async function actualizarInsumo(formData: FormData): Promise<void> {
   const supabase = await createClient();
 
   const insumoId = String(formData.get("insumo_id") ?? "");
   const nombre = String(formData.get("nombre") ?? "").trim();
-  if (!insumoId || !nombre) return;
+  const unidad = String(formData.get("unidad") ?? "").trim();
+  const stockMinimoRaw = String(formData.get("stock_minimo") ?? "");
+  const stockMinimo = stockMinimoRaw ? Number(stockMinimoRaw) : 0;
+  if (!insumoId || !nombre || !unidad) return;
 
-  await supabase.from("insumos").update({ nombre }).eq("id", insumoId);
-
-  revalidatePath("/sucursales/[id]/inventario", "page");
-}
-
-export async function actualizarCategoriaInsumo(formData: FormData): Promise<void> {
-  const supabase = await createClient();
-
-  const insumoId = String(formData.get("insumo_id") ?? "");
-  const categoria = String(formData.get("categoria") ?? "");
-  if (!insumoId || !["medicos", "varios"].includes(categoria)) return;
-
-  await supabase.from("insumos").update({ categoria }).eq("id", insumoId);
+  await supabase
+    .from("insumos")
+    .update({ nombre, unidad, stock_minimo: stockMinimo })
+    .eq("id", insumoId);
 
   revalidatePath("/sucursales/[id]/inventario", "page");
 }

@@ -136,6 +136,7 @@ export interface Insumo {
   nombre: string;
   categoria: CategoriaInsumo;
   unidad: string;
+  stock_minimo: number;
   activo: boolean;
 }
 
@@ -149,6 +150,7 @@ export interface MovimientoInventario {
   cantidad: number;
   precio: number | null;
   importe_total: number | null;
+  es_inicial: boolean;
   fecha: string;
 }
 

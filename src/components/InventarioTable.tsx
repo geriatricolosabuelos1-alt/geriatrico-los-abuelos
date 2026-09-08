@@ -2,9 +2,7 @@
 
 import { useMemo, useState } from "react";
 import {
-  actualizarCategoriaInsumo,
-  actualizarNombreInsumo,
-  actualizarUnidadInsumo,
+  actualizarInsumo,
   crearInsumo,
   eliminarInsumo,
   type CrearInsumoEstado,
@@ -16,7 +14,11 @@ type FilaInsumo = {
   nombre: string;
   categoria: CategoriaInsumo;
   unidad: string;
-  stock: number;
+  stockMinimo: number;
+  stockInicial: number;
+  ingreso: number;
+  egreso: number;
+  stockFinal: number;
 };
 
 type Props = {
@@ -31,100 +33,103 @@ const ETIQUETA_CATEGORIA: Record<CategoriaInsumo, string> = {
 
 const ORDEN_CATEGORIAS: CategoriaInsumo[] = ["medicos", "varios"];
 
-function FilaNombre({ insumo }: { insumo: FilaInsumo }) {
+function tieneAlerta(insumo: FilaInsumo): boolean {
+  return insumo.stockFinal <= 0 || insumo.stockFinal <= insumo.stockMinimo;
+}
+
+function FilaEditable({ insumo }: { insumo: FilaInsumo }) {
   const [nombre, setNombre] = useState(insumo.nombre);
-  const [enviando, setEnviando] = useState(false);
-
-  async function manejarSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setEnviando(true);
-    const formData = new FormData(e.currentTarget);
-    await actualizarNombreInsumo(formData);
-    setEnviando(false);
-  }
-
-  return (
-    <form onSubmit={manejarSubmit} className="flex items-center gap-1.5">
-      <input type="hidden" name="insumo_id" value={insumo.id} />
-      <input
-        type="text"
-        name="nombre"
-        value={nombre}
-        onChange={(e) => setNombre(e.target.value)}
-        className="w-40 rounded-md border border-edge bg-panel-deep px-2 py-1 text-sm font-medium text-ink focus:border-brass focus:outline-none"
-      />
-      <button
-        type="submit"
-        disabled={enviando}
-        className="text-xs font-medium text-brass hover:text-ink disabled:opacity-50"
-      >
-        {enviando ? "..." : "Guardar"}
-      </button>
-    </form>
-  );
-}
-
-function FilaCategoria({ insumo }: { insumo: FilaInsumo }) {
-  const [categoria, setCategoria] = useState<CategoriaInsumo>(insumo.categoria);
-  const [enviando, setEnviando] = useState(false);
-
-  async function manejarCambio(e: React.ChangeEvent<HTMLSelectElement>) {
-    const nuevaCategoria = e.target.value as CategoriaInsumo;
-    setCategoria(nuevaCategoria);
-    setEnviando(true);
-    const formData = new FormData();
-    formData.set("insumo_id", insumo.id);
-    formData.set("categoria", nuevaCategoria);
-    await actualizarCategoriaInsumo(formData);
-    setEnviando(false);
-  }
-
-  return (
-    <select
-      value={categoria}
-      onChange={manejarCambio}
-      disabled={enviando}
-      className="rounded-md border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none disabled:opacity-50"
-    >
-      {ORDEN_CATEGORIAS.map((cat) => (
-        <option key={cat} value={cat}>
-          {ETIQUETA_CATEGORIA[cat]}
-        </option>
-      ))}
-    </select>
-  );
-}
-
-function FilaUnidad({ insumo }: { insumo: FilaInsumo }) {
   const [unidad, setUnidad] = useState(insumo.unidad);
+  const [stockMinimo, setStockMinimo] = useState(String(insumo.stockMinimo));
   const [enviando, setEnviando] = useState(false);
 
   async function manejarSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setEnviando(true);
     const formData = new FormData(e.currentTarget);
-    await actualizarUnidadInsumo(formData);
+    await actualizarInsumo(formData);
     setEnviando(false);
   }
 
+  async function manejarEliminar() {
+    if (!window.confirm(`¿Eliminar "${insumo.nombre}" del catálogo de insumos?`)) return;
+    await eliminarInsumo(insumo.id);
+  }
+
   return (
-    <form onSubmit={manejarSubmit} className="flex items-center gap-1.5">
-      <input type="hidden" name="insumo_id" value={insumo.id} />
-      <input
-        type="text"
-        name="unidad"
-        value={unidad}
-        onChange={(e) => setUnidad(e.target.value)}
-        className="w-24 rounded-md border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none"
-      />
-      <button
-        type="submit"
-        disabled={enviando}
-        className="text-xs font-medium text-brass hover:text-ink disabled:opacity-50"
-      >
-        {enviando ? "..." : "Guardar"}
-      </button>
-    </form>
+    <>
+      <td className="px-4 py-3 font-medium text-ink whitespace-nowrap">
+        <input
+          form={`form-${insumo.id}`}
+          type="text"
+          name="nombre"
+          value={nombre}
+          onChange={(e) => setNombre(e.target.value)}
+          className="w-40 rounded-md border border-edge bg-panel-deep px-2 py-1 text-sm font-medium text-ink focus:border-brass focus:outline-none"
+        />
+      </td>
+      <td className="px-4 py-3 text-ink-soft">
+        <input
+          form={`form-${insumo.id}`}
+          type="text"
+          name="unidad"
+          value={unidad}
+          onChange={(e) => setUnidad(e.target.value)}
+          className="w-24 rounded-md border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none"
+        />
+      </td>
+      <td className="px-4 py-3 text-ink-soft">{insumo.stockInicial}</td>
+      <td className="px-4 py-3 text-brass">+{insumo.ingreso}</td>
+      <td className="px-4 py-3 text-red-400">-{insumo.egreso}</td>
+      <td className="px-4 py-3">
+        <span
+          className={
+            insumo.stockFinal <= 0 ? "font-semibold text-red-400" : "font-semibold text-brass"
+          }
+        >
+          {insumo.stockFinal}
+        </span>
+      </td>
+      <td className="px-4 py-3">
+        <input
+          form={`form-${insumo.id}`}
+          type="number"
+          min="0"
+          step="0.01"
+          name="stock_minimo"
+          value={stockMinimo}
+          onChange={(e) => setStockMinimo(e.target.value)}
+          className="w-20 rounded-md border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none"
+        />
+      </td>
+      <td className="px-4 py-3">
+        {tieneAlerta(insumo) && (
+          <span className="rounded-full bg-red-400/15 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-red-400">
+            Comprar
+          </span>
+        )}
+      </td>
+      <td className="px-4 py-3 text-right whitespace-nowrap">
+        <form id={`form-${insumo.id}`} onSubmit={manejarSubmit} className="inline">
+          <input type="hidden" name="insumo_id" value={insumo.id} />
+          <button
+            type="submit"
+            disabled={enviando}
+            className="text-xs font-medium text-brass hover:text-ink disabled:opacity-50"
+          >
+            {enviando ? "..." : "Guardar"}
+          </button>
+        </form>
+        <span className="mx-2 text-edge">·</span>
+        <button
+          type="button"
+          onClick={manejarEliminar}
+          className="text-xs text-red-400 underline decoration-red-400/40 underline-offset-2 hover:text-red-300"
+        >
+          Eliminar
+        </button>
+      </td>
+    </>
   );
 }
 
@@ -200,11 +205,6 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
     return insumos.filter((i) => !texto || i.nombre.toLowerCase().includes(texto));
   }, [insumos, busqueda]);
 
-  async function manejarEliminar(id: string, nombre: string) {
-    if (!window.confirm(`¿Eliminar "${nombre}" del catálogo de insumos?`)) return;
-    await eliminarInsumo(id);
-  }
-
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center gap-3">
@@ -247,49 +247,53 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
                 <thead className="sticky top-0 border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
                   <tr>
                     <th className="px-4 py-3">Insumo</th>
-                    <th className="px-4 py-3">Stock</th>
                     <th className="px-4 py-3">Unidad</th>
-                    {esAdmin && <th className="px-4 py-3">Categoría</th>}
+                    <th className="px-4 py-3">Stock inicial</th>
+                    <th className="px-4 py-3">+Ingreso</th>
+                    <th className="px-4 py-3">-Egreso</th>
+                    <th className="px-4 py-3">Stock final</th>
+                    <th className="px-4 py-3">Stock mínimo</th>
+                    <th className="px-4 py-3">Alerta</th>
                     {esAdmin && <th className="px-4 py-3"></th>}
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((i) => (
-                    <tr key={i.id} className="border-b border-edge last:border-0">
-                      <td className="px-4 py-3 font-medium text-ink whitespace-nowrap">
-                        {esAdmin ? <FilaNombre insumo={i} /> : i.nombre}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={
-                            i.stock <= 0
-                              ? "font-semibold text-red-400"
-                              : "font-semibold text-brass"
-                          }
-                        >
-                          {i.stock}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-ink-soft">
-                        {esAdmin ? <FilaUnidad insumo={i} /> : i.unidad}
-                      </td>
-                      {esAdmin && (
+                  {items.map((i) =>
+                    esAdmin ? (
+                      <tr key={i.id} className="border-b border-edge last:border-0">
+                        <FilaEditable insumo={i} />
+                      </tr>
+                    ) : (
+                      <tr key={i.id} className="border-b border-edge last:border-0">
+                        <td className="px-4 py-3 font-medium text-ink whitespace-nowrap">
+                          {i.nombre}
+                        </td>
+                        <td className="px-4 py-3 text-ink-soft">{i.unidad}</td>
+                        <td className="px-4 py-3 text-ink-soft">{i.stockInicial}</td>
+                        <td className="px-4 py-3 text-brass">+{i.ingreso}</td>
+                        <td className="px-4 py-3 text-red-400">-{i.egreso}</td>
                         <td className="px-4 py-3">
-                          <FilaCategoria insumo={i} />
-                        </td>
-                      )}
-                      {esAdmin && (
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() => manejarEliminar(i.id, i.nombre)}
-                            className="text-xs text-red-400 underline decoration-red-400/40 underline-offset-2 hover:text-red-300"
+                          <span
+                            className={
+                              i.stockFinal <= 0
+                                ? "font-semibold text-red-400"
+                                : "font-semibold text-brass"
+                            }
                           >
-                            Eliminar
-                          </button>
+                            {i.stockFinal}
+                          </span>
                         </td>
-                      )}
-                    </tr>
-                  ))}
+                        <td className="px-4 py-3 text-ink-soft">{i.stockMinimo}</td>
+                        <td className="px-4 py-3">
+                          {tieneAlerta(i) && (
+                            <span className="rounded-full bg-red-400/15 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-red-400">
+                              Comprar
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ),
+                  )}
                 </tbody>
               </table>
             </div>
