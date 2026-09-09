@@ -25,6 +25,12 @@ export async function crearResidente(
   const obra_social = String(formData.get("obra_social") ?? "").trim() || null;
   const numero_afiliado = String(formData.get("numero_afiliado") ?? "").trim() || null;
   const tipo_cobertura = String(formData.get("tipo_cobertura") ?? "").trim() || null;
+  const cuota_mensual_raw = String(formData.get("cuota_mensual") ?? "").trim();
+  const cuota_mensual = cuota_mensual_raw ? Number(cuota_mensual_raw) : null;
+  const contratante_nombre = String(formData.get("contratante_nombre") ?? "").trim() || null;
+  const contratante_dni = String(formData.get("contratante_dni") ?? "").trim() || null;
+  const contratante_domicilio =
+    String(formData.get("contratante_domicilio") ?? "").trim() || null;
   const medico_cabecera = String(formData.get("medico_cabecera") ?? "").trim() || null;
   const grupo_sanguineo = String(formData.get("grupo_sanguineo") ?? "").trim() || null;
   const diagnosticos = String(formData.get("diagnosticos") ?? "").trim() || null;
@@ -60,6 +66,10 @@ export async function crearResidente(
     obra_social,
     numero_afiliado,
     tipo_cobertura,
+    cuota_mensual,
+    contratante_nombre,
+    contratante_dni,
+    contratante_domicilio,
   });
 
   if (errorFichaAdmin) {

@@ -55,6 +55,9 @@ export interface FichaAdministrativa {
   cud_vencimiento: string | null;
   monto_cobertura_obra_social: number | null;
   porcentaje_recargo_mora: number | null;
+  contratante_nombre: string | null;
+  contratante_dni: string | null;
+  contratante_domicilio: string | null;
 }
 
 export type TipoDocumentoResidente =

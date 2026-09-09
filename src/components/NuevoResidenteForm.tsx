@@ -80,6 +80,21 @@ export function NuevoResidenteForm({ sucursalId }: Props) {
               name="tipo_cobertura"
               placeholder="Subsidio, particular..."
             />
+            <Campo
+              label="Cuota mensual (canon)"
+              name="cuota_mensual"
+              type="number"
+              placeholder="0"
+            />
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-edge bg-card p-6">
+          <h2 className={SECCION}>Contratante (firma el contrato)</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Campo label="Nombre y apellido" name="contratante_nombre" />
+            <Campo label="DNI" name="contratante_dni" />
+            <Campo label="Domicilio" name="contratante_domicilio" />
           </div>
         </section>
 

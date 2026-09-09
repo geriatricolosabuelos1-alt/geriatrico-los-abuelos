@@ -44,7 +44,7 @@ export default async function LegajoResidentePage({
   const { data: fichaAdministrativa } = await supabase
     .from("ficha_administrativa")
     .select(
-      "residente_id, obra_social, numero_afiliado, tipo_cobertura, cuota_mensual, notas_contrato, fecha_vencimiento_cuota, mecanismo_actualizacion, cud_vencimiento",
+      "residente_id, obra_social, numero_afiliado, tipo_cobertura, cuota_mensual, notas_contrato, fecha_vencimiento_cuota, mecanismo_actualizacion, cud_vencimiento, contratante_nombre, contratante_dni, contratante_domicilio",
     )
     .eq("residente_id", id)
     .maybeSingle<FichaAdministrativa>();

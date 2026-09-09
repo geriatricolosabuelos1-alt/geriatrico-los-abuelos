@@ -33,6 +33,12 @@ export async function actualizarLegajo(
   const mecanismo_actualizacion =
     String(formData.get("mecanismo_actualizacion") ?? "").trim() || null;
   const cud_vencimiento = String(formData.get("cud_vencimiento") ?? "") || null;
+  const cuota_mensual_raw = String(formData.get("cuota_mensual") ?? "").trim();
+  const cuota_mensual = cuota_mensual_raw ? Number(cuota_mensual_raw) : null;
+  const contratante_nombre = String(formData.get("contratante_nombre") ?? "").trim() || null;
+  const contratante_dni = String(formData.get("contratante_dni") ?? "").trim() || null;
+  const contratante_domicilio =
+    String(formData.get("contratante_domicilio") ?? "").trim() || null;
 
   const medico_cabecera = String(formData.get("medico_cabecera") ?? "").trim() || null;
   const grupo_sanguineo = String(formData.get("grupo_sanguineo") ?? "").trim() || null;
@@ -76,6 +82,10 @@ export async function actualizarLegajo(
         fecha_vencimiento_cuota,
         mecanismo_actualizacion,
         cud_vencimiento,
+        cuota_mensual,
+        contratante_nombre,
+        contratante_dni,
+        contratante_domicilio,
       },
       { onConflict: "residente_id" },
     );
