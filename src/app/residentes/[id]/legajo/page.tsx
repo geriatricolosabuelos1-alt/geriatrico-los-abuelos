@@ -78,12 +78,20 @@ export default async function LegajoResidentePage({
               {residente.apellido}, {residente.nombre}
             </h1>
           </div>
-          <Link
-            href={`/residentes/${id}/evolucion`}
-            className="text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
-          >
-            Ver evolución
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href={`/residentes/${id}/contrato`}
+              className="text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+            >
+              Ver contrato
+            </Link>
+            <Link
+              href={`/residentes/${id}/evolucion`}
+              className="text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+            >
+              Ver evolución
+            </Link>
+          </div>
         </div>
 
         <LegajoForm

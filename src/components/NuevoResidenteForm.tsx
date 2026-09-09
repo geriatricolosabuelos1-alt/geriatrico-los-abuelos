@@ -71,6 +71,11 @@ export function NuevoResidenteForm({ sucursalId }: Props) {
               placeholder="PAMI, OSEP, particular..."
             />
             <Campo
+              label="Número de afiliado"
+              name="numero_afiliado"
+              placeholder="150164400808/00"
+            />
+            <Campo
               label="Tipo de cobertura"
               name="tipo_cobertura"
               placeholder="Subsidio, particular..."

@@ -23,6 +23,7 @@ export async function crearResidente(
   const contacto_familiar = String(formData.get("contacto_familiar") ?? "").trim() || null;
   const telefono_familiar = String(formData.get("telefono_familiar") ?? "").trim() || null;
   const obra_social = String(formData.get("obra_social") ?? "").trim() || null;
+  const numero_afiliado = String(formData.get("numero_afiliado") ?? "").trim() || null;
   const tipo_cobertura = String(formData.get("tipo_cobertura") ?? "").trim() || null;
   const medico_cabecera = String(formData.get("medico_cabecera") ?? "").trim() || null;
   const grupo_sanguineo = String(formData.get("grupo_sanguineo") ?? "").trim() || null;
@@ -57,6 +58,7 @@ export async function crearResidente(
   const { error: errorFichaAdmin } = await supabase.from("ficha_administrativa").insert({
     residente_id: residente.id,
     obra_social,
+    numero_afiliado,
     tipo_cobertura,
   });
 
@@ -77,7 +79,7 @@ export async function crearResidente(
   }
 
   revalidatePath(`/sucursales/${sucursalId}/residentes`);
-  redirect(`/residentes/${residente.id}/legajo`);
+  redirect(`/residentes/${residente.id}/contrato`);
 }
 
 export async function eliminarResidente(sucursalId: string, residenteId: string): Promise<void> {
