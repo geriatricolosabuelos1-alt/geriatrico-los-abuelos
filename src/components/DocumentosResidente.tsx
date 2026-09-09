@@ -7,11 +7,14 @@ import {
   subirDocumento,
   type DocumentoConUrl,
 } from "@/app/residentes/[id]/legajo/documentos-actions";
-import type { TipoDocumentoResidente } from "@/lib/types";
+import type { RolUsuario, TipoDocumentoResidente } from "@/lib/types";
 
 type Props = {
   residenteId: string;
+  rolActual: RolUsuario;
 };
+
+const ROLES_CONTRATO: RolUsuario[] = ["admin", "administrativo"];
 
 const TIPOS: { valor: TipoDocumentoResidente; etiqueta: string }[] = [
   { valor: "orden_internacion", etiqueta: "Orden médica de internación" },
@@ -20,7 +23,7 @@ const TIPOS: { valor: TipoDocumentoResidente; etiqueta: string }[] = [
   { valor: "contrato", etiqueta: "Contrato firmado" },
 ];
 
-export function DocumentosResidente({ residenteId }: Props) {
+export function DocumentosResidente({ residenteId, rolActual }: Props) {
   const [documentos, setDocumentos] = useState<DocumentoConUrl[]>([]);
   const [cargando, setCargando] = useState(true);
   const [subiendoTipo, setSubiendoTipo] = useState<TipoDocumentoResidente | null>(null);
@@ -83,23 +86,32 @@ export function DocumentosResidente({ residenteId }: Props) {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {TIPOS.map((t) => {
           const documentosDeTipo = documentos.filter((d) => d.tipo === t.valor);
+          const esContrato = t.valor === "contrato";
+          const puedeGestionar = !esContrato || ROLES_CONTRATO.includes(rolActual);
           return (
             <div key={t.valor} className="rounded-xl border border-edge bg-panel-deep p-4">
               <div className="mb-2 flex items-center justify-between gap-2">
                 <p className="text-sm font-medium text-ink">{t.etiqueta}</p>
-                <label className="flex-shrink-0 cursor-pointer rounded-full border border-edge px-3 py-1 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink">
-                  {subiendoTipo === t.valor ? "Subiendo..." : "+ Subir"}
-                  <input
-                    type="file"
-                    className="hidden"
-                    disabled={subiendoTipo !== null}
-                    onChange={(e) => {
-                      const archivo = e.target.files?.[0];
-                      if (archivo) manejarSubida(t.valor, archivo);
-                      e.target.value = "";
-                    }}
-                  />
-                </label>
+                {puedeGestionar ? (
+                  <label className="flex-shrink-0 cursor-pointer rounded-full border border-edge px-3 py-1 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink">
+                    {subiendoTipo === t.valor ? "Subiendo..." : "+ Subir"}
+                    <input
+                      type="file"
+                      accept={esContrato ? "application/pdf" : undefined}
+                      className="hidden"
+                      disabled={subiendoTipo !== null}
+                      onChange={(e) => {
+                        const archivo = e.target.files?.[0];
+                        if (archivo) manejarSubida(t.valor, archivo);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                ) : (
+                  <span className="flex-shrink-0 text-[0.65rem] text-ink-soft">
+                    Solo administración
+                  </span>
+                )}
               </div>
 
               {cargando ? (
@@ -125,13 +137,15 @@ export function DocumentosResidente({ residenteId }: Props) {
                       ) : (
                         <span className="truncate text-ink-soft">{doc.nombre_archivo}</span>
                       )}
-                      <button
-                        type="button"
-                        onClick={() => manejarBorrar(doc)}
-                        className="flex-shrink-0 text-red-700 hover:text-red-500"
-                      >
-                        Eliminar
-                      </button>
+                      {puedeGestionar && (
+                        <button
+                          type="button"
+                          onClick={() => manejarBorrar(doc)}
+                          className="flex-shrink-0 text-red-700 hover:text-red-500"
+                        >
+                          Eliminar
+                        </button>
+                      )}
                     </li>
                   ))}
                 </ul>

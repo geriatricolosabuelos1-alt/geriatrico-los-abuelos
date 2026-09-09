@@ -6,6 +6,24 @@ import type { DocumentoResidente, TipoDocumentoResidente } from "@/lib/types";
 
 const BUCKET = "residentes-documentos";
 const URL_EXPIRACION_SEGUNDOS = 60 * 10;
+const ROLES_CONTRATO = ["admin", "administrativo"];
+
+async function puedeGestionarContrato(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<boolean> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { data: perfil } = await supabase
+    .from("perfiles")
+    .select("rol")
+    .eq("id", user.id)
+    .single<{ rol: string }>();
+
+  return !!perfil && ROLES_CONTRATO.includes(perfil.rol);
+}
 
 export type DocumentoConUrl = DocumentoResidente & { urlFirmada: string | null };
 
@@ -49,6 +67,10 @@ export async function subirDocumento(
     return { error: "Elegí un archivo." };
   }
 
+  if (tipo === "contrato" && !(await puedeGestionarContrato(supabase))) {
+    return { error: "Solo administración puede subir el contrato firmado." };
+  }
+
   const extension = archivo.name.split(".").pop() || "pdf";
   const nombreEnStorage = `${residenteId}/${tipo}-${Date.now()}.${extension}`;
 
@@ -81,6 +103,17 @@ export async function eliminarDocumento(
   path: string,
 ): Promise<void> {
   const supabase = await createClient();
+
+  const { data: doc } = await supabase
+    .from("documentos_residente")
+    .select("tipo")
+    .eq("id", documentoId)
+    .single<{ tipo: TipoDocumentoResidente }>();
+
+  if (doc?.tipo === "contrato" && !(await puedeGestionarContrato(supabase))) {
+    return;
+  }
+
   await supabase.storage.from(BUCKET).remove([path]);
   await supabase.from("documentos_residente").delete().eq("id", documentoId);
   revalidatePath(`/residentes/${residenteId}/legajo`);

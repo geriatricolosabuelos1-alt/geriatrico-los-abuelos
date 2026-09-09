@@ -7,12 +7,13 @@ import {
 } from "@/app/residentes/[id]/legajo/actions";
 import { FotoPicker } from "@/components/FotoPicker";
 import { DocumentosResidente } from "@/components/DocumentosResidente";
-import type { FichaAdministrativa, FichaMedica, Residente } from "@/lib/types";
+import type { FichaAdministrativa, FichaMedica, Residente, RolUsuario } from "@/lib/types";
 
 type Props = {
   residente: Residente;
   fichaAdministrativa: FichaAdministrativa | null;
   fichaMedica: FichaMedica | null;
+  rolActual: RolUsuario;
 };
 
 const ESTADO_INICIAL: ActualizarLegajoEstado = { error: null };
@@ -50,7 +51,7 @@ function Campo({
   );
 }
 
-export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Props) {
+export function LegajoForm({ residente, fichaAdministrativa, fichaMedica, rolActual }: Props) {
   const accionConIds = actualizarLegajo.bind(null, residente.id, residente.sucursal_id);
   const [estado, formAction, enviando] = useActionState(accionConIds, ESTADO_INICIAL);
 
@@ -246,7 +247,7 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
           </div>
         </section>
 
-        <DocumentosResidente residenteId={residente.id} />
+        <DocumentosResidente residenteId={residente.id} rolActual={rolActual} />
       </div>
 
       {estado.error && <p className="text-base text-red-700">{estado.error}</p>}

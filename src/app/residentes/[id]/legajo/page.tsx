@@ -98,6 +98,7 @@ export default async function LegajoResidentePage({
           residente={residente}
           fichaAdministrativa={fichaAdministrativa ?? null}
           fichaMedica={fichaMedica ?? null}
+          rolActual={perfil.rol}
         />
       </main>
     </div>
