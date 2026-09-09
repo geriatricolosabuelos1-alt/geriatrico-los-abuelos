@@ -46,6 +46,7 @@ export interface Residente {
 export interface FichaAdministrativa {
   residente_id: string;
   obra_social: string | null;
+  numero_afiliado: string | null;
   tipo_cobertura: string | null;
   cuota_mensual: number | null;
   notas_contrato: string | null;

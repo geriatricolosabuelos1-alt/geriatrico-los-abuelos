@@ -93,6 +93,12 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica }: Prop
               placeholder="PAMI, OSEP, particular..."
             />
             <Campo
+              label="Número de afiliado"
+              name="numero_afiliado"
+              defaultValue={fichaAdministrativa?.numero_afiliado}
+              placeholder="150164400808/00"
+            />
+            <Campo
               label="Tipo de cobertura"
               name="tipo_cobertura"
               defaultValue={fichaAdministrativa?.tipo_cobertura}

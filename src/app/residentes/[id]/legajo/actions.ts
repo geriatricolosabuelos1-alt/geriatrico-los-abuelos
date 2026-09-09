@@ -27,6 +27,7 @@ export async function actualizarLegajo(
   const telefono_familiar = String(formData.get("telefono_familiar") ?? "").trim() || null;
 
   const obra_social = String(formData.get("obra_social") ?? "").trim() || null;
+  const numero_afiliado = String(formData.get("numero_afiliado") ?? "").trim() || null;
   const tipo_cobertura = String(formData.get("tipo_cobertura") ?? "").trim() || null;
   const fecha_vencimiento_cuota = String(formData.get("fecha_vencimiento_cuota") ?? "") || null;
   const mecanismo_actualizacion =
@@ -70,6 +71,7 @@ export async function actualizarLegajo(
       {
         residente_id: residenteId,
         obra_social,
+        numero_afiliado,
         tipo_cobertura,
         fecha_vencimiento_cuota,
         mecanismo_actualizacion,
