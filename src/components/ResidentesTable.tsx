@@ -32,6 +32,18 @@ function formatearFecha(fecha: string | null): string {
   return fecha ? new Date(fecha + "T00:00:00").toLocaleDateString("es-AR") : "—";
 }
 
+function calcularEdad(fechaNacimiento: string | null): number | null {
+  if (!fechaNacimiento) return null;
+  const nacimiento = new Date(fechaNacimiento + "T00:00:00");
+  const hoy = new Date();
+  let edad = hoy.getFullYear() - nacimiento.getFullYear();
+  const aunNoCumplio =
+    hoy.getMonth() < nacimiento.getMonth() ||
+    (hoy.getMonth() === nacimiento.getMonth() && hoy.getDate() < nacimiento.getDate());
+  if (aunNoCumplio) edad--;
+  return edad;
+}
+
 function EncabezadoOrdenable({
   label,
   columna,
@@ -143,6 +155,7 @@ export function ResidentesTable({
                 ordenActual={orden}
                 onOrdenar={manejarOrdenar}
               />
+              <th className="px-4 py-3">Edad</th>
               <EncabezadoOrdenable
                 label="Ingreso"
                 columna="ingreso"
@@ -189,6 +202,9 @@ export function ResidentesTable({
                       </span>
                       {r.apellido}, {r.nombre}
                     </Link>
+                  </td>
+                  <td className="px-4 py-3 align-middle text-ink-soft whitespace-nowrap">
+                    {calcularEdad(r.fecha_nacimiento) ?? "—"}
                   </td>
                   <td className="px-4 py-3 align-middle text-ink-soft whitespace-nowrap">
                     {formatearFecha(r.fecha_ingreso)}
@@ -245,7 +261,7 @@ export function ResidentesTable({
             {filtrados.length === 0 && (
               <tr>
                 <td
-                  colSpan={esAdministrativo ? 7 : 6}
+                  colSpan={esAdministrativo ? 8 : 7}
                   className="px-4 py-6 text-center text-ink-soft"
                 >
                   Ningún residente coincide con el filtro.
