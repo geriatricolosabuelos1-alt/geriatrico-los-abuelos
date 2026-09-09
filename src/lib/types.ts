@@ -85,6 +85,15 @@ export interface MedicamentoResidente {
   updated_at: string;
 }
 
+export interface DosisAdministrada {
+  id: string;
+  medicamento_id: string;
+  residente_id: string;
+  cantidad: number;
+  administrado_por: string | null;
+  fecha: string;
+}
+
 export interface FichaMedica {
   residente_id: string;
   medico_cabecera: string | null;
