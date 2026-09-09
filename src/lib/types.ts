@@ -75,6 +75,16 @@ export interface DocumentoResidente {
   created_at: string;
 }
 
+export interface MedicamentoResidente {
+  id: string;
+  residente_id: string;
+  nombre: string;
+  dosis: string | null;
+  cantidad_stock: number;
+  notas: string | null;
+  updated_at: string;
+}
+
 export interface FichaMedica {
   residente_id: string;
   medico_cabecera: string | null;

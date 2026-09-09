@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { LegajoForm } from "@/components/LegajoForm";
+import { listarMedicamentos } from "@/app/residentes/[id]/legajo/medicacion-actions";
 import type { FichaAdministrativa, FichaMedica, Perfil, Residente } from "@/lib/types";
 
 type Params = { id: string };
@@ -57,6 +58,8 @@ export default async function LegajoResidentePage({
     .eq("residente_id", id)
     .maybeSingle<FichaMedica>();
 
+  const medicamentos = await listarMedicamentos(id);
+
   return (
     <div className="flex min-h-screen w-full">
       <Sidebar
@@ -99,6 +102,7 @@ export default async function LegajoResidentePage({
           fichaAdministrativa={fichaAdministrativa ?? null}
           fichaMedica={fichaMedica ?? null}
           rolActual={perfil.rol}
+          medicamentos={medicamentos}
         />
       </main>
     </div>

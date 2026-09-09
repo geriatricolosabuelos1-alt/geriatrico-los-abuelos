@@ -7,13 +7,21 @@ import {
 } from "@/app/residentes/[id]/legajo/actions";
 import { FotoPicker } from "@/components/FotoPicker";
 import { DocumentosResidente } from "@/components/DocumentosResidente";
-import type { FichaAdministrativa, FichaMedica, Residente, RolUsuario } from "@/lib/types";
+import { MedicacionResidente } from "@/components/MedicacionResidente";
+import type {
+  FichaAdministrativa,
+  FichaMedica,
+  MedicamentoResidente,
+  Residente,
+  RolUsuario,
+} from "@/lib/types";
 
 type Props = {
   residente: Residente;
   fichaAdministrativa: FichaAdministrativa | null;
   fichaMedica: FichaMedica | null;
   rolActual: RolUsuario;
+  medicamentos: MedicamentoResidente[];
 };
 
 const ESTADO_INICIAL: ActualizarLegajoEstado = { error: null };
@@ -51,11 +59,18 @@ function Campo({
   );
 }
 
-export function LegajoForm({ residente, fichaAdministrativa, fichaMedica, rolActual }: Props) {
+export function LegajoForm({
+  residente,
+  fichaAdministrativa,
+  fichaMedica,
+  rolActual,
+  medicamentos,
+}: Props) {
   const accionConIds = actualizarLegajo.bind(null, residente.id, residente.sucursal_id);
   const [estado, formAction, enviando] = useActionState(accionConIds, ESTADO_INICIAL);
 
   return (
+    <div className="space-y-6">
     <form action={formAction} className="space-y-6">
       <FotoPicker
         residenteId={residente.id}
@@ -260,5 +275,8 @@ export function LegajoForm({ residente, fichaAdministrativa, fichaMedica, rolAct
         {enviando ? "Guardando..." : "Guardar legajo"}
       </button>
     </form>
+
+    <MedicacionResidente residenteId={residente.id} medicamentos={medicamentos} />
+    </div>
   );
 }
