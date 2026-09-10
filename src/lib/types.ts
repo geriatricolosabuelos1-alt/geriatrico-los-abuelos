@@ -193,6 +193,24 @@ export interface Rendicion {
   created_at: string;
 }
 
+export interface FacturaArca {
+  id: string;
+  pago_id: string;
+  residente_id: string;
+  sucursal_id: string;
+  tipo_cbte: number;
+  pto_vta: number;
+  cbte_nro: number;
+  cae: string;
+  cae_vencimiento: string;
+  importe: number;
+  fecha_emision: string;
+  doc_tipo: number;
+  doc_nro: string;
+  condicion_iva_receptor_id: number;
+  created_at: string;
+}
+
 export interface Pago {
   id: string;
   residente_id: string;

@@ -7,6 +7,7 @@ import { AgregarPeriodoManual } from "@/components/AgregarPeriodoManual";
 import { EditorArancel } from "@/components/EditorArancel";
 import { HistorialPagos } from "@/components/HistorialPagos";
 import { BotonExportarPdf } from "@/components/BotonExportarPdf";
+import { BotonFacturar } from "@/components/BotonFacturar";
 import { diasDeAtraso } from "@/lib/aranceles";
 import type { MetodoPago, Perfil } from "@/lib/types";
 
@@ -22,6 +23,7 @@ type FilaPago = {
   fecha_pago: string | null;
   tipo_pago: "obra_social" | "paciente";
   pagos_historial: { monto: number; fecha: string; metodo_pago: MetodoPago | null }[];
+  facturas_arca: { id: string }[];
 };
 
 const ETIQUETA_ESTADO: Record<FilaPago["estado"], string> = {
@@ -66,9 +68,9 @@ export default async function CuentaCorrientePage({
 
   const { data: residente } = await supabase
     .from("residentes")
-    .select("id, nombre, apellido, sucursal_id")
+    .select("id, nombre, apellido, sucursal_id, dni")
     .eq("id", id)
-    .single<{ id: string; nombre: string; apellido: string; sucursal_id: string }>();
+    .single<{ id: string; nombre: string; apellido: string; sucursal_id: string; dni: string | null }>();
 
   if (!residente || !perfil) {
     notFound();
@@ -90,7 +92,7 @@ export default async function CuentaCorrientePage({
   const { data: pagos } = await supabase
     .from("pagos")
     .select(
-      "id, monto, monto_pagado, mes, anio, estado, fecha_pago, tipo_pago, pagos_historial(monto, fecha, metodo_pago)",
+      "id, monto, monto_pagado, mes, anio, estado, fecha_pago, tipo_pago, pagos_historial(monto, fecha, metodo_pago), facturas_arca(id)",
     )
     .eq("residente_id", id)
     .order("anio", { ascending: false })
@@ -228,6 +230,15 @@ export default async function CuentaCorrientePage({
                         >
                           Recibo
                         </Link>
+                      )}
+                      {p.monto_pagado > 0 && (
+                        <BotonFacturar
+                          residenteId={id}
+                          pagoId={p.id}
+                          montoSugerido={p.monto_pagado}
+                          dniResidente={residente.dni}
+                          yaFacturado={p.facturas_arca.length > 0}
+                        />
                       )}
                       <AccionesPago
                         residenteId={id}
