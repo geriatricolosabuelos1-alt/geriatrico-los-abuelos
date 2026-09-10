@@ -23,7 +23,7 @@ type FilaPago = {
   fecha_pago: string | null;
   tipo_pago: "obra_social" | "paciente";
   pagos_historial: { monto: number; fecha: string; metodo_pago: MetodoPago | null }[];
-  facturas_arca: { id: string }[];
+  facturas_arca: { id: string }[] | null;
 };
 
 const ETIQUETA_ESTADO: Record<FilaPago["estado"], string> = {
@@ -237,7 +237,7 @@ export default async function CuentaCorrientePage({
                           pagoId={p.id}
                           montoSugerido={p.monto_pagado}
                           dniResidente={residente.dni}
-                          yaFacturado={p.facturas_arca.length > 0}
+                          yaFacturado={(p.facturas_arca?.length ?? 0) > 0}
                         />
                       )}
                       <AccionesPago
