@@ -100,8 +100,10 @@ export default async function InventarioSucursalPage({
   });
 
   const listaInsumos = insumos ?? [];
-  const filasInsumo = listaInsumos
-    .filter((i) => !categoria || i.categoria === categoria)
+  const listaInsumosCategoria = categoria
+    ? listaInsumos.filter((i) => i.categoria === categoria)
+    : [];
+  const filasInsumo = listaInsumosCategoria
     .map((i) => {
       const resumen = resumenPorInsumo.get(i.id) ?? { stockInicial: 0, ingreso: 0, egreso: 0 };
       return {
@@ -150,9 +152,34 @@ export default async function InventarioSucursalPage({
           )}
         </div>
 
-        <InventarioForm sucursalId={id} insumos={listaInsumos} residentes={residentes ?? []} />
+        {categoria ? (
+          <>
+            <InventarioForm
+              sucursalId={id}
+              insumos={listaInsumosCategoria}
+              residentes={residentes ?? []}
+            />
 
-        <InventarioTable insumos={filasInsumo} esAdmin={esAdmin} />
+            <InventarioTable insumos={filasInsumo} esAdmin={esAdmin} />
+          </>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {CATEGORIAS_VALIDAS.map((cat) => (
+              <Link
+                key={cat}
+                href={`/sucursales/${id}/inventario?categoria=${cat}`}
+                className="rounded-2xl border border-edge bg-card p-6 hover:border-brass"
+              >
+                <p className="font-display text-lg font-semibold text-ink">
+                  {ETIQUETA_CATEGORIA[cat]}
+                </p>
+                <p className="mt-1 text-sm text-ink-soft">
+                  {listaInsumos.filter((i) => i.categoria === cat).length} insumos cargados
+                </p>
+              </Link>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );
