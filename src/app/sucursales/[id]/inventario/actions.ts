@@ -138,11 +138,13 @@ export async function actualizarInsumo(formData: FormData): Promise<void> {
   const unidad = String(formData.get("unidad") ?? "").trim();
   const stockMinimoRaw = String(formData.get("stock_minimo") ?? "");
   const stockMinimo = stockMinimoRaw ? Number(stockMinimoRaw) : 0;
+  const precioReferenciaRaw = String(formData.get("precio_referencia") ?? "").trim();
+  const precio_referencia = precioReferenciaRaw ? Number(precioReferenciaRaw) : null;
   if (!insumoId || !nombre || !unidad) return;
 
   await supabase
     .from("insumos")
-    .update({ nombre, unidad, stock_minimo: stockMinimo })
+    .update({ nombre, unidad, stock_minimo: stockMinimo, precio_referencia })
     .eq("id", insumoId);
 
   revalidatePath("/sucursales/[id]/inventario", "page");

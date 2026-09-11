@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { eliminarResidente } from "@/app/sucursales/[id]/residentes/actions";
+import type { InsumoMedicoConStock } from "@/app/sucursales/[id]/residentes/insumos-actions";
+import { AgregarInsumoResidente } from "@/components/AgregarInsumoResidente";
 
 type FilaResidente = {
   id: string;
@@ -23,6 +25,8 @@ type Props = {
   residentes: FilaResidente[];
   puedeBorrar: boolean;
   esAdministrativo: boolean;
+  puedeCargarInsumos: boolean;
+  insumosMedicos: InsumoMedicoConStock[];
 };
 
 type Columna = "nombre" | "ingreso" | "egreso";
@@ -74,6 +78,8 @@ export function ResidentesTable({
   residentes,
   puedeBorrar,
   esAdministrativo,
+  puedeCargarInsumos,
+  insumosMedicos,
 }: Props) {
   const [busqueda, setBusqueda] = useState("");
   const [estadoFiltro, setEstadoFiltro] = useState<"todos" | "activo" | "inactivo">("todos");
@@ -247,6 +253,16 @@ export function ResidentesTable({
                     >
                       Evolución
                     </Link>
+                    {puedeCargarInsumos && (
+                      <span className="mr-3">
+                        <AgregarInsumoResidente
+                          sucursalId={sucursalId}
+                          residenteId={r.id}
+                          residenteNombre={`${r.apellido}, ${r.nombre}`}
+                          insumos={insumosMedicos}
+                        />
+                      </span>
+                    )}
                     {puedeBorrar && (
                       <button
                         onClick={() => manejarBorrar(r.id, `${r.nombre} ${r.apellido}`)}

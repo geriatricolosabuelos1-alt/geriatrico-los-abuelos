@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { ResidentesTable } from "@/components/ResidentesTable";
+import { listarInsumosMedicosConStock } from "./insumos-actions";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
@@ -57,14 +58,17 @@ export default async function ResidentesSucursalPage({
     perfil.rol,
   );
 
-  const { data: residentes } = await supabase
-    .from("residentes")
-    .select(
-      "id, nombre, apellido, fecha_nacimiento, fecha_ingreso, fecha_egreso, contacto_familiar, telefono_familiar, foto_url, activo, ficha_administrativa(obra_social, tipo_cobertura, cuota_mensual)",
-    )
-    .eq("sucursal_id", id)
-    .order("apellido")
-    .returns<FilaResidente[]>();
+  const [{ data: residentes }, insumosMedicos] = await Promise.all([
+    supabase
+      .from("residentes")
+      .select(
+        "id, nombre, apellido, fecha_nacimiento, fecha_ingreso, fecha_egreso, contacto_familiar, telefono_familiar, foto_url, activo, ficha_administrativa(obra_social, tipo_cobertura, cuota_mensual)",
+      )
+      .eq("sucursal_id", id)
+      .order("apellido")
+      .returns<FilaResidente[]>(),
+    listarInsumosMedicosConStock(id),
+  ]);
 
   return (
     <div className="flex min-h-screen w-full">
@@ -100,6 +104,8 @@ export default async function ResidentesSucursalPage({
           residentes={residentes ?? []}
           puedeBorrar={perfil.rol === "admin"}
           esAdministrativo={["admin", "administrativo"].includes(perfil.rol)}
+          puedeCargarInsumos={puedeCrear}
+          insumosMedicos={insumosMedicos}
         />
       </main>
     </div>

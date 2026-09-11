@@ -64,7 +64,7 @@ export default async function InventarioSucursalPage({
       .single<{ id: string; nombre: string }>(),
     supabase
       .from("insumos")
-      .select("id, nombre, categoria, unidad, stock_minimo, activo")
+      .select("id, nombre, categoria, unidad, stock_minimo, precio_referencia, activo")
       .eq("activo", true)
       .order("nombre")
       .returns<Insumo[]>(),
@@ -117,6 +117,7 @@ export default async function InventarioSucursalPage({
         categoria: i.categoria,
         unidad: i.unidad,
         stockMinimo: i.stock_minimo,
+        precioReferencia: i.precio_referencia,
         stockInicial: resumen.stockInicial,
         ingreso: resumen.ingreso,
         egreso: resumen.egreso,

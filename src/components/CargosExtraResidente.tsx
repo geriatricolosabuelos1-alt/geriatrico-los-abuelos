@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import {
   eliminarCargoExtra,
   marcarCargoExtraPagado,
@@ -11,6 +11,20 @@ type Props = {
   residenteId: string;
   cargos: CargoExtraResidente[];
 };
+
+const MESES = [
+  "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre",
+];
+
+function claveMes(fecha: string): string {
+  return fecha.slice(0, 7); // "YYYY-MM"
+}
+
+function etiquetaMes(clave: string): string {
+  const [anio, mes] = clave.split("-").map(Number);
+  return `${MESES[mes - 1]} ${anio}`;
+}
 
 function FilaCargo({ residenteId, cargo }: { residenteId: string; cargo: CargoExtraResidente }) {
   const [enviando, setEnviando] = useState(false);
@@ -68,11 +82,18 @@ export function CargosExtraResidente({ residenteId, cargos }: Props) {
 
   const totalPendiente = cargos.filter((c) => !c.pagado).reduce((acc, c) => acc + c.monto, 0);
 
+  const grupos = new Map<string, CargoExtraResidente[]>();
+  cargos.forEach((c) => {
+    const clave = claveMes(c.fecha);
+    grupos.set(clave, [...(grupos.get(clave) ?? []), c]);
+  });
+  const clavesOrdenadas = [...grupos.keys()].sort().reverse();
+
   return (
     <div className="overflow-x-auto rounded-2xl border border-edge bg-card print:overflow-visible print:rounded-none print:border-0 print:bg-white">
       <div className="flex items-center justify-between border-b border-edge px-4 py-3 print:border-neutral-300">
         <h2 className="font-display text-sm font-semibold text-ink print:text-black">
-          Cargos extra (insumos imputados)
+          Insumos extra consumidos (imputados a cuenta corriente)
         </h2>
         {totalPendiente > 0 && (
           <span className="text-xs font-semibold text-red-700">
@@ -91,9 +112,25 @@ export function CargosExtraResidente({ residenteId, cargos }: Props) {
           </tr>
         </thead>
         <tbody>
-          {cargos.map((c) => (
-            <FilaCargo key={c.id} residenteId={residenteId} cargo={c} />
-          ))}
+          {clavesOrdenadas.map((clave) => {
+            const items = grupos.get(clave)!;
+            const totalMes = items.reduce((acc, c) => acc + c.monto, 0);
+            return (
+              <Fragment key={clave}>
+                <tr className="border-b border-edge bg-panel-deep">
+                  <td colSpan={2} className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-ink">
+                    {etiquetaMes(clave)}
+                  </td>
+                  <td colSpan={3} className="px-3 py-2 text-right text-xs font-semibold text-ink">
+                    Total del mes: ${totalMes.toLocaleString("es-AR")}
+                  </td>
+                </tr>
+                {items.map((c) => (
+                  <FilaCargo key={c.id} residenteId={residenteId} cargo={c} />
+                ))}
+              </Fragment>
+            );
+          })}
         </tbody>
       </table>
     </div>

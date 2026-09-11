@@ -220,6 +220,7 @@ export interface Insumo {
   categoria: CategoriaInsumo;
   unidad: string;
   stock_minimo: number;
+  precio_referencia: number | null;
   activo: boolean;
 }
 

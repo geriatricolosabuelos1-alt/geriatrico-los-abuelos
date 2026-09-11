@@ -15,6 +15,7 @@ type FilaInsumo = {
   categoria: CategoriaInsumo;
   unidad: string;
   stockMinimo: number;
+  precioReferencia: number | null;
   stockInicial: number;
   ingreso: number;
   egreso: number;
@@ -41,6 +42,9 @@ function FilaEditable({ insumo }: { insumo: FilaInsumo }) {
   const [nombre, setNombre] = useState(insumo.nombre);
   const [unidad, setUnidad] = useState(insumo.unidad);
   const [stockMinimo, setStockMinimo] = useState(String(insumo.stockMinimo));
+  const [precioReferencia, setPrecioReferencia] = useState(
+    insumo.precioReferencia !== null ? String(insumo.precioReferencia) : "",
+  );
   const [enviando, setEnviando] = useState(false);
 
   async function manejarSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -100,6 +104,19 @@ function FilaEditable({ insumo }: { insumo: FilaInsumo }) {
           value={stockMinimo}
           onChange={(e) => setStockMinimo(e.target.value)}
           className="w-20 rounded-md border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none"
+        />
+      </td>
+      <td className="px-4 py-3">
+        <input
+          form={`form-${insumo.id}`}
+          type="number"
+          min="0"
+          step="0.01"
+          name="precio_referencia"
+          placeholder="—"
+          value={precioReferencia}
+          onChange={(e) => setPrecioReferencia(e.target.value)}
+          className="w-24 rounded-md border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none"
         />
       </td>
       <td className="px-4 py-3">
@@ -253,6 +270,7 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
                     <th className="px-4 py-3">-Egreso</th>
                     <th className="px-4 py-3">Stock final</th>
                     <th className="px-4 py-3">Stock mínimo</th>
+                    <th className="px-4 py-3">Precio ref.</th>
                     <th className="px-4 py-3">Alerta</th>
                     {esAdmin && <th className="px-4 py-3"></th>}
                   </tr>
@@ -284,6 +302,11 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-ink-soft">{i.stockMinimo}</td>
+                        <td className="px-4 py-3 text-ink-soft">
+                          {i.precioReferencia !== null
+                            ? `$${i.precioReferencia.toLocaleString("es-AR")}`
+                            : "—"}
+                        </td>
                         <td className="px-4 py-3">
                           {tieneAlerta(i) && (
                             <span className="rounded-full bg-red-100 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide text-red-700">
