@@ -29,6 +29,8 @@
   --color-tab: rgb(14 107 94 / 0.14);
   --color-btn-ink: #f6f2ea;
   --color-warn: #f6dfc9;
+  --color-sede: #2f5f8f;
+  --color-sede-soft: rgb(47 95 143 / 0.14);
 }
 
 /* Sombras del relieve (se redefinen en modo oscuro) */
@@ -55,6 +57,8 @@
   --color-tab: rgb(79 191 160 / 0.16);
   --color-btn-ink: #0c1512;
   --color-warn: #3a2a18;
+  --color-sede: #7fb0e0;
+  --color-sede-soft: rgb(127 176 224 / 0.16);
 
   --relieve: 6px 6px 16px rgb(0 0 0 / 0.45), -4px -4px 12px rgb(255 255 255 / 0.04);
   --relieve-sm: 3px 3px 9px rgb(0 0 0 / 0.45), -2px -2px 7px rgb(255 255 255 / 0.04);
@@ -68,6 +72,15 @@
 }
 @utility hueco {
   box-shadow: var(--hueco);
+}
+@utility text-sede {
+  color: var(--color-sede);
+}
+@utility bg-sede {
+  background: var(--color-sede);
+}
+@utility bg-sede-soft {
+  background: var(--color-sede-soft);
 }
 
 body {

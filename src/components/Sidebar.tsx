@@ -217,7 +217,8 @@ export async function Sidebar({ perfil, activo }: Props) {
 
       {sucursalesVisibles.map((s) => (
         <div key={s.id} className="mt-3 flex flex-col gap-1">
-          <p className="px-2.5 pb-1 text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
+          <p className="mb-0.5 flex items-center gap-1.5 rounded-md bg-sede-soft px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-sede">
+            <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-sede" />
             {s.nombre}
           </p>
           {ROLES_RESIDENTES.includes(perfil.rol) && (
