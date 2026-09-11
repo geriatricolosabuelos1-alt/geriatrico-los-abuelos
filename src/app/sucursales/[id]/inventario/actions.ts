@@ -21,23 +21,61 @@ export async function registrarMovimiento(
   const cantidad = Number(formData.get("cantidad") ?? 0);
   const precioRaw = String(formData.get("precio") ?? "");
   const precio = precioRaw ? Number(precioRaw) : null;
+  const residente_id = String(formData.get("residente_id") ?? "") || null;
+  const imputarResidente = formData.get("imputar_residente") === "on" && tipo === "salida";
 
   if (!insumo_id || (tipo !== "entrada" && tipo !== "salida") || !cantidad || cantidad <= 0) {
     return { error: "Completá insumo, tipo y una cantidad mayor a cero." };
   }
 
-  const { error } = await supabase.from("movimientos_inventario").insert({
-    sucursal_id: sucursalId,
-    insumo_id,
-    tipo,
-    cantidad,
-    precio,
-    importe_total: precio ? precio * cantidad : null,
-    registrado_por: user?.id,
-  });
+  const importe_total = precio ? precio * cantidad : null;
+
+  if (imputarResidente && (!residente_id || !importe_total)) {
+    return {
+      error: "Para imputar el gasto a un residente, elegí el residente y completá un precio.",
+    };
+  }
+
+  const { data: movimiento, error } = await supabase
+    .from("movimientos_inventario")
+    .insert({
+      sucursal_id: sucursalId,
+      insumo_id,
+      tipo,
+      cantidad,
+      precio,
+      importe_total,
+      residente_id,
+      registrado_por: user?.id,
+    })
+    .select("id")
+    .single<{ id: string }>();
 
   if (error) {
     return { error: error.message };
+  }
+
+  if (imputarResidente && residente_id && importe_total) {
+    const { data: insumo } = await supabase
+      .from("insumos")
+      .select("nombre, unidad")
+      .eq("id", insumo_id)
+      .single<{ nombre: string; unidad: string }>();
+
+    const { error: errorCargo } = await supabase.from("cargos_extra_residente").insert({
+      residente_id,
+      sucursal_id: sucursalId,
+      movimiento_inventario_id: movimiento?.id ?? null,
+      concepto: `${insumo?.nombre ?? "Insumo"} — ${cantidad} ${insumo?.unidad ?? "unidades"}`,
+      monto: importe_total,
+      registrado_por: user?.id ?? null,
+    });
+
+    if (errorCargo) {
+      return { error: `Movimiento guardado, pero no se pudo imputar el gasto: ${errorCargo.message}` };
+    }
+
+    revalidatePath(`/residentes/${residente_id}/cuenta-corriente`);
   }
 
   revalidatePath(`/sucursales/${sucursalId}/inventario`);

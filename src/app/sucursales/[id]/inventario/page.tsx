@@ -45,6 +45,7 @@ export default async function InventarioSucursalPage({
     { data: sucursal },
     { data: insumos },
     { data: movimientos },
+    { data: residentes },
   ] = await Promise.all([
     supabase
       .from("perfiles")
@@ -67,6 +68,13 @@ export default async function InventarioSucursalPage({
       .select("insumo_id, tipo, cantidad, es_inicial")
       .eq("sucursal_id", id)
       .returns<FilaMovimiento[]>(),
+    supabase
+      .from("residentes")
+      .select("id, nombre, apellido")
+      .eq("sucursal_id", id)
+      .eq("activo", true)
+      .order("apellido")
+      .returns<{ id: string; nombre: string; apellido: string }[]>(),
   ]);
 
   if (!sucursal || !perfil) {
@@ -142,7 +150,7 @@ export default async function InventarioSucursalPage({
           )}
         </div>
 
-        <InventarioForm sucursalId={id} insumos={listaInsumos} />
+        <InventarioForm sucursalId={id} insumos={listaInsumos} residentes={residentes ?? []} />
 
         <InventarioTable insumos={filasInsumo} esAdmin={esAdmin} />
       </main>

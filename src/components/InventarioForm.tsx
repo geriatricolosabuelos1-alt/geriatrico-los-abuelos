@@ -7,9 +7,12 @@ import {
 } from "@/app/sucursales/[id]/inventario/actions";
 import type { CategoriaInsumo, Insumo } from "@/lib/types";
 
+type ResidenteBasico = { id: string; nombre: string; apellido: string };
+
 type Props = {
   sucursalId: string;
   insumos: Insumo[];
+  residentes: ResidenteBasico[];
 };
 
 const ESTADO_INICIAL: RegistrarMovimientoEstado = { error: null };
@@ -28,12 +31,14 @@ const FORMATO_MONEDA = new Intl.NumberFormat("es-AR", {
   currency: "ARS",
 });
 
-export function InventarioForm({ sucursalId, insumos }: Props) {
+export function InventarioForm({ sucursalId, insumos, residentes }: Props) {
   const accionConSucursal = registrarMovimiento.bind(null, sucursalId);
   const [estado, formAction, enviando] = useActionState(accionConSucursal, ESTADO_INICIAL);
 
   const [precio, setPrecio] = useState("");
   const [cantidad, setCantidad] = useState("");
+  const [tipo, setTipo] = useState<"entrada" | "salida">("entrada");
+  const [imputar, setImputar] = useState(false);
 
   const categorias: CategoriaInsumo[] = ["medicos", "varios"];
 
@@ -74,7 +79,17 @@ export function InventarioForm({ sucursalId, insumos }: Props) {
 
         <div className="w-32">
           <label className={ETIQUETA}>Tipo</label>
-          <select name="tipo" required className={CAMPO}>
+          <select
+            name="tipo"
+            required
+            value={tipo}
+            onChange={(e) => {
+              const v = e.target.value as "entrada" | "salida";
+              setTipo(v);
+              if (v === "entrada") setImputar(false);
+            }}
+            className={CAMPO}
+          >
             <option value="entrada">Ingreso</option>
             <option value="salida">Salida</option>
           </select>
@@ -125,6 +140,36 @@ export function InventarioForm({ sucursalId, insumos }: Props) {
           {enviando ? "Guardando..." : "Registrar"}
         </button>
       </div>
+
+      {tipo === "salida" && (
+        <div className="flex flex-wrap items-end gap-3 rounded-lg border border-edge bg-panel-deep p-3">
+          <label className="flex items-center gap-2 text-xs font-medium text-ink">
+            <input
+              type="checkbox"
+              name="imputar_residente"
+              checked={imputar}
+              onChange={(e) => setImputar(e.target.checked)}
+            />
+            Imputar como gasto extra a un residente
+          </label>
+          {imputar && (
+            <div className="min-w-[220px] flex-1">
+              <label className={ETIQUETA}>Residente</label>
+              <select name="residente_id" required className={CAMPO}>
+                <option value="">Seleccionar...</option>
+                {residentes.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.apellido}, {r.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {imputar && !precio && (
+            <p className="text-xs text-red-700">Completá el precio para poder imputar el gasto.</p>
+          )}
+        </div>
+      )}
 
       {estado.error && <p className="text-sm text-red-700">{estado.error}</p>}
     </form>

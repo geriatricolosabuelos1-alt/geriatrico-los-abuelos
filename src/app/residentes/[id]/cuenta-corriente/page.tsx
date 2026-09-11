@@ -8,7 +8,9 @@ import { EditorArancel } from "@/components/EditorArancel";
 import { HistorialPagos } from "@/components/HistorialPagos";
 import { BotonExportarPdf } from "@/components/BotonExportarPdf";
 import { BotonFacturar } from "@/components/BotonFacturar";
+import { CargosExtraResidente } from "@/components/CargosExtraResidente";
 import { diasDeAtraso } from "@/lib/aranceles";
+import { listarCargosExtra } from "./actions";
 import type { MetodoPago, Perfil } from "@/lib/types";
 
 type Params = { id: string };
@@ -89,15 +91,18 @@ export default async function CuentaCorrientePage({
       fecha_vencimiento_cuota: string | null;
     }>();
 
-  const { data: pagos } = await supabase
-    .from("pagos")
-    .select(
-      "id, monto, monto_pagado, mes, anio, estado, fecha_pago, tipo_pago, pagos_historial(monto, fecha, metodo_pago), facturas_arca(id)",
-    )
-    .eq("residente_id", id)
-    .order("anio", { ascending: false })
-    .order("mes", { ascending: false })
-    .returns<FilaPago[]>();
+  const [{ data: pagos }, cargosExtra] = await Promise.all([
+    supabase
+      .from("pagos")
+      .select(
+        "id, monto, monto_pagado, mes, anio, estado, fecha_pago, tipo_pago, pagos_historial(monto, fecha, metodo_pago), facturas_arca(id)",
+      )
+      .eq("residente_id", id)
+      .order("anio", { ascending: false })
+      .order("mes", { ascending: false })
+      .returns<FilaPago[]>(),
+    listarCargosExtra(id),
+  ]);
 
   const diaVencimiento = fichaAdministrativa?.fecha_vencimiento_cuota
     ? new Date(fichaAdministrativa.fecha_vencimiento_cuota + "T00:00:00").getDate()
@@ -163,6 +168,8 @@ export default async function CuentaCorrientePage({
         <div className="print:hidden">
           <AgregarPeriodoManual residenteId={id} sucursalId={residente.sucursal_id} />
         </div>
+
+        <CargosExtraResidente residenteId={id} cargos={cargosExtra} />
 
         <div className="overflow-x-auto rounded-2xl border border-edge bg-card print:overflow-visible print:rounded-none print:border-0 print:bg-white">
           <table className="w-full text-left text-sm">

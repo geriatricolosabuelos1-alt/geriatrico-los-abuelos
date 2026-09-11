@@ -2,6 +2,40 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import type { CargoExtraResidente } from "@/lib/types";
+
+export async function listarCargosExtra(residenteId: string): Promise<CargoExtraResidente[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("cargos_extra_residente")
+    .select(
+      "id, residente_id, sucursal_id, movimiento_inventario_id, concepto, monto, fecha, pagado, fecha_pago, registrado_por, created_at",
+    )
+    .eq("residente_id", residenteId)
+    .order("fecha", { ascending: false })
+    .returns<CargoExtraResidente[]>();
+
+  return data ?? [];
+}
+
+export async function marcarCargoExtraPagado(
+  residenteId: string,
+  cargoId: string,
+  pagado: boolean,
+): Promise<void> {
+  const supabase = await createClient();
+  await supabase
+    .from("cargos_extra_residente")
+    .update({ pagado, fecha_pago: pagado ? new Date().toISOString().slice(0, 10) : null })
+    .eq("id", cargoId);
+  revalidatePath(`/residentes/${residenteId}/cuenta-corriente`);
+}
+
+export async function eliminarCargoExtra(residenteId: string, cargoId: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from("cargos_extra_residente").delete().eq("id", cargoId);
+  revalidatePath(`/residentes/${residenteId}/cuenta-corriente`);
+}
 
 export type RegistrarPagoEstado = { error: string | null };
 

@@ -223,6 +223,20 @@ export interface Insumo {
   activo: boolean;
 }
 
+export interface CargoExtraResidente {
+  id: string;
+  residente_id: string;
+  sucursal_id: string;
+  movimiento_inventario_id: string | null;
+  concepto: string;
+  monto: number;
+  fecha: string;
+  pagado: boolean;
+  fecha_pago: string | null;
+  registrado_por: string | null;
+  created_at: string;
+}
+
 export type TipoMovimiento = "entrada" | "salida";
 
 export interface MovimientoInventario {
@@ -234,6 +248,7 @@ export interface MovimientoInventario {
   precio: number | null;
   importe_total: number | null;
   es_inicial: boolean;
+  residente_id: string | null;
   fecha: string;
 }
 
