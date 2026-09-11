@@ -223,7 +223,7 @@ export async function Sidebar({ perfil, activo }: Props) {
           </p>
           {ROLES_RESIDENTES.includes(perfil.rol) && (
             <SubTab
-              href={`/sucursales/${s.id}/residentes`}
+              href={`/sucursales/${s.id}/residentes${areaActual === "medicina" ? "?vista=medicina" : ""}`}
               label="Residentes"
               activo={
                 activo?.tipo === "sucursal" &&
@@ -234,7 +234,7 @@ export async function Sidebar({ perfil, activo }: Props) {
           )}
           {ROLES_MEDICACION.includes(perfil.rol) && (
             <SubTab
-              href={`/sucursales/${s.id}/medicacion`}
+              href={`/sucursales/${s.id}/medicacion${areaActual === "medicina" ? "?vista=medicina" : ""}`}
               label="Medicación"
               activo={
                 activo?.tipo === "sucursal" &&

@@ -7,6 +7,7 @@ import { listarCatalogoMedicamentos } from "@/app/residentes/[id]/legajo/medicac
 import type { AlertaMedicacion, MedicamentoResidente, Perfil } from "@/lib/types";
 
 type Params = { id: string };
+type SearchParams = { vista?: string };
 
 type ResidenteConMeds = {
   id: string;
@@ -17,10 +18,13 @@ type ResidenteConMeds = {
 
 export default async function MedicacionSucursalPage({
   params,
+  searchParams,
 }: {
   params: Promise<Params>;
+  searchParams: Promise<SearchParams>;
 }) {
   const { id } = await params;
+  const { vista } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -64,7 +68,12 @@ export default async function MedicacionSucursalPage({
     <div className="flex min-h-screen w-full">
       <Sidebar
         perfil={perfil!}
-        activo={{ tipo: "sucursal", sucursalId: id, seccion: "medicacion" }}
+        activo={{
+          tipo: "sucursal",
+          sucursalId: id,
+          seccion: "medicacion",
+          area: vista === "medicina" ? "medicina" : "administrativa",
+        }}
       />
 
       <main className="flex-1 space-y-6 px-9 py-8">
