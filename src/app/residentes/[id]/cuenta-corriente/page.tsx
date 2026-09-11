@@ -124,7 +124,7 @@ export default async function CuentaCorrientePage({
         />
       </div>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-9 py-8 print:max-w-none print:space-y-4 print:px-0 print:py-0">
+      <main className="flex-1 space-y-6 px-9 py-8 print:space-y-4 print:px-0 print:py-0">
         <div className="hidden print:block">
           <p className="font-display text-lg font-semibold text-black">Los Abuelos</p>
           <p className="text-xs uppercase tracking-widest text-neutral-600">
