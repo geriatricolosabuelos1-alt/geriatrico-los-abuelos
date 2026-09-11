@@ -228,34 +228,36 @@ export default async function CuentaCorrientePage({
                     <td className="px-3 py-2.5 text-ink-soft print:text-neutral-700">
                       {recargo > 0 ? `$${recargo.toLocaleString("es-AR")}` : "—"}
                     </td>
-                    <td className="px-3 py-2.5 text-right whitespace-nowrap print:hidden">
-                      {p.monto_pagado > 0 && (
-                        <Link
-                          href={`/residentes/${id}/recibo/${p.id}`}
-                          target="_blank"
-                          className="mr-3 text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
-                        >
-                          Recibo
-                        </Link>
-                      )}
-                      {p.monto_pagado > 0 && (
-                        <BotonFacturar
+                    <td className="px-3 py-2.5 text-right print:hidden">
+                      <div className="flex flex-wrap items-center justify-end gap-3">
+                        {p.monto_pagado > 0 && (
+                          <Link
+                            href={`/residentes/${id}/recibo/${p.id}`}
+                            target="_blank"
+                            className="text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                          >
+                            Recibo
+                          </Link>
+                        )}
+                        {p.monto_pagado > 0 && (
+                          <BotonFacturar
+                            residenteId={id}
+                            pagoId={p.id}
+                            montoSugerido={p.monto_pagado}
+                            dniResidente={residente.dni}
+                            yaFacturado={(p.facturas_arca?.length ?? 0) > 0}
+                          />
+                        )}
+                        <AccionesPago
                           residenteId={id}
                           pagoId={p.id}
-                          montoSugerido={p.monto_pagado}
-                          dniResidente={residente.dni}
-                          yaFacturado={(p.facturas_arca?.length ?? 0) > 0}
+                          estado={p.estado}
+                          monto={p.monto}
+                          montoPagado={p.monto_pagado}
+                          fechaPago={p.fecha_pago}
+                          restante={restante}
                         />
-                      )}
-                      <AccionesPago
-                        residenteId={id}
-                        pagoId={p.id}
-                        estado={p.estado}
-                        monto={p.monto}
-                        montoPagado={p.monto_pagado}
-                        fechaPago={p.fecha_pago}
-                        restante={restante}
-                      />
+                      </div>
                     </td>
                   </tr>
                 );

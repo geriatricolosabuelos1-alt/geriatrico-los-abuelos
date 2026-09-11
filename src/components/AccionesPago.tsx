@@ -182,7 +182,7 @@ export function AccionesPago({
   }
 
   return (
-    <div className="flex items-center justify-end gap-3 whitespace-nowrap">
+    <>
       {estado !== "pagado" && (
         <button
           type="button"
@@ -206,6 +206,6 @@ export function AccionesPago({
       >
         Eliminar
       </button>
-    </div>
+    </>
   );
 }
