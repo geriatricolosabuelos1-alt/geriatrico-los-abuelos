@@ -29,7 +29,7 @@ export default async function InformeMedicacionPage({
     supabase
       .from("residentes")
       .select(
-        "id, nombre, apellido, medicamentos_residente(id, residente_id, nombre, dosis, cantidad_stock, notas, updated_at)",
+        "id, nombre, apellido, medicamentos_residente(id, residente_id, nombre, dosis, dosis_diaria, frecuencia, horario, instrucciones, cantidad_stock, notas, activo, updated_at)",
       )
       .eq("sucursal_id", id)
       .eq("activo", true)
@@ -42,6 +42,7 @@ export default async function InformeMedicacionPage({
   }
 
   const filas = (residentes ?? [])
+    .map((r) => ({ ...r, medicamentos_residente: r.medicamentos_residente.filter((m) => m.activo) }))
     .filter((r) => r.medicamentos_residente.length > 0)
     .flatMap((r) =>
       r.medicamentos_residente

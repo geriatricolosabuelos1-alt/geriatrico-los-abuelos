@@ -2,8 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
-import { BotonDarDosis } from "@/components/BotonDarDosis";
-import type { MedicamentoResidente, Perfil } from "@/lib/types";
+import { MedicacionResidente } from "@/components/MedicacionResidente";
+import { listarCatalogoMedicamentos } from "@/app/residentes/[id]/legajo/medicacion-actions";
+import type { AlertaMedicacion, MedicamentoResidente, Perfil } from "@/lib/types";
 
 type Params = { id: string };
 
@@ -26,35 +27,38 @@ export default async function MedicacionSucursalPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: perfil }, { data: sucursal }, { data: residentes }] = await Promise.all([
-    supabase
-      .from("perfiles")
-      .select("id, nombre_completo, rol, sucursal_id, activo")
-      .eq("id", user!.id)
-      .single<Perfil>(),
-    supabase
-      .from("sucursales")
-      .select("id, nombre")
-      .eq("id", id)
-      .single<{ id: string; nombre: string }>(),
-    supabase
-      .from("residentes")
-      .select(
-        "id, nombre, apellido, medicamentos_residente(id, residente_id, nombre, dosis, cantidad_stock, notas, updated_at)",
-      )
-      .eq("sucursal_id", id)
-      .eq("activo", true)
-      .order("apellido")
-      .returns<ResidenteConMeds[]>(),
-  ]);
+  const [{ data: perfil }, { data: sucursal }, { data: residentes }, { data: alertas }, catalogo] =
+    await Promise.all([
+      supabase
+        .from("perfiles")
+        .select("id, nombre_completo, rol, sucursal_id, activo")
+        .eq("id", user!.id)
+        .single<Perfil>(),
+      supabase
+        .from("sucursales")
+        .select("id, nombre")
+        .eq("id", id)
+        .single<{ id: string; nombre: string }>(),
+      supabase
+        .from("residentes")
+        .select(
+          "id, nombre, apellido, medicamentos_residente(id, residente_id, nombre, dosis, dosis_diaria, frecuencia, horario, instrucciones, cantidad_stock, notas, activo, updated_at)",
+        )
+        .eq("sucursal_id", id)
+        .eq("activo", true)
+        .order("apellido")
+        .returns<ResidenteConMeds[]>(),
+      supabase
+        .from("alertas_medicacion")
+        .select("id, medicamento_id, residente_id, dias_restantes, nivel, creada_at, notificada, resuelta")
+        .eq("resuelta", false)
+        .returns<AlertaMedicacion[]>(),
+      listarCatalogoMedicamentos(),
+    ]);
 
   if (!sucursal || !perfil) {
     notFound();
   }
-
-  const residentesConMedicacion = (residentes ?? []).filter(
-    (r) => r.medicamentos_residente.length > 0,
-  );
 
   return (
     <div className="flex min-h-screen w-full">
@@ -71,7 +75,8 @@ export default async function MedicacionSucursalPage({
             </p>
             <h1 className="font-display text-[32px] font-semibold text-ink">Medicación</h1>
             <p className="mt-1 text-sm text-ink-soft">
-              Registrá cada dosis administrada — el stock se descuenta automáticamente.
+              Cargá, editá o dá de baja medicación, registrá ingresos y administrá dosis — todo se
+              refleja también en el legajo de cada residente.
             </p>
           </div>
           <Link
@@ -83,16 +88,13 @@ export default async function MedicacionSucursalPage({
         </div>
 
         <div className="space-y-4">
-          {residentesConMedicacion.length === 0 && (
-            <p className="text-sm text-ink-soft">
-              Ningún residente tiene medicación cargada todavía. Agregala desde el legajo de
-              cada residente.
-            </p>
+          {(residentes ?? []).length === 0 && (
+            <p className="text-sm text-ink-soft">No hay residentes activos en esta sede.</p>
           )}
 
-          {residentesConMedicacion.map((r) => (
-            <section key={r.id} className="rounded-2xl border border-edge bg-card p-5">
-              <div className="mb-3 flex items-center justify-between">
+          {(residentes ?? []).map((r) => (
+            <div key={r.id}>
+              <div className="mb-2 flex items-center justify-between px-1">
                 <h2 className="font-display text-base font-semibold text-ink">
                   {r.apellido}, {r.nombre}
                 </h2>
@@ -104,46 +106,14 @@ export default async function MedicacionSucursalPage({
                 </Link>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
-                      <th className="px-3 py-2">Medicamento</th>
-                      <th className="px-3 py-2">Dosis</th>
-                      <th className="px-3 py-2">Stock</th>
-                      <th className="px-3 py-2"></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {r.medicamentos_residente
-                      .sort((a, b) => a.nombre.localeCompare(b.nombre))
-                      .map((m) => (
-                        <tr key={m.id} className="border-t border-edge">
-                          <td className="px-3 py-2 text-sm text-ink">{m.nombre}</td>
-                          <td className="px-3 py-2 text-sm text-ink-soft">{m.dosis ?? "—"}</td>
-                          <td className="px-3 py-2">
-                            <span
-                              className={`text-sm font-semibold ${
-                                m.cantidad_stock <= 5 ? "text-red-700" : "text-ink"
-                              }`}
-                            >
-                              {m.cantidad_stock}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            <BotonDarDosis
-                              sucursalId={id}
-                              residenteId={r.id}
-                              medicamentoId={m.id}
-                              stockActual={m.cantidad_stock}
-                            />
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+              <MedicacionResidente
+                residenteId={r.id}
+                medicamentos={r.medicamentos_residente}
+                alertas={(alertas ?? []).filter((a) => a.residente_id === r.id)}
+                catalogo={catalogo}
+                sucursalId={id}
+              />
+            </div>
           ))}
         </div>
       </main>

@@ -14,6 +14,24 @@ export interface Sucursal {
   capacidad_camas: number | null;
 }
 
+export interface ItemHabilitacion {
+  id: string;
+  categoria: string;
+  orden: number;
+  descripcion: string;
+}
+
+export interface HabilitacionDocumento {
+  id: string;
+  sucursal_id: string;
+  item_id: string;
+  archivo_url: string | null;
+  nombre_archivo: string | null;
+  fecha_presentacion: string | null;
+  notas: string | null;
+  updated_at: string;
+}
+
 export interface Perfil {
   id: string;
   nombre_completo: string;
@@ -75,23 +93,62 @@ export interface DocumentoResidente {
   created_at: string;
 }
 
+export interface CatalogoMedicamento {
+  id: string;
+  nombre: string;
+  dosis: string | null;
+}
+
 export interface MedicamentoResidente {
   id: string;
   residente_id: string;
   nombre: string;
   dosis: string | null;
+  dosis_diaria: number | null;
+  frecuencia: string | null;
+  horario: string | null;
+  instrucciones: string | null;
   cantidad_stock: number;
   notas: string | null;
+  activo: boolean;
   updated_at: string;
 }
+
+export type EstadoDosis = "administrado" | "omitido";
 
 export interface DosisAdministrada {
   id: string;
   medicamento_id: string;
   residente_id: string;
   cantidad: number;
+  estado: EstadoDosis;
   administrado_por: string | null;
   fecha: string;
+}
+
+export interface IngresoMedicamento {
+  id: string;
+  medicamento_id: string;
+  residente_id: string;
+  cantidad: number;
+  lote: string | null;
+  vencimiento: string | null;
+  entregado_por: string | null;
+  registrado_por: string | null;
+  fecha: string;
+}
+
+export type NivelAlertaMedicacion = "aviso_7" | "aviso_5" | "sin_stock";
+
+export interface AlertaMedicacion {
+  id: string;
+  medicamento_id: string;
+  residente_id: string;
+  dias_restantes: number | null;
+  nivel: NivelAlertaMedicacion;
+  creada_at: string;
+  notificada: boolean;
+  resuelta: boolean;
 }
 
 export interface FichaMedica {

@@ -3,7 +3,11 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { LegajoForm } from "@/components/LegajoForm";
-import { listarMedicamentos } from "@/app/residentes/[id]/legajo/medicacion-actions";
+import {
+  listarAlertasActivas,
+  listarCatalogoMedicamentos,
+  listarMedicamentos,
+} from "@/app/residentes/[id]/legajo/medicacion-actions";
 import type { FichaAdministrativa, FichaMedica, Perfil, Residente } from "@/lib/types";
 
 type Params = { id: string };
@@ -58,7 +62,11 @@ export default async function LegajoResidentePage({
     .eq("residente_id", id)
     .maybeSingle<FichaMedica>();
 
-  const medicamentos = await listarMedicamentos(id);
+  const [medicamentos, alertasMedicacion, catalogoMedicamentos] = await Promise.all([
+    listarMedicamentos(id),
+    listarAlertasActivas(id),
+    listarCatalogoMedicamentos(),
+  ]);
 
   return (
     <div className="flex min-h-screen w-full">
@@ -103,6 +111,8 @@ export default async function LegajoResidentePage({
           fichaMedica={fichaMedica ?? null}
           rolActual={perfil.rol}
           medicamentos={medicamentos}
+          alertasMedicacion={alertasMedicacion}
+          catalogoMedicamentos={catalogoMedicamentos}
         />
       </main>
     </div>

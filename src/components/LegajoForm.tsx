@@ -9,6 +9,8 @@ import { FotoPicker } from "@/components/FotoPicker";
 import { DocumentosResidente } from "@/components/DocumentosResidente";
 import { MedicacionResidente } from "@/components/MedicacionResidente";
 import type {
+  AlertaMedicacion,
+  CatalogoMedicamento,
   FichaAdministrativa,
   FichaMedica,
   MedicamentoResidente,
@@ -22,6 +24,8 @@ type Props = {
   fichaMedica: FichaMedica | null;
   rolActual: RolUsuario;
   medicamentos: MedicamentoResidente[];
+  alertasMedicacion: AlertaMedicacion[];
+  catalogoMedicamentos: CatalogoMedicamento[];
 };
 
 const ESTADO_INICIAL: ActualizarLegajoEstado = { error: null };
@@ -65,6 +69,8 @@ export function LegajoForm({
   fichaMedica,
   rolActual,
   medicamentos,
+  alertasMedicacion,
+  catalogoMedicamentos,
 }: Props) {
   const accionConIds = actualizarLegajo.bind(null, residente.id, residente.sucursal_id);
   const [estado, formAction, enviando] = useActionState(accionConIds, ESTADO_INICIAL);
@@ -276,7 +282,12 @@ export function LegajoForm({
       </button>
     </form>
 
-    <MedicacionResidente residenteId={residente.id} medicamentos={medicamentos} />
+    <MedicacionResidente
+      residenteId={residente.id}
+      medicamentos={medicamentos}
+      alertas={alertasMedicacion}
+      catalogo={catalogoMedicamentos}
+    />
     </div>
   );
 }

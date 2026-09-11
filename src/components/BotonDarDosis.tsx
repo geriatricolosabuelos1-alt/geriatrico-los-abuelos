@@ -25,11 +25,10 @@ export function BotonDarDosis({ sucursalId, residenteId, medicamentoId, stockAct
       <button
         type="button"
         onClick={() => setAbierto(true)}
-        disabled={stockActual <= 0}
-        className="rounded-full border border-brass/40 px-3 py-1 text-xs font-semibold text-brass hover:bg-brass-soft disabled:cursor-not-allowed disabled:opacity-40"
-        title={stockActual <= 0 ? "Sin stock disponible" : undefined}
+        className="rounded-full border border-brass/40 px-3 py-1 text-xs font-semibold text-brass hover:bg-brass-soft"
+        title={stockActual <= 0 ? "Sin stock disponible — se puede registrar como omitida" : undefined}
       >
-        Dar dosis
+        Registrar dosis
       </button>
     );
   }
@@ -43,15 +42,28 @@ export function BotonDarDosis({ sucursalId, residenteId, medicamentoId, stockAct
         name="cantidad"
         defaultValue={1}
         min={1}
-        max={stockActual}
+        max={stockActual > 0 ? stockActual : undefined}
         className="w-14 rounded-lg border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none"
       />
       <button
         type="submit"
-        disabled={enviando}
-        className="rounded-full bg-brass px-3 py-1 text-xs font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
+        name="estado"
+        value="administrado"
+        disabled={enviando || stockActual <= 0}
+        title={stockActual <= 0 ? "Sin stock disponible" : undefined}
+        className="rounded-full bg-brass px-3 py-1 text-xs font-semibold text-btn-ink hover:bg-brass/90 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {enviando ? "..." : "Confirmar"}
+        {enviando ? "..." : "Administrar"}
+      </button>
+      <button
+        type="submit"
+        name="estado"
+        value="omitido"
+        disabled={enviando}
+        className="rounded-full border border-edge px-3 py-1 text-xs font-semibold text-ink-soft hover:border-red-300 hover:text-red-700 disabled:opacity-50"
+        title="Registrar que la dosis no se administró"
+      >
+        Omitir
       </button>
       <button
         type="button"

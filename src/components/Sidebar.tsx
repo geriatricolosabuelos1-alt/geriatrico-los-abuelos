@@ -10,7 +10,10 @@ type Seccion =
   | "rendiciones"
   | "gastos"
   | "reportes"
-  | "medicacion";
+  | "medicacion"
+  | "legales";
+
+type SubseccionLegales = "habilitacion";
 
 type Props = {
   perfil: Perfil;
@@ -19,6 +22,7 @@ type Props = {
     sucursalId: string;
     seccion: Seccion;
     categoriaInventario?: CategoriaInsumo;
+    subseccion?: SubseccionLegales;
     area?: "administrativa" | "medicina";
   };
 };
@@ -50,6 +54,7 @@ const ROLES_CUOTAS: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_RENDICIONES: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_GASTOS: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_REPORTES: RolUsuario[] = ["admin", "administrativo"];
+const ROLES_LEGALES: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_INVENTARIO: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_EMPLEADOS: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_DASHBOARD: RolUsuario[] = ["admin", "administrativo"];
@@ -305,6 +310,28 @@ export async function Sidebar({ perfil, activo }: Props) {
                 activo.seccion === "reportes"
               }
             />
+          )}
+          {ROLES_LEGALES.includes(perfil.rol) && areaActual === "administrativa" && (
+            <>
+              <SubTab
+                href={`/sucursales/${s.id}/legales/habilitacion`}
+                label="Legales"
+                activo={
+                  activo?.tipo === "sucursal" &&
+                  activo.sucursalId === s.id &&
+                  activo.seccion === "legales"
+                }
+              />
+              {activo?.tipo === "sucursal" &&
+                activo.sucursalId === s.id &&
+                activo.seccion === "legales" && (
+                  <SubSubTab
+                    href={`/sucursales/${s.id}/legales/habilitacion`}
+                    label="Habilitación"
+                    activo={activo.subseccion === "habilitacion"}
+                  />
+                )}
+            </>
           )}
         </div>
       ))}
