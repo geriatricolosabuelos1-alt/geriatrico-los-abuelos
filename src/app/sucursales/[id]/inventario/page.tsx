@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { InventarioForm } from "@/components/InventarioForm";
@@ -34,6 +34,11 @@ export default async function InventarioSucursalPage({
   const categoria = CATEGORIAS_VALIDAS.includes(categoriaRaw as CategoriaInsumo)
     ? (categoriaRaw as CategoriaInsumo)
     : undefined;
+
+  if (!categoria) {
+    redirect(`/sucursales/${id}/inventario?categoria=${CATEGORIAS_VALIDAS[0]}`);
+  }
+
   const supabase = await createClient();
 
   const {
@@ -152,34 +157,13 @@ export default async function InventarioSucursalPage({
           )}
         </div>
 
-        {categoria ? (
-          <>
-            <InventarioForm
-              sucursalId={id}
-              insumos={listaInsumosCategoria}
-              residentes={residentes ?? []}
-            />
+        <InventarioForm
+          sucursalId={id}
+          insumos={listaInsumosCategoria}
+          residentes={residentes ?? []}
+        />
 
-            <InventarioTable insumos={filasInsumo} esAdmin={esAdmin} />
-          </>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {CATEGORIAS_VALIDAS.map((cat) => (
-              <Link
-                key={cat}
-                href={`/sucursales/${id}/inventario?categoria=${cat}`}
-                className="rounded-2xl border border-edge bg-card p-6 hover:border-brass"
-              >
-                <p className="font-display text-lg font-semibold text-ink">
-                  {ETIQUETA_CATEGORIA[cat]}
-                </p>
-                <p className="mt-1 text-sm text-ink-soft">
-                  {listaInsumos.filter((i) => i.categoria === cat).length} insumos cargados
-                </p>
-              </Link>
-            ))}
-          </div>
-        )}
+        <InventarioTable insumos={filasInsumo} esAdmin={esAdmin} />
       </main>
     </div>
   );
