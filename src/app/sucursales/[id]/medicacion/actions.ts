@@ -50,6 +50,7 @@ export async function administrarDosis(
     residente_id: residenteId,
     cantidad,
     administrado_por: user?.id ?? null,
+    estado: "administrada",
   });
 
   if (errorInsert) {

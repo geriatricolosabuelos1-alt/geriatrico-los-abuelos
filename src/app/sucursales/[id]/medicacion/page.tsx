@@ -7,6 +7,11 @@ import type { MedicamentoResidente, Perfil } from "@/lib/types";
 
 type Params = { id: string };
 
+function diasRestantes(m: MedicamentoResidente): number | null {
+  if (!m.dosis_diaria || m.dosis_diaria <= 0) return null;
+  return Math.floor(m.cantidad_stock / m.dosis_diaria);
+}
+
 type ResidenteConMeds = {
   id: string;
   nombre: string;
@@ -40,7 +45,7 @@ export default async function MedicacionSucursalPage({
     supabase
       .from("residentes")
       .select(
-        "id, nombre, apellido, medicamentos_residente(id, residente_id, nombre, dosis, cantidad_stock, notas, updated_at)",
+        "id, nombre, apellido, medicamentos_residente(id, residente_id, nombre, dosis, cantidad_stock, notas, updated_at, dosis_diaria, frecuencia, horario, instrucciones, activo)",
       )
       .eq("sucursal_id", id)
       .eq("activo", true)
@@ -110,36 +115,61 @@ export default async function MedicacionSucursalPage({
                     <tr className="text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
                       <th className="px-3 py-2">Medicamento</th>
                       <th className="px-3 py-2">Dosis</th>
+                      <th className="px-3 py-2">Horario</th>
                       <th className="px-3 py-2">Stock</th>
+                      <th className="px-3 py-2">Días restantes</th>
                       <th className="px-3 py-2"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {r.medicamentos_residente
                       .sort((a, b) => a.nombre.localeCompare(b.nombre))
-                      .map((m) => (
-                        <tr key={m.id} className="border-t border-edge">
-                          <td className="px-3 py-2 text-sm text-ink">{m.nombre}</td>
-                          <td className="px-3 py-2 text-sm text-ink-soft">{m.dosis ?? "—"}</td>
-                          <td className="px-3 py-2">
-                            <span
-                              className={`text-sm font-semibold ${
-                                m.cantidad_stock <= 5 ? "text-red-700" : "text-ink"
-                              }`}
-                            >
-                              {m.cantidad_stock}
-                            </span>
-                          </td>
-                          <td className="px-3 py-2 text-right">
-                            <BotonDarDosis
-                              sucursalId={id}
-                              residenteId={r.id}
-                              medicamentoId={m.id}
-                              stockActual={m.cantidad_stock}
-                            />
-                          </td>
-                        </tr>
-                      ))}
+                      .map((m) => {
+                        const restantes = diasRestantes(m);
+                        return (
+                          <tr key={m.id} className="border-t border-edge">
+                            <td className="px-3 py-2 text-sm text-ink">{m.nombre}</td>
+                            <td className="px-3 py-2 text-sm text-ink-soft">{m.dosis ?? "—"}</td>
+                            <td className="px-3 py-2 text-xs text-ink-soft">
+                              {m.horario ?? m.frecuencia ?? "—"}
+                            </td>
+                            <td className="px-3 py-2">
+                              <span
+                                className={`text-sm font-semibold ${
+                                  m.cantidad_stock <= 5 ? "text-red-700" : "text-ink"
+                                }`}
+                              >
+                                {m.cantidad_stock}
+                              </span>
+                            </td>
+                            <td className="px-3 py-2 text-xs">
+                              {restantes === null ? (
+                                <span className="text-ink-soft">—</span>
+                              ) : (
+                                <span
+                                  className={
+                                    restantes <= 7
+                                      ? "font-semibold text-red-700"
+                                      : restantes <= 14
+                                        ? "font-semibold text-amber-600"
+                                        : "text-ink-soft"
+                                  }
+                                >
+                                  {restantes} día{restantes === 1 ? "" : "s"}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2 text-right">
+                              <BotonDarDosis
+                                sucursalId={id}
+                                residenteId={r.id}
+                                medicamentoId={m.id}
+                                stockActual={m.cantidad_stock}
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>

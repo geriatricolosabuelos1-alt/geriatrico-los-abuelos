@@ -83,7 +83,27 @@ export interface MedicamentoResidente {
   cantidad_stock: number;
   notas: string | null;
   updated_at: string;
+  dosis_diaria: number | null;
+  frecuencia: string | null;
+  horario: string | null;
+  instrucciones: string | null;
+  activo: boolean;
 }
+
+export interface IngresoMedicamento {
+  id: string;
+  medicamento_id: string;
+  residente_id: string;
+  fecha: string;
+  cantidad: number;
+  lote: string | null;
+  vencimiento: string | null;
+  entregado_por: string | null;
+  registrado_por: string | null;
+  created_at: string;
+}
+
+export type EstadoDosis = "administrada" | "omitida" | "rechazada";
 
 export interface DosisAdministrada {
   id: string;
@@ -92,6 +112,7 @@ export interface DosisAdministrada {
   cantidad: number;
   administrado_por: string | null;
   fecha: string;
+  estado: EstadoDosis;
 }
 
 export interface FichaMedica {

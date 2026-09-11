@@ -29,7 +29,7 @@ export default async function InformeMedicacionPage({
     supabase
       .from("residentes")
       .select(
-        "id, nombre, apellido, medicamentos_residente(id, residente_id, nombre, dosis, cantidad_stock, notas, updated_at)",
+        "id, nombre, apellido, medicamentos_residente(id, residente_id, nombre, dosis, cantidad_stock, notas, updated_at, dosis_diaria, frecuencia, horario, instrucciones, activo)",
       )
       .eq("sucursal_id", id)
       .eq("activo", true)
@@ -50,7 +50,12 @@ export default async function InformeMedicacionPage({
           residente: `${r.apellido}, ${r.nombre}`,
           medicamento: m.nombre,
           dosis: m.dosis ?? "—",
+          horario: m.horario ?? m.frecuencia ?? "—",
           stock: m.cantidad_stock,
+          diasRestantes:
+            m.dosis_diaria && m.dosis_diaria > 0
+              ? Math.floor(m.cantidad_stock / m.dosis_diaria)
+              : null,
           notas: m.notas,
         })),
     );
@@ -83,7 +88,9 @@ export default async function InformeMedicacionPage({
               <th className="py-2 pr-3">Residente</th>
               <th className="py-2 pr-3">Medicamento</th>
               <th className="py-2 pr-3">Dosis</th>
+              <th className="py-2 pr-3">Horario</th>
               <th className="py-2 pr-3 text-right">Stock actual</th>
+              <th className="py-2 pr-3 text-right">Días restantes</th>
               <th className="py-2">Notas</th>
             </tr>
           </thead>
@@ -95,6 +102,7 @@ export default async function InformeMedicacionPage({
                 </td>
                 <td className="py-2.5 pr-3 text-ink print:text-black">{f.medicamento}</td>
                 <td className="py-2.5 pr-3 text-ink-soft print:text-neutral-700">{f.dosis}</td>
+                <td className="py-2.5 pr-3 text-ink-soft print:text-neutral-700">{f.horario}</td>
                 <td
                   className={`py-2.5 pr-3 text-right font-semibold ${
                     f.stock <= 5 ? "text-red-700" : "text-ink print:text-black"
@@ -102,12 +110,15 @@ export default async function InformeMedicacionPage({
                 >
                   {f.stock}
                 </td>
+                <td className="py-2.5 pr-3 text-right text-ink-soft print:text-neutral-700">
+                  {f.diasRestantes ?? "—"}
+                </td>
                 <td className="py-2.5 text-ink-soft print:text-neutral-700">{f.notas ?? "—"}</td>
               </tr>
             ))}
             {filas.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-6 text-center text-ink-soft print:text-neutral-600">
+                <td colSpan={7} className="py-6 text-center text-ink-soft print:text-neutral-600">
                   No hay medicación cargada en esta sede.
                 </td>
               </tr>
