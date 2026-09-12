@@ -32,7 +32,7 @@ function Tarjeta({
       <p className="mt-4 font-display text-lg font-semibold text-ink">{titulo}</p>
       <p className="mt-1 text-sm text-ink-soft">{subtitulo}</p>
       {!habilitada && (
-        <span className="mt-4 rounded-full bg-white/5 px-3 py-1 text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
+        <span className="mt-4 rounded-full bg-white/5 px-3 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
           Sin acceso
         </span>
       )}

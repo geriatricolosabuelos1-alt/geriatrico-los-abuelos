@@ -178,13 +178,13 @@ function FormularioNuevoInsumo({ onCreado }: { onCreado: () => void }) {
       className="flex flex-wrap items-end gap-3 rounded-2xl border border-edge bg-card p-4"
     >
       <div>
-        <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
+        <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
           Nombre
         </label>
         <input name="nombre" required className={CAMPO} placeholder="Ej: Aceite" />
       </div>
       <div>
-        <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
+        <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
           Categoría
         </label>
         <select name="categoria" required defaultValue="varios" className={CAMPO}>
@@ -196,7 +196,7 @@ function FormularioNuevoInsumo({ onCreado }: { onCreado: () => void }) {
         </select>
       </div>
       <div>
-        <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
+        <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
           Unidad
         </label>
         <input name="unidad" className={CAMPO} placeholder="unidades" />

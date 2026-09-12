@@ -205,13 +205,13 @@ export function GastosFijos({ sucursalId, mes, anio, catalogo, gastosDelMes }: P
           className="flex flex-wrap items-end gap-3 rounded-2xl border border-edge bg-card p-4"
         >
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
               Nombre
             </label>
             <input name="nombre" required className={CAMPO} placeholder="Ej: Alquiler" />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
               Monto estimado
             </label>
             <input

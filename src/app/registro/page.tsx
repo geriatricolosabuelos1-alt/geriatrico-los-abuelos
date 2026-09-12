@@ -60,7 +60,7 @@ export default function RegistroPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
               Nombre completo
             </label>
             <input
@@ -73,7 +73,7 @@ export default function RegistroPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
               Email
             </label>
             <input
@@ -86,7 +86,7 @@ export default function RegistroPage() {
           </div>
 
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
+            <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
               Contraseña
             </label>
             <input

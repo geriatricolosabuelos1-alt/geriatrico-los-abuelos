@@ -89,7 +89,7 @@ export function BotonFacturar({
         </h3>
 
         <div>
-          <label className="mb-1 block text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
+          <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
             Importe a facturar
           </label>
           <input
@@ -101,7 +101,7 @@ export function BotonFacturar({
         </div>
 
         <div>
-          <label className="mb-1 block text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
+          <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
             Facturar a
           </label>
           <select
@@ -121,7 +121,7 @@ export function BotonFacturar({
 
         {tipoDoc !== "consumidor_final" && (
           <div>
-            <label className="mb-1 block text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
+            <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
               {tipoDoc === "dni" ? "DNI" : "CUIT"}
             </label>
             <input
@@ -135,7 +135,7 @@ export function BotonFacturar({
 
         {tipoDoc === "cuit" && (
           <div>
-            <label className="mb-1 block text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
+            <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
               Condición frente al IVA
             </label>
             <select

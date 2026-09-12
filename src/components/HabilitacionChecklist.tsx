@@ -49,7 +49,7 @@ function EditorItem({
     >
       <input type="hidden" name="item_id" value={itemId} />
       <div>
-        <label className="mb-1 block text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
+        <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
           Archivo (PDF)
         </label>
         <input
@@ -60,7 +60,7 @@ function EditorItem({
         />
       </div>
       <div>
-        <label className="mb-1 block text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
+        <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
           Fecha de presentación
         </label>
         <input
@@ -71,7 +71,7 @@ function EditorItem({
         />
       </div>
       <div className="min-w-[180px] flex-1">
-        <label className="mb-1 block text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
+        <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
           Notas
         </label>
         <input

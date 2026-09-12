@@ -33,7 +33,7 @@ const ESTADO_INICIAL: ActualizarLegajoEstado = { error: null };
 const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
 const ETIQUETA =
-  "mb-1 block text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft";
+  "mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft";
 const SECCION = "mb-3 font-display text-base font-semibold text-ink";
 
 function Campo({

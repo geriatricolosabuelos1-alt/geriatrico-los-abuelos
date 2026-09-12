@@ -63,7 +63,7 @@ export function AgregarPeriodoManual({ residenteId, sucursalId }: Props) {
       className="flex flex-wrap items-end gap-3 rounded-2xl border border-edge bg-card p-4"
     >
       <div>
-        <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
+        <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
           Mes
         </label>
         <select name="mes" defaultValue={ahora.getMonth() + 1} className={CAMPO}>
@@ -75,7 +75,7 @@ export function AgregarPeriodoManual({ residenteId, sucursalId }: Props) {
         </select>
       </div>
       <div>
-        <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
+        <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
           Año
         </label>
         <input
@@ -86,7 +86,7 @@ export function AgregarPeriodoManual({ residenteId, sucursalId }: Props) {
         />
       </div>
       <div>
-        <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
+        <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
           Parte
         </label>
         <select name="tipo_pago" defaultValue="paciente" className={CAMPO}>
@@ -95,7 +95,7 @@ export function AgregarPeriodoManual({ residenteId, sucursalId }: Props) {
         </select>
       </div>
       <div>
-        <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft">
+        <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
           Monto
         </label>
         <input type="number" step="0.01" name="monto" required className={CAMPO} />

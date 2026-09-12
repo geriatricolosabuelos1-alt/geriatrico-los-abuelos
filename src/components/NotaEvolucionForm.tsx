@@ -12,7 +12,7 @@ const ESTADO_INICIAL: CrearNotaEstado = { error: null };
 
 const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
-const ETIQUETA = "mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft";
+const ETIQUETA = "mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft";
 
 export function NotaEvolucionForm({ residenteId, mostrarSelectorTipo }: Props) {
   const accionConId = crearNotaEvolucion.bind(null, residenteId);
