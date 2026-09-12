@@ -7,23 +7,81 @@ import type {
   CatalogoMedicamento,
   DosisAdministrada,
   EstadoDosis,
+  EstadoToma,
   IngresoMedicamento,
   MedicamentoResidente,
   NivelAlertaMedicacion,
+  TomaMar,
 } from "@/lib/types";
+
+const COLUMNAS_MEDICAMENTO =
+  "id, residente_id, nombre, dosis, dosis_diaria, frecuencia, horario, via_administracion, tipo_administracion, dosis_maxima_diaria, horarios, instrucciones, cantidad_stock, notas, activo, cambio_reciente_at, updated_at";
 
 export async function listarMedicamentos(residenteId: string): Promise<MedicamentoResidente[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("medicamentos_residente")
-    .select(
-      "id, residente_id, nombre, dosis, dosis_diaria, frecuencia, horario, instrucciones, cantidad_stock, notas, activo, updated_at",
-    )
+    .select(COLUMNAS_MEDICAMENTO)
     .eq("residente_id", residenteId)
     .order("nombre")
     .returns<MedicamentoResidente[]>();
 
   return data ?? [];
+}
+
+function fechaHoyISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+export async function obtenerTomasDeHoy(residenteId: string): Promise<TomaMar[]> {
+  const supabase = await createClient();
+
+  const { data: medicamentos } = await supabase
+    .from("medicamentos_residente")
+    .select("id, horarios, tipo_administracion")
+    .eq("residente_id", residenteId)
+    .eq("activo", true)
+    .returns<{ id: string; horarios: string[] | null; tipo_administracion: string }[]>();
+
+  const continuos = (medicamentos ?? []).filter(
+    (m) => m.tipo_administracion === "continua" && m.horarios && m.horarios.length > 0,
+  );
+
+  if (continuos.length === 0) return [];
+
+  const hoy = fechaHoyISO();
+  const { data: registradas } = await supabase
+    .from("dosis_administradas")
+    .select("id, medicamento_id, horario_previsto, estado, motivo")
+    .eq("residente_id", residenteId)
+    .gte("fecha", `${hoy}T00:00:00`)
+    .lt("fecha", `${hoy}T23:59:59.999`)
+    .not("horario_previsto", "is", null)
+    .returns<
+      { id: string; medicamento_id: string; horario_previsto: string; estado: EstadoDosis; motivo: string | null }[]
+    >();
+
+  const porClave = new Map(
+    (registradas ?? []).map((r) => [`${r.medicamento_id}-${r.horario_previsto}`, r]),
+  );
+
+  const tomas: TomaMar[] = [];
+  for (const m of continuos) {
+    for (const horario of m.horarios ?? []) {
+      const existente = porClave.get(`${m.id}-${horario}`);
+      const estado: EstadoToma = existente?.estado ?? "pendiente";
+      tomas.push({
+        medicamentoId: m.id,
+        residenteId,
+        horario,
+        estado,
+        dosisId: existente?.id ?? null,
+        motivo: existente?.motivo ?? null,
+      });
+    }
+  }
+
+  return tomas;
 }
 
 export async function listarAlertasActivas(residenteId: string): Promise<AlertaMedicacion[]> {
@@ -55,12 +113,84 @@ export async function listarDosisAdministradas(medicamentoId: string): Promise<D
   const supabase = await createClient();
   const { data } = await supabase
     .from("dosis_administradas")
-    .select("id, medicamento_id, residente_id, cantidad, estado, administrado_por, fecha")
+    .select(
+      "id, medicamento_id, residente_id, cantidad, estado, motivo, horario_previsto, administrado_por, fecha",
+    )
     .eq("medicamento_id", medicamentoId)
     .order("fecha", { ascending: false })
     .returns<DosisAdministrada[]>();
 
   return data ?? [];
+}
+
+export async function obtenerDosisSosHoy(residenteId: string): Promise<Record<string, number>> {
+  const supabase = await createClient();
+  const hoy = fechaHoyISO();
+  const { data } = await supabase
+    .from("dosis_administradas")
+    .select("medicamento_id, cantidad")
+    .eq("residente_id", residenteId)
+    .eq("estado", "administrado")
+    .is("horario_previsto", null)
+    .gte("fecha", `${hoy}T00:00:00`)
+    .lt("fecha", `${hoy}T23:59:59.999`)
+    .returns<{ medicamento_id: string; cantidad: number }[]>();
+
+  const totales: Record<string, number> = {};
+  for (const d of data ?? []) {
+    totales[d.medicamento_id] = (totales[d.medicamento_id] ?? 0) + d.cantidad;
+  }
+  return totales;
+}
+
+export type RegistrarDosisSosEstado = { error: string | null };
+
+export async function registrarDosisSos(
+  sucursalId: string,
+  _estado: RegistrarDosisSosEstado,
+  formData: FormData,
+): Promise<RegistrarDosisSosEstado> {
+  const supabase = await createClient();
+
+  const medicamentoId = String(formData.get("medicamento_id") ?? "");
+  const residenteId = String(formData.get("residente_id") ?? "");
+
+  if (!medicamentoId || !residenteId) {
+    return { error: "Faltan datos del medicamento." };
+  }
+
+  const { data: medicamento } = await supabase
+    .from("medicamentos_residente")
+    .select("dosis_maxima_diaria")
+    .eq("id", medicamentoId)
+    .single<{ dosis_maxima_diaria: number | null }>();
+
+  if (medicamento?.dosis_maxima_diaria) {
+    const totales = await obtenerDosisSosHoy(residenteId);
+    const yaDadas = totales[medicamentoId] ?? 0;
+    if (yaDadas >= medicamento.dosis_maxima_diaria) {
+      return { error: `Ya se alcanzó la dosis máxima diaria (${medicamento.dosis_maxima_diaria}).` };
+    }
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { error } = await supabase.from("dosis_administradas").insert({
+    medicamento_id: medicamentoId,
+    residente_id: residenteId,
+    cantidad: 1,
+    estado: "administrado",
+    horario_previsto: null,
+    administrado_por: user?.id ?? null,
+  });
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/sucursales/${sucursalId}/medicacion`);
+  revalidatePath(`/residentes/${residenteId}/legajo`);
+  return { error: null };
 }
 
 async function recalcularAlertas(
@@ -114,7 +244,7 @@ export async function listarCatalogoMedicamentos(): Promise<CatalogoMedicamento[
   const supabase = await createClient();
   const { data } = await supabase
     .from("catalogo_medicamentos")
-    .select("id, nombre, dosis")
+    .select("id, nombre, dosis, grupo_terapeutico")
     .order("nombre")
     .returns<CatalogoMedicamento[]>();
 
@@ -148,6 +278,16 @@ async function guardarEnCatalogo(
 
 export type MedicamentoEstado = { error: string | null };
 
+function parsearHorarios(valor: FormDataEntryValue | null): string[] | null {
+  const texto = String(valor ?? "").trim();
+  if (!texto) return null;
+  const horarios = texto
+    .split(",")
+    .map((h) => h.trim())
+    .filter(Boolean);
+  return horarios.length > 0 ? horarios : null;
+}
+
 export async function agregarMedicamento(
   residenteId: string,
   _estado: MedicamentoEstado,
@@ -161,6 +301,11 @@ export async function agregarMedicamento(
   const dosis_diaria = dosisDiariaRaw ? Number(dosisDiariaRaw) : null;
   const frecuencia = String(formData.get("frecuencia") ?? "").trim() || null;
   const horario = String(formData.get("horario") ?? "").trim() || null;
+  const via_administracion = String(formData.get("via_administracion") ?? "").trim() || null;
+  const tipo_administracion = formData.get("tipo_administracion") === "sos" ? "sos" : "continua";
+  const dosisMaximaRaw = String(formData.get("dosis_maxima_diaria") ?? "").trim();
+  const dosis_maxima_diaria = dosisMaximaRaw ? Number(dosisMaximaRaw) : null;
+  const horarios = parsearHorarios(formData.get("horarios"));
   const instrucciones = String(formData.get("instrucciones") ?? "").trim() || null;
   const cantidad_stock = Number(formData.get("cantidad_stock") ?? 0);
 
@@ -175,6 +320,10 @@ export async function agregarMedicamento(
     dosis_diaria,
     frecuencia,
     horario,
+    via_administracion,
+    tipo_administracion,
+    dosis_maxima_diaria,
+    horarios,
     instrucciones,
     cantidad_stock,
   });
@@ -203,6 +352,11 @@ export async function actualizarPrescripcion(
   const dosis_diaria = dosisDiariaRaw ? Number(dosisDiariaRaw) : null;
   const frecuencia = String(formData.get("frecuencia") ?? "").trim() || null;
   const horario = String(formData.get("horario") ?? "").trim() || null;
+  const via_administracion = String(formData.get("via_administracion") ?? "").trim() || null;
+  const tipo_administracion = formData.get("tipo_administracion") === "sos" ? "sos" : "continua";
+  const dosisMaximaRaw = String(formData.get("dosis_maxima_diaria") ?? "").trim();
+  const dosis_maxima_diaria = dosisMaximaRaw ? Number(dosisMaximaRaw) : null;
+  const horarios = parsearHorarios(formData.get("horarios"));
   const instrucciones = String(formData.get("instrucciones") ?? "").trim() || null;
 
   if (!medicamentoId || !nombre) {
@@ -217,6 +371,10 @@ export async function actualizarPrescripcion(
       dosis_diaria,
       frecuencia,
       horario,
+      via_administracion,
+      tipo_administracion,
+      dosis_maxima_diaria,
+      horarios,
       instrucciones,
       updated_at: new Date().toISOString(),
     })
@@ -412,6 +570,104 @@ export async function eliminarIngreso(
   }
 
   revalidatePath(`/residentes/${residenteId}/legajo`);
+}
+
+const UMBRAL_POLIFARMACIA = 5;
+
+export interface AvisoPolifarmacia {
+  totalActivos: number;
+  esPolifarmacia: boolean;
+  duplicados: string[];
+}
+
+export async function evaluarPolifarmacia(residenteId: string): Promise<AvisoPolifarmacia> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("medicamentos_residente")
+    .select("nombre")
+    .eq("residente_id", residenteId)
+    .eq("activo", true)
+    .returns<{ nombre: string }[]>();
+
+  const nombres = (data ?? []).map((m) => m.nombre.trim().toLowerCase());
+  const conteo = new Map<string, number>();
+  for (const n of nombres) conteo.set(n, (conteo.get(n) ?? 0) + 1);
+  const duplicados = [...conteo.entries()].filter(([, c]) => c > 1).map(([n]) => n);
+
+  return {
+    totalActivos: nombres.length,
+    esPolifarmacia: nombres.length >= UMBRAL_POLIFARMACIA,
+    duplicados,
+  };
+}
+
+export type RegistrarEstadoTomaEstado = { error: string | null };
+
+export async function registrarEstadoToma(
+  sucursalId: string,
+  _estado: RegistrarEstadoTomaEstado,
+  formData: FormData,
+): Promise<RegistrarEstadoTomaEstado> {
+  const supabase = await createClient();
+
+  const medicamentoId = String(formData.get("medicamento_id") ?? "");
+  const residenteId = String(formData.get("residente_id") ?? "");
+  const horario = String(formData.get("horario") ?? "");
+  const estadoRaw = String(formData.get("estado") ?? "");
+  const motivo = String(formData.get("motivo") ?? "").trim() || null;
+  const dosisIdExistente = String(formData.get("dosis_id") ?? "") || null;
+
+  const estado = estadoRaw as EstadoDosis;
+  if (!medicamentoId || !residenteId || !horario) {
+    return { error: "Faltan datos de la toma." };
+  }
+  if (!["administrado", "rechazado", "suspendido"].includes(estado)) {
+    return { error: "Estado inválido." };
+  }
+  if (estado !== "administrado" && !motivo) {
+    return { error: "Ingresá el motivo." };
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (dosisIdExistente) {
+    const { data: dosisActual } = await supabase
+      .from("dosis_administradas")
+      .select("cantidad, estado")
+      .eq("id", dosisIdExistente)
+      .single<{ cantidad: number; estado: EstadoDosis }>();
+
+    const { error } = await supabase
+      .from("dosis_administradas")
+      .update({ estado, motivo })
+      .eq("id", dosisIdExistente);
+
+    if (error) return { error: error.message };
+
+    if (dosisActual) {
+      const reversion = dosisActual.estado === "administrado" ? dosisActual.cantidad : 0;
+      const aplicacion = estado === "administrado" ? dosisActual.cantidad : 0;
+      await ajustarStockPorDelta(supabase, medicamentoId, residenteId, reversion - aplicacion);
+    }
+  } else {
+    const { error } = await supabase.from("dosis_administradas").insert({
+      medicamento_id: medicamentoId,
+      residente_id: residenteId,
+      cantidad: 1,
+      estado,
+      motivo,
+      horario_previsto: horario,
+      administrado_por: user?.id ?? null,
+    });
+
+    if (error) return { error: error.message };
+  }
+
+  revalidatePath(`/sucursales/${sucursalId}/medicacion`);
+  revalidatePath(`/residentes/${residenteId}/legajo`);
+  return { error: null };
 }
 
 export type ActualizarDosisEstado = { error: string | null };
