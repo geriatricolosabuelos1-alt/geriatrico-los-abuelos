@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { EmpleadoForm } from "@/components/EmpleadoForm";
@@ -51,7 +52,15 @@ export default async function EmpleadosPage() {
       <Sidebar perfil={perfil!} activo={{ tipo: "empleados" }} />
 
       <main className="flex-1 space-y-6 px-9 py-8">
-        <h1 className="font-display text-[32px] font-semibold text-ink">Empleados</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="font-display text-[32px] font-semibold text-ink">Empleados</h1>
+          <Link
+            href="/empleados/turnos"
+            className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
+          >
+            Turnos cubiertos
+          </Link>
+        </div>
 
         <EmpleadoForm sucursales={sucursales ?? []} />
 

@@ -190,6 +190,20 @@ export interface Empleado {
   activo: boolean;
 }
 
+export interface TurnoCubierto {
+  id: string;
+  empleado_id: string;
+  sucursal_id: string;
+  fecha: string;
+  turno: string;
+  hora_inicio: string | null;
+  hora_fin: string | null;
+  horas: number;
+  observacion: string | null;
+  registrado_por: string | null;
+  created_at: string;
+}
+
 export type TipoGasto = "fijo" | "variable";
 
 export interface Gasto {
