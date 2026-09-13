@@ -178,14 +178,17 @@ export async function Sidebar({ perfil, activo }: Props) {
     <aside className="flex w-60 flex-shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-edge bg-panel-deep p-4">
       <div className="mb-6 flex items-center gap-3 px-1">
         <Link href="/" className="flex items-center gap-3">
-          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-brass font-display text-[0.9rem] font-semibold text-btn-ink">
-            LA
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-vektor.png"
+            alt="Vektor Geriatrixs"
+            className="h-9 w-9 flex-shrink-0 rounded-[10px] object-cover"
+          />
           <span>
             <p className="font-display text-[0.95rem] font-semibold leading-tight tracking-tight text-ink">
-              Los Abuelos
+              Vektor
             </p>
-            <p className="text-[0.7rem] text-ink-soft">Residencia geriátrica</p>
+            <p className="text-[0.7rem] text-ink-soft">Geriatrixs</p>
           </span>
         </Link>
       </div>

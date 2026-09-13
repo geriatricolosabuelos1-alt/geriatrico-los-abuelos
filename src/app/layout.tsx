@@ -9,8 +9,13 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
-  title: "Geriátrico Los Abuelos",
+  title: "Vektor Geriatrixs · Los Abuelos",
   description: "Sistema de gestión para el geriátrico Los Abuelos",
+  icons: {
+    icon: "/favicon-vektor.png",
+    shortcut: "/favicon-vektor.png",
+    apple: "/logo-vektor.png",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

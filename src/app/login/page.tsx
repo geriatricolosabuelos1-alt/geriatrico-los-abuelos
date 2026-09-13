@@ -36,12 +36,18 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-panel px-4">
       <div className="w-full max-w-sm rounded-2xl border border-edge bg-card p-8">
-        <p className="mb-1 text-[0.65rem] font-semibold uppercase tracking-widest text-brass">
-          Suite de cuidado
-        </p>
-        <h1 className="mb-1 font-display text-xl font-semibold text-ink">
-          Los Abuelos
-        </h1>
+        <div className="mb-4 flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-vektor.png"
+            alt="Vektor Geriatrixs"
+            className="h-11 w-11 flex-shrink-0 rounded-[10px] object-cover"
+          />
+          <div>
+            <h1 className="font-display text-xl font-semibold leading-tight text-ink">Vektor</h1>
+            <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-brass">Geriatrixs</p>
+          </div>
+        </div>
         <p className="mb-6 text-sm text-ink-soft">Iniciá sesión para continuar</p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
