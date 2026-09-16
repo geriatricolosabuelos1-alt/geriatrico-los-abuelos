@@ -106,7 +106,13 @@ export function InventarioTicketForm({ sucursalId }: Props) {
       .filter((i) => i.incluido)
       .map((i) =>
         i.insumo_id
-          ? { insumo_id: i.insumo_id, cantidad: i.cantidad, precio: i.precio }
+          ? {
+              insumo_id: i.insumo_id,
+              nombre: i.nombre,
+              categoria: i.categoriaSugerida,
+              cantidad: i.cantidad,
+              precio: i.precio,
+            }
           : {
               nombre: i.nombre,
               categoria: i.categoriaSugerida,

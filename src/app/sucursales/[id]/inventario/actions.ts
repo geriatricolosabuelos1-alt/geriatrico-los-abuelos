@@ -6,6 +6,32 @@ import type { CategoriaInsumo } from "@/lib/types";
 
 export type RegistrarMovimientoEstado = { error: string | null };
 
+const ETIQUETA_CATEGORIA_GASTO: Record<CategoriaInsumo, string> = {
+  medicos: "Insumos médicos",
+  varios: "Insumos varios",
+};
+
+async function crearGastoDeCompra(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  sucursalId: string,
+  categoria: CategoriaInsumo,
+  monto: number,
+  descripcion: string,
+): Promise<{ error: string | null }> {
+  const hoy = new Date();
+  const { error } = await supabase.from("gastos").insert({
+    sucursal_id: sucursalId,
+    categoria: ETIQUETA_CATEGORIA_GASTO[categoria],
+    monto,
+    mes: hoy.getMonth() + 1,
+    anio: hoy.getFullYear(),
+    fecha: hoy.toISOString().slice(0, 10),
+    descripcion,
+    tipo: "variable",
+  });
+  return { error: error?.message ?? null };
+}
+
 export async function registrarMovimiento(
   sucursalId: string,
   _estado: RegistrarMovimientoEstado,
@@ -56,27 +82,41 @@ export async function registrarMovimiento(
     return { error: error.message };
   }
 
-  if (imputarResidente && residente_id && importe_total) {
+  if (importe_total) {
     const { data: insumo } = await supabase
       .from("insumos")
-      .select("nombre, unidad")
+      .select("nombre, unidad, categoria")
       .eq("id", insumo_id)
-      .single<{ nombre: string; unidad: string }>();
+      .single<{ nombre: string; unidad: string; categoria: CategoriaInsumo }>();
 
-    const { error: errorCargo } = await supabase.from("cargos_extra_residente").insert({
-      residente_id,
-      sucursal_id: sucursalId,
-      movimiento_inventario_id: movimiento?.id ?? null,
-      concepto: `${insumo?.nombre ?? "Insumo"} — ${cantidad} ${insumo?.unidad ?? "unidades"}`,
-      monto: importe_total,
-      registrado_por: user?.id ?? null,
-    });
+    if (imputarResidente && residente_id) {
+      const { error: errorCargo } = await supabase.from("cargos_extra_residente").insert({
+        residente_id,
+        sucursal_id: sucursalId,
+        movimiento_inventario_id: movimiento?.id ?? null,
+        concepto: `${insumo?.nombre ?? "Insumo"} — ${cantidad} ${insumo?.unidad ?? "unidades"}`,
+        monto: importe_total,
+        registrado_por: user?.id ?? null,
+      });
 
-    if (errorCargo) {
-      return { error: `Movimiento guardado, pero no se pudo imputar el gasto: ${errorCargo.message}` };
+      if (errorCargo) {
+        return { error: `Movimiento guardado, pero no se pudo imputar el gasto: ${errorCargo.message}` };
+      }
+
+      revalidatePath(`/residentes/${residente_id}/cuenta-corriente`);
+    } else if (tipo === "entrada") {
+      const { error: errorGasto } = await crearGastoDeCompra(
+        supabase,
+        sucursalId,
+        insumo?.categoria ?? "varios",
+        importe_total,
+        `${insumo?.nombre ?? "Insumo"} — ${cantidad} ${insumo?.unidad ?? "unidades"} (inventario)`,
+      );
+      if (errorGasto) {
+        return { error: `Movimiento guardado, pero no se pudo registrar el gasto: ${errorGasto}` };
+      }
+      revalidatePath(`/sucursales/${sucursalId}/gastos`);
     }
-
-    revalidatePath(`/residentes/${residente_id}/cuenta-corriente`);
   }
 
   revalidatePath(`/sucursales/${sucursalId}/inventario`);
@@ -188,7 +228,13 @@ export async function eliminarInsumo(insumoId: string): Promise<void> {
 // --- Carga por foto de ticket: lee el ticket con IA y despues sigue el mismo
 // proceso de "registrar movimiento" de arriba (movimientos_inventario, entrada).
 
-type ItemExistente = { insumo_id: string; cantidad: number; precio: number | null };
+type ItemExistente = {
+  insumo_id: string;
+  nombre: string;
+  categoria: CategoriaInsumo;
+  cantidad: number;
+  precio: number | null;
+};
 type ItemNuevo = {
   nombre: string;
   categoria: CategoriaInsumo;
@@ -354,14 +400,26 @@ export async function registrarMovimientosPorTicket(
     return { error: "No hay ningún producto para cargar." };
   }
 
-  const movimientos: { insumo_id: string; cantidad: number; precio: number | null }[] = [];
+  const movimientos: {
+    insumo_id: string;
+    nombre: string;
+    categoria: CategoriaInsumo;
+    cantidad: number;
+    precio: number | null;
+  }[] = [];
 
   for (const item of items) {
     if (Number(item.cantidad) <= 0) continue;
     const precio = item.precio && item.precio > 0 ? item.precio : null;
 
     if ("insumo_id" in item) {
-      movimientos.push({ insumo_id: item.insumo_id, cantidad: item.cantidad, precio });
+      movimientos.push({
+        insumo_id: item.insumo_id,
+        nombre: item.nombre,
+        categoria: item.categoria,
+        cantidad: item.cantidad,
+        precio,
+      });
       continue;
     }
 
@@ -380,7 +438,13 @@ export async function registrarMovimientosPorTicket(
       };
     }
 
-    movimientos.push({ insumo_id: insumoCreado.id, cantidad: item.cantidad, precio });
+    movimientos.push({
+      insumo_id: insumoCreado.id,
+      nombre,
+      categoria: item.categoria,
+      cantidad: item.cantidad,
+      precio,
+    });
   }
 
   if (movimientos.length === 0) {
@@ -401,6 +465,37 @@ export async function registrarMovimientosPorTicket(
 
   if (errorMovimientos) {
     return { error: errorMovimientos.message };
+  }
+
+  const gastosPorCategoria = new Map<CategoriaInsumo, { monto: number; nombres: string[] }>();
+  movimientos
+    .filter((m) => m.precio)
+    .forEach((m) => {
+      const actual = gastosPorCategoria.get(m.categoria) ?? { monto: 0, nombres: [] };
+      actual.monto += (m.precio as number) * m.cantidad;
+      actual.nombres.push(m.nombre);
+      gastosPorCategoria.set(m.categoria, actual);
+    });
+
+  for (const [categoria, { monto, nombres }] of gastosPorCategoria) {
+    const descripcion =
+      nombres.length > 4
+        ? `${nombres.slice(0, 4).join(", ")} y ${nombres.length - 4} más (ticket)`
+        : `${nombres.join(", ")} (ticket)`;
+    const { error: errorGasto } = await crearGastoDeCompra(
+      supabase,
+      sucursalId,
+      categoria,
+      monto,
+      descripcion,
+    );
+    if (errorGasto) {
+      return { error: `Productos guardados, pero no se pudo registrar el gasto: ${errorGasto}` };
+    }
+  }
+
+  if (gastosPorCategoria.size > 0) {
+    revalidatePath(`/sucursales/${sucursalId}/gastos`);
   }
 
   revalidatePath(`/sucursales/${sucursalId}/inventario`);
