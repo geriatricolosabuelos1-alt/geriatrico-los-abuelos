@@ -66,6 +66,12 @@ export function PanelAccionesEmpleados({ sucursales }: Props) {
           titulo="Turnos semanales"
           subtitulo="Planificar el turno recurrente hasta fin de año"
         />
+        <Tarjeta
+          href="/empleados/control-turnos"
+          icono="✅"
+          titulo="Control de turnos"
+          subtitulo="Comparar el turno programado contra la marcación real"
+        />
       </div>
 
       {abierto && (
