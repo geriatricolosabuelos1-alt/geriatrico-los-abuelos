@@ -64,6 +64,36 @@ export async function crearTurnoPrograma(
   return { error: null };
 }
 
+export type ActualizarTurnoProgramaEstado = { error: string | null };
+
+export async function actualizarTurnoPrograma(
+  id: string,
+  formData: FormData,
+): Promise<ActualizarTurnoProgramaEstado> {
+  const supabase = await createClient();
+
+  const hora_inicio = String(formData.get("hora_inicio") ?? "");
+  const hora_fin = String(formData.get("hora_fin") ?? "");
+  const vigente_desde = String(formData.get("vigente_desde") ?? "");
+  const vigente_hasta = String(formData.get("vigente_hasta") ?? "");
+
+  if (!hora_inicio || !hora_fin || !vigente_desde || !vigente_hasta) {
+    return { error: "Completá horario y vigencia." };
+  }
+
+  const { error } = await supabase
+    .from("turnos_programados")
+    .update({ hora_inicio, hora_fin, vigente_desde, vigente_hasta })
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/empleados/turnos");
+  return { error: null };
+}
+
 export async function eliminarTurnoPrograma(id: string): Promise<void> {
   const supabase = await createClient();
   await supabase.from("turnos_programados").delete().eq("id", id);

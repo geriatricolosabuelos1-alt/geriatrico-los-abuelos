@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { FormularioTurnoPrograma } from "@/components/FormularioTurnoPrograma";
 import { TablaTurnosSemanal } from "@/components/TablaTurnosSemanal";
+import { ExportarPdfTurnos } from "@/components/ExportarPdfTurnos";
 import { listarTurnosProgramados } from "@/app/empleados/turnos-actions";
 import type { Perfil, Sucursal } from "@/lib/types";
 
@@ -98,7 +99,15 @@ export default async function TurnosPage({
           </button>
         </form>
 
-        <FormularioTurnoPrograma sucursalId={sucursalId} empleados={empleadosDeSede} />
+        <div className="flex flex-wrap gap-3">
+          <FormularioTurnoPrograma sucursalId={sucursalId} empleados={empleadosDeSede} />
+        </div>
+
+        <ExportarPdfTurnos
+          turnos={turnos}
+          empleadosPorId={empleadosPorId}
+          sucursalNombre={listaSucursales.find((s) => s.id === sucursalId)?.nombre ?? "Sede"}
+        />
 
         <TablaTurnosSemanal turnos={turnos} empleadosPorId={empleadosPorId} />
       </main>
