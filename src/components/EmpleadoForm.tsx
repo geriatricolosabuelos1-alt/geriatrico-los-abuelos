@@ -1,11 +1,13 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useRef } from "react";
 import { crearEmpleado, type CrearEmpleadoEstado } from "@/app/empleados/actions";
 import type { Sucursal } from "@/lib/types";
 
 type Props = {
   sucursales: Sucursal[];
+  onCancelar: () => void;
+  onGuardado: () => void;
 };
 
 const ESTADO_INICIAL: CrearEmpleadoEstado = { error: null };
@@ -14,29 +16,16 @@ const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
 const ETIQUETA = "mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft";
 
-export function EmpleadoForm({ sucursales }: Props) {
-  const [abierto, setAbierto] = useState(false);
+export function EmpleadoForm({ sucursales, onCancelar, onGuardado }: Props) {
   const [estado, formAction, enviando] = useActionState(crearEmpleado, ESTADO_INICIAL);
   const enviandoAnterior = useRef(enviando);
 
   useEffect(() => {
     if (enviandoAnterior.current && !enviando && !estado.error) {
-      setAbierto(false);
+      onGuardado();
     }
     enviandoAnterior.current = enviando;
-  }, [enviando, estado.error]);
-
-  if (!abierto) {
-    return (
-      <button
-        type="button"
-        onClick={() => setAbierto(true)}
-        className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
-      >
-        + Nuevo empleado
-      </button>
-    );
-  }
+  }, [enviando, estado.error, onGuardado]);
 
   return (
     <form
@@ -47,7 +36,7 @@ export function EmpleadoForm({ sucursales }: Props) {
         <h2 className="font-display text-sm font-semibold text-ink">Nuevo empleado</h2>
         <button
           type="button"
-          onClick={() => setAbierto(false)}
+          onClick={onCancelar}
           className="text-sm text-ink-soft hover:text-ink"
         >
           ✕
