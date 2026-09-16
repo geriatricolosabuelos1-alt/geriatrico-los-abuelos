@@ -24,6 +24,8 @@ create policy "fichadas_select_autenticados" on public.fichadas
   using (true);
 
 -- Busca un empleado activo por DNI. Devuelve solo id + nombre (nada mas).
+-- Compara solo los digitos: el DNI puede estar guardado con puntos (45.144.752)
+-- y el kiosco lo manda sin formato (45144752).
 create or replace function public.buscar_empleado_fichado(p_dni text)
 returns table(id uuid, nombre_completo text)
 language sql
@@ -32,7 +34,9 @@ set search_path = public
 as $$
   select id, nombre_completo
   from empleados
-  where dni = p_dni and activo = true
+  where regexp_replace(dni, '\D', '', 'g') = regexp_replace(p_dni, '\D', '', 'g')
+    and dni is not null
+    and activo = true
   limit 1;
 $$;
 
@@ -48,13 +52,16 @@ set search_path = public
 as $$
 declare
   v_activo boolean;
-  v_row record;
+  v_id uuid;
+  v_tipo text;
+  v_fecha date;
+  v_hora time;
 begin
   if p_tipo not in ('ingreso', 'egreso') then
     raise exception 'tipo invalido';
   end if;
 
-  select activo into v_activo from empleados where id = p_empleado_id;
+  select e.activo into v_activo from empleados e where e.id = p_empleado_id;
   if v_activo is not true then
     raise exception 'empleado no encontrado o inactivo';
   end if;
@@ -66,9 +73,10 @@ begin
     (now() at time zone 'America/Argentina/Buenos_Aires')::date,
     (now() at time zone 'America/Argentina/Buenos_Aires')::time
   )
-  returning fichadas.id, fichadas.tipo, fichadas.fecha, fichadas.hora into v_row;
+  returning fichadas.id, fichadas.tipo, fichadas.fecha, fichadas.hora
+  into v_id, v_tipo, v_fecha, v_hora;
 
-  return query select v_row.id, v_row.tipo, v_row.fecha, v_row.hora;
+  return query select v_id, v_tipo, v_fecha, v_hora;
 end;
 $$;
 
