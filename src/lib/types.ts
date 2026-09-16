@@ -179,6 +179,7 @@ export interface MedicamentoResidente {
   cantidad_stock: number;
   notas: string | null;
   activo: boolean;
+  sin_seguimiento_stock: boolean;
   cambio_reciente_at: string | null;
   updated_at: string;
 }

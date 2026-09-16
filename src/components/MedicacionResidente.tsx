@@ -600,6 +600,16 @@ function FormularioPrescripcion({
           className="w-full rounded-lg border border-edge bg-panel px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
         />
       </div>
+      <label className="flex w-full items-center gap-2 text-xs text-ink-soft">
+        <input
+          type="checkbox"
+          name="sin_seguimiento_stock"
+          defaultChecked={medicamento.sin_seguimiento_stock}
+          className="h-3.5 w-3.5"
+        />
+        Sin control de stock acá (ej: la familia lo trae/arma el pastillero) — no generar alertas
+        de stock bajo para este medicamento
+      </label>
       <button
         type="submit"
         disabled={enviando}
@@ -644,7 +654,14 @@ function FilaMedicamento({
   return (
     <>
       <tr className="border-t border-edge">
-        <td className="px-3 py-2 text-sm text-ink">{medicamento.nombre}</td>
+        <td className="px-3 py-2 text-sm text-ink">
+          {medicamento.nombre}
+          {medicamento.sin_seguimiento_stock && (
+            <span className="ml-1.5 rounded-full border border-edge bg-panel px-1.5 py-0.5 text-[0.6rem] text-ink-soft">
+              sin control de stock
+            </span>
+          )}
+        </td>
         <td className="px-3 py-2 text-sm text-ink-soft">
           {medicamento.dosis ?? "—"}
           {medicamento.frecuencia && (

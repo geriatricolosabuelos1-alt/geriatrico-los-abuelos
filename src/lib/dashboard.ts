@@ -52,6 +52,7 @@ type MedSinDosisRaw = {
   nombre: string;
   cantidad_stock: number;
   dosis_diaria: number | null;
+  sin_seguimiento_stock: boolean;
   residente_id: string;
   residentes: { nombre: string; apellido: string; sucursal_id: string };
 };
@@ -63,6 +64,7 @@ type AlertaMedicacionRaw = {
   medicamentos_residente: {
     nombre: string;
     residente_id: string;
+    sin_seguimiento_stock: boolean;
     residentes: { nombre: string; apellido: string; sucursal_id: string };
   };
 };
@@ -110,19 +112,21 @@ export async function obtenerResumenSucursal(
     supabase
       .from("alertas_medicacion")
       .select(
-        "id, dias_restantes, nivel, medicamentos_residente!inner(nombre, residente_id, residentes!inner(nombre, apellido, sucursal_id))",
+        "id, dias_restantes, nivel, medicamentos_residente!inner(nombre, residente_id, sin_seguimiento_stock, residentes!inner(nombre, apellido, sucursal_id))",
       )
       .eq("resuelta", false)
       .eq("medicamentos_residente.residentes.sucursal_id", sucursalId)
+      .eq("medicamentos_residente.sin_seguimiento_stock", false)
       .returns<AlertaMedicacionRaw[]>(),
     supabase
       .from("medicamentos_residente")
       .select(
-        "id, nombre, cantidad_stock, dosis_diaria, residente_id, residentes!inner(nombre, apellido, sucursal_id)",
+        "id, nombre, cantidad_stock, dosis_diaria, sin_seguimiento_stock, residente_id, residentes!inner(nombre, apellido, sucursal_id)",
       )
       .eq("activo", true)
+      .eq("sin_seguimiento_stock", false)
       .eq("residentes.sucursal_id", sucursalId)
-      .lte("cantidad_stock", 5)
+      .lte("cantidad_stock", 10)
       .returns<MedSinDosisRaw[]>(),
     supabase
       .from("insumos")
@@ -190,7 +194,12 @@ export async function obtenerResumenSucursal(
       residenteId: m.residente_id,
       residenteNombre: `${m.residentes.apellido}, ${m.residentes.nombre}`,
       medicamentoNombre: m.nombre,
-      nivel: m.cantidad_stock <= 0 ? "sin_stock" : ("aviso_7" as const),
+      nivel:
+        m.cantidad_stock <= 0
+          ? "sin_stock"
+          : m.cantidad_stock <= 5
+            ? ("aviso_5" as const)
+            : ("aviso_7" as const),
       diasRestantes: null,
       sinDosisDiaria: true,
       stockActual: m.cantidad_stock,

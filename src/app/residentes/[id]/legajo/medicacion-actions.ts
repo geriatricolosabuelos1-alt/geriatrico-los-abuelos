@@ -15,7 +15,7 @@ import type {
 } from "@/lib/types";
 
 const COLUMNAS_MEDICAMENTO =
-  "id, residente_id, nombre, dosis, dosis_diaria, frecuencia, horario, via_administracion, tipo_administracion, dosis_maxima_diaria, horarios, instrucciones, cantidad_stock, notas, activo, cambio_reciente_at, updated_at";
+  "id, residente_id, nombre, dosis, dosis_diaria, frecuencia, horario, via_administracion, tipo_administracion, dosis_maxima_diaria, horarios, instrucciones, cantidad_stock, notas, activo, sin_seguimiento_stock, cambio_reciente_at, updated_at";
 
 export async function listarMedicamentos(residenteId: string): Promise<MedicamentoResidente[]> {
   const supabase = await createClient();
@@ -308,6 +308,7 @@ export async function agregarMedicamento(
   const horarios = parsearHorarios(formData.get("horarios"));
   const instrucciones = String(formData.get("instrucciones") ?? "").trim() || null;
   const cantidad_stock = Number(formData.get("cantidad_stock") ?? 0);
+  const sin_seguimiento_stock = formData.get("sin_seguimiento_stock") === "on";
 
   if (!nombre) {
     return { error: "El nombre del medicamento es obligatorio." };
@@ -326,6 +327,7 @@ export async function agregarMedicamento(
     horarios,
     instrucciones,
     cantidad_stock,
+    sin_seguimiento_stock,
   });
 
   if (error) {
@@ -358,6 +360,7 @@ export async function actualizarPrescripcion(
   const dosis_maxima_diaria = dosisMaximaRaw ? Number(dosisMaximaRaw) : null;
   const horarios = parsearHorarios(formData.get("horarios"));
   const instrucciones = String(formData.get("instrucciones") ?? "").trim() || null;
+  const sin_seguimiento_stock = formData.get("sin_seguimiento_stock") === "on";
 
   if (!medicamentoId || !nombre) {
     return { error: "Falta el nombre del medicamento." };
@@ -376,6 +379,7 @@ export async function actualizarPrescripcion(
       dosis_maxima_diaria,
       horarios,
       instrucciones,
+      sin_seguimiento_stock,
       updated_at: new Date().toISOString(),
     })
     .eq("id", medicamentoId);
