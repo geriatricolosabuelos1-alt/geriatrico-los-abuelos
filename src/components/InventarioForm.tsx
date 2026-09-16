@@ -11,6 +11,7 @@ type ResidenteBasico = { id: string; nombre: string; apellido: string };
 
 type Props = {
   sucursalId: string;
+  categoria: CategoriaInsumo;
   insumos: Insumo[];
   residentes: ResidenteBasico[];
 };
@@ -21,26 +22,19 @@ const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
 const ETIQUETA = "mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft";
 
-const ETIQUETA_CATEGORIA: Record<CategoriaInsumo, string> = {
-  medicos: "Insumos médicos",
-  varios: "Insumos varios",
-};
-
 const FORMATO_MONEDA = new Intl.NumberFormat("es-AR", {
   style: "currency",
   currency: "ARS",
 });
 
-export function InventarioForm({ sucursalId, insumos, residentes }: Props) {
-  const accionConSucursal = registrarMovimiento.bind(null, sucursalId);
+export function InventarioForm({ sucursalId, categoria, insumos, residentes }: Props) {
+  const accionConSucursal = registrarMovimiento.bind(null, sucursalId, categoria);
   const [estado, formAction, enviando] = useActionState(accionConSucursal, ESTADO_INICIAL);
 
   const [precio, setPrecio] = useState("");
   const [cantidad, setCantidad] = useState("");
   const [tipo, setTipo] = useState<"entrada" | "salida">("entrada");
   const [imputar, setImputar] = useState(false);
-
-  const categorias: CategoriaInsumo[] = ["medicos", "varios"];
 
   const importeTotal = useMemo(() => {
     const p = Number(precio);
@@ -59,22 +53,19 @@ export function InventarioForm({ sucursalId, insumos, residentes }: Props) {
       <div className="flex flex-wrap items-end gap-3 overflow-x-auto">
         <div className="min-w-[220px] flex-1">
           <label className={ETIQUETA}>Insumo</label>
-          <select name="insumo_id" required className={CAMPO}>
-            <option value="">Seleccionar...</option>
-            {categorias.map((cat) => {
-              const items = insumos.filter((i) => i.categoria === cat);
-              if (items.length === 0) return null;
-              return (
-                <optgroup key={cat} label={ETIQUETA_CATEGORIA[cat]}>
-                  {items.map((i) => (
-                    <option key={i.id} value={i.id}>
-                      {i.nombre}
-                    </option>
-                  ))}
-                </optgroup>
-              );
-            })}
-          </select>
+          <input
+            type="text"
+            name="insumo_nombre"
+            list="lista-insumos-inventario"
+            required
+            placeholder="Elegí uno existente o escribí uno nuevo"
+            className={CAMPO}
+          />
+          <datalist id="lista-insumos-inventario">
+            {insumos.map((i) => (
+              <option key={i.id} value={i.nombre} />
+            ))}
+          </datalist>
         </div>
 
         <div className="w-32">

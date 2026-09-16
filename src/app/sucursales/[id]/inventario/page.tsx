@@ -161,6 +161,7 @@ export default async function InventarioSucursalPage({
 
         <InventarioForm
           sucursalId={id}
+          categoria={categoria!}
           insumos={listaInsumosCategoria}
           residentes={residentes ?? []}
         />

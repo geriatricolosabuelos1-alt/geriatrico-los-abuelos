@@ -34,6 +34,7 @@ async function crearGastoDeCompra(
 
 export async function registrarMovimiento(
   sucursalId: string,
+  categoriaActual: CategoriaInsumo,
   _estado: RegistrarMovimientoEstado,
   formData: FormData,
 ): Promise<RegistrarMovimientoEstado> {
@@ -43,7 +44,7 @@ export async function registrarMovimiento(
     data: { user },
   } = await supabase.auth.getUser();
 
-  const insumo_id = String(formData.get("insumo_id") ?? "");
+  const insumoNombre = String(formData.get("insumo_nombre") ?? "").trim();
   const tipo = String(formData.get("tipo") ?? "");
   const cantidad = Number(formData.get("cantidad") ?? 0);
   const precioRaw = String(formData.get("precio") ?? "");
@@ -51,7 +52,7 @@ export async function registrarMovimiento(
   const residente_id = String(formData.get("residente_id") ?? "") || null;
   const imputarResidente = formData.get("imputar_residente") === "on" && tipo === "salida";
 
-  if (!insumo_id || (tipo !== "entrada" && tipo !== "salida") || !cantidad || cantidad <= 0) {
+  if (!insumoNombre || (tipo !== "entrada" && tipo !== "salida") || !cantidad || cantidad <= 0) {
     return { error: "Completá insumo, tipo y una cantidad mayor a cero." };
   }
 
@@ -63,11 +64,38 @@ export async function registrarMovimiento(
     };
   }
 
+  const patronExacto = insumoNombre.replace(/[%_]/g, (c) => `\\${c}`);
+  const { data: existente } = await supabase
+    .from("insumos")
+    .select("id, nombre, unidad, categoria")
+    .ilike("nombre", patronExacto)
+    .maybeSingle<{ id: string; nombre: string; unidad: string; categoria: CategoriaInsumo }>();
+
+  let insumo: { id: string; nombre: string; unidad: string; categoria: CategoriaInsumo };
+
+  if (existente) {
+    insumo = existente;
+  } else {
+    if (tipo === "salida") {
+      return { error: `"${insumoNombre}" no está en el catálogo — para dar salida tiene que existir.` };
+    }
+    const { data: insumoCreado, error: errorInsumo } = await supabase
+      .from("insumos")
+      .insert({ nombre: insumoNombre, categoria: categoriaActual, unidad: "unidades", activo: true })
+      .select("id, nombre, unidad, categoria")
+      .single<{ id: string; nombre: string; unidad: string; categoria: CategoriaInsumo }>();
+
+    if (errorInsumo || !insumoCreado) {
+      return { error: `No se pudo crear el insumo "${insumoNombre}": ${errorInsumo?.message ?? "error desconocido"}` };
+    }
+    insumo = insumoCreado;
+  }
+
   const { data: movimiento, error } = await supabase
     .from("movimientos_inventario")
     .insert({
       sucursal_id: sucursalId,
-      insumo_id,
+      insumo_id: insumo.id,
       tipo,
       cantidad,
       precio,
@@ -83,18 +111,12 @@ export async function registrarMovimiento(
   }
 
   if (importe_total) {
-    const { data: insumo } = await supabase
-      .from("insumos")
-      .select("nombre, unidad, categoria")
-      .eq("id", insumo_id)
-      .single<{ nombre: string; unidad: string; categoria: CategoriaInsumo }>();
-
     if (imputarResidente && residente_id) {
       const { error: errorCargo } = await supabase.from("cargos_extra_residente").insert({
         residente_id,
         sucursal_id: sucursalId,
         movimiento_inventario_id: movimiento?.id ?? null,
-        concepto: `${insumo?.nombre ?? "Insumo"} — ${cantidad} ${insumo?.unidad ?? "unidades"}`,
+        concepto: `${insumo.nombre} — ${cantidad} ${insumo.unidad}`,
         monto: importe_total,
         registrado_por: user?.id ?? null,
       });
@@ -108,9 +130,9 @@ export async function registrarMovimiento(
       const { error: errorGasto } = await crearGastoDeCompra(
         supabase,
         sucursalId,
-        insumo?.categoria ?? "varios",
+        insumo.categoria,
         importe_total,
-        `${insumo?.nombre ?? "Insumo"} — ${cantidad} ${insumo?.unidad ?? "unidades"} (inventario)`,
+        `${insumo.nombre} — ${cantidad} ${insumo.unidad} (inventario)`,
       );
       if (errorGasto) {
         return { error: `Movimiento guardado, pero no se pudo registrar el gasto: ${errorGasto}` };
