@@ -44,6 +44,15 @@ export default async function RendicionesSucursalPage({
 
   const listaRendiciones = rendiciones ?? [];
 
+  const { data: insumos } = await supabase
+    .from("insumos")
+    .select("nombre")
+    .eq("activo", true)
+    .order("nombre")
+    .returns<{ nombre: string }[]>();
+
+  const nombresInsumos = (insumos ?? []).map((i) => i.nombre);
+
   const rendicionesConUrl = await Promise.all(
     listaRendiciones.map(async (r) => {
       if (!r.imagen_path) return { ...r, url: null };
@@ -68,6 +77,12 @@ export default async function RendicionesSucursalPage({
           </p>
           <h1 className="font-display text-[32px] font-semibold text-ink">Rendiciones</h1>
         </div>
+
+        <datalist id="catalogo-insumos">
+          {nombresInsumos.map((nombre) => (
+            <option key={nombre} value={nombre} />
+          ))}
+        </datalist>
 
         <RendicionForm sucursalId={id} />
 

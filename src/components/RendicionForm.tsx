@@ -249,6 +249,7 @@ export function RendicionForm({ sucursalId }: Props) {
           type="text"
           name="descripcion"
           placeholder="Compra verdulería, carnicería..."
+          list="catalogo-insumos"
           className={CAMPO}
         />
       </div>

@@ -59,6 +59,7 @@ export function RendicionCard({ rendicion, url, sucursalId }: Props) {
             type="text"
             name="descripcion"
             defaultValue={rendicion.descripcion ?? ""}
+            list="catalogo-insumos"
             className={CAMPO}
           />
         </div>
