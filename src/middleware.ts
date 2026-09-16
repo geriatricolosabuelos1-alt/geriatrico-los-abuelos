@@ -1,7 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+// Rutas accesibles sin sesion iniciada.
 const RUTAS_PUBLICAS = ["/login", "/registro", "/fichado"];
+
+// De estas rutas se saca a un usuario que YA tiene sesion iniciada
+// (no aplica a /fichado: el personal logueado tambien puede fichar).
+const RUTAS_SOLO_SIN_SESION = ["/login", "/registro"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -41,7 +46,11 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && esRutaPublica) {
+  const esRutaSoloSinSesion = RUTAS_SOLO_SIN_SESION.some((ruta) =>
+    request.nextUrl.pathname.startsWith(ruta),
+  );
+
+  if (user && esRutaSoloSinSesion) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
