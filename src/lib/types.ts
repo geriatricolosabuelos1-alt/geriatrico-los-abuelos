@@ -593,7 +593,7 @@ export interface Rendicion {
   monto: number | null;
   descripcion: string | null;
   fecha: string;
-  imagen_path: string;
+  imagen_path: string | null;
   created_at: string;
 }
 

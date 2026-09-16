@@ -151,6 +151,7 @@ export async function crearRendicion(
   const montoRaw = String(formData.get("monto") ?? "");
   const descripcion = String(formData.get("descripcion") ?? "") || null;
   const monto = montoRaw ? Number(montoRaw) : null;
+  const fechaRaw = String(formData.get("fecha") ?? "");
   const itemsRaw = String(formData.get("items") ?? "[]");
 
   let items: ItemAEnviar[] = [];
@@ -160,25 +161,32 @@ export async function crearRendicion(
     items = [];
   }
 
-  if (!(archivo instanceof File) || archivo.size === 0) {
-    return { error: "Subí una foto del ticket." };
+  const tieneArchivo = archivo instanceof File && archivo.size > 0;
+
+  if (!tieneArchivo && monto === null && !descripcion) {
+    return { error: "Cargá al menos una foto, un monto o una descripción." };
   }
 
-  const extension = archivo.name.split(".").pop() ?? "jpg";
-  const rutaArchivo = `${sucursalId}/${crypto.randomUUID()}.${extension}`;
+  let rutaArchivo: string | null = null;
 
-  const { error: errorSubida } = await supabase.storage
-    .from("rendiciones")
-    .upload(rutaArchivo, archivo, { contentType: archivo.type });
+  if (tieneArchivo) {
+    const extension = archivo.name.split(".").pop() ?? "jpg";
+    rutaArchivo = `${sucursalId}/${crypto.randomUUID()}.${extension}`;
 
-  if (errorSubida) {
-    return { error: errorSubida.message };
+    const { error: errorSubida } = await supabase.storage
+      .from("rendiciones")
+      .upload(rutaArchivo, archivo, { contentType: archivo.type });
+
+    if (errorSubida) {
+      return { error: errorSubida.message };
+    }
   }
 
   const { error: errorInsert } = await supabase.from("rendiciones").insert({
     sucursal_id: sucursalId,
     monto,
     descripcion,
+    fecha: fechaRaw || undefined,
     imagen_path: rutaArchivo,
     registrado_por: user?.id,
   });
@@ -233,5 +241,58 @@ export async function crearRendicion(
 
   revalidatePath(`/sucursales/${sucursalId}/rendiciones`);
   revalidatePath(`/sucursales/${sucursalId}/inventario`);
+  return { error: null };
+}
+
+export type EditarRendicionEstado = { error: string | null };
+
+export async function editarRendicion(
+  rendicionId: string,
+  sucursalId: string,
+  _estado: EditarRendicionEstado,
+  formData: FormData,
+): Promise<EditarRendicionEstado> {
+  const supabase = await createClient();
+
+  const montoRaw = String(formData.get("monto") ?? "");
+  const descripcion = String(formData.get("descripcion") ?? "") || null;
+  const monto = montoRaw ? Number(montoRaw) : null;
+  const fechaRaw = String(formData.get("fecha") ?? "");
+
+  if (!fechaRaw) {
+    return { error: "La fecha es obligatoria." };
+  }
+
+  const { error } = await supabase
+    .from("rendiciones")
+    .update({ monto, descripcion, fecha: fechaRaw })
+    .eq("id", rendicionId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/sucursales/${sucursalId}/rendiciones`);
+  return { error: null };
+}
+
+export async function eliminarRendicion(
+  rendicionId: string,
+  sucursalId: string,
+  imagenPath: string | null,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+
+  const { error } = await supabase.from("rendiciones").delete().eq("id", rendicionId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  if (imagenPath) {
+    await supabase.storage.from("rendiciones").remove([imagenPath]);
+  }
+
+  revalidatePath(`/sucursales/${sucursalId}/rendiciones`);
   return { error: null };
 }

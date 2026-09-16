@@ -127,15 +127,17 @@ export function RendicionForm({ sucursalId }: Props) {
       <input type="hidden" name="items" value={itemsParaEnviar} />
 
       <div className="sm:col-span-3">
-        <label className={ETIQUETA}>Foto o PDF del ticket</label>
+        <label className={ETIQUETA}>Foto o PDF del ticket (opcional)</label>
         <input
           type="file"
           name="foto"
           accept="image/*,application/pdf"
-          required
           onChange={manejarArchivo}
           className={`${CAMPO} file:mr-3 file:rounded-md file:border-0 file:bg-brass file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-btn-ink`}
         />
+        <p className="mt-1 text-[0.65rem] text-ink-soft">
+          Si no tenés foto, podés cargar la rendición a mano con monto y descripción.
+        </p>
         {leyendo && (
           <p className="mt-2 text-xs text-ink-soft">Leyendo el ticket, un momento...</p>
         )}
@@ -241,12 +243,22 @@ export function RendicionForm({ sucursalId }: Props) {
         />
       </div>
 
-      <div className="sm:col-span-2">
+      <div>
         <label className={ETIQUETA}>Descripción</label>
         <input
           type="text"
           name="descripcion"
           placeholder="Compra verdulería, carnicería..."
+          className={CAMPO}
+        />
+      </div>
+
+      <div>
+        <label className={ETIQUETA}>Fecha</label>
+        <input
+          type="date"
+          name="fecha"
+          defaultValue={new Date().toISOString().slice(0, 10)}
           className={CAMPO}
         />
       </div>

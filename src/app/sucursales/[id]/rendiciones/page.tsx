@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { RendicionForm } from "@/components/RendicionForm";
+import { RendicionCard } from "@/components/RendicionCard";
 import type { Perfil, Rendicion } from "@/lib/types";
 
 type Params = { id: string };
@@ -45,6 +46,7 @@ export default async function RendicionesSucursalPage({
 
   const rendicionesConUrl = await Promise.all(
     listaRendiciones.map(async (r) => {
+      if (!r.imagen_path) return { ...r, url: null };
       const { data } = await supabase.storage
         .from("rendiciones")
         .createSignedUrl(r.imagen_path, 3600);
@@ -71,44 +73,7 @@ export default async function RendicionesSucursalPage({
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
           {rendicionesConUrl.map((r) => (
-            <div
-              key={r.id}
-              className="overflow-hidden rounded-2xl border border-edge bg-card"
-            >
-              {r.url && r.imagen_path.toLowerCase().endsWith(".pdf") ? (
-                <a
-                  href={r.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex h-36 w-full flex-col items-center justify-center gap-1 bg-panel-deep text-brass"
-                >
-                  <span className="font-display text-2xl font-semibold">PDF</span>
-                  <span className="text-xs text-ink-soft">Ver documento</span>
-                </a>
-              ) : (
-                r.url && (
-                  <a href={r.url} target="_blank" rel="noopener noreferrer">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={r.url}
-                      alt={r.descripcion ?? "Ticket de compra"}
-                      className="h-36 w-full object-cover"
-                    />
-                  </a>
-                )
-              )}
-              <div className="p-3">
-                <p className="text-sm font-medium text-ink">
-                  {r.monto != null ? `$${r.monto}` : "Sin monto"}
-                </p>
-                <p className="truncate text-xs text-ink-soft">
-                  {r.descripcion ?? "—"}
-                </p>
-                <p className="mt-1 text-[0.65rem] text-ink-soft">
-                  {new Date(r.fecha).toLocaleDateString("es-AR")}
-                </p>
-              </div>
-            </div>
+            <RendicionCard key={r.id} rendicion={r} url={r.url} sucursalId={id} />
           ))}
           {rendicionesConUrl.length === 0 && (
             <p className="col-span-full text-center text-sm text-ink-soft">
