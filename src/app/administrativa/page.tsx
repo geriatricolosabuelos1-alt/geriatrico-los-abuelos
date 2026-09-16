@@ -104,24 +104,34 @@ export default async function DashboardPage() {
               Totales combinados (ambas sedes)
             </h2>
             <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
-              <div className="rounded-2xl border border-edge bg-card p-5">
+              <Link
+                href="/administrativa/informe-residentes"
+                target="_blank"
+                className="rounded-2xl border border-edge bg-card p-5 transition-colors hover:border-brass"
+              >
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   Residentes activos
                 </p>
                 <p className="font-display text-3xl font-semibold tabular-nums lining-nums text-ink">
                   {totalResidentesGlobal}
                 </p>
-              </div>
-              <div className="relative overflow-hidden rounded-2xl border border-transparent bg-warn p-5">
+              </Link>
+              <Link
+                href="/administrativa/informe-deudores"
+                target="_blank"
+                className="relative overflow-hidden rounded-2xl border border-transparent bg-warn p-5 transition-colors hover:border-brass"
+              >
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
                   Monto pendiente de cobro
                 </p>
                 <p className="font-display text-3xl font-semibold tabular-nums lining-nums text-ink">
                   {formatearMonto(totalMontoPendienteGlobal)}
                 </p>
-              </div>
-              <div
-                className={`rounded-2xl border p-5 ${
+              </Link>
+              <Link
+                href="/administrativa/informe-medicacion"
+                target="_blank"
+                className={`rounded-2xl border p-5 transition-colors hover:border-brass ${
                   medicacionRojaGlobal
                     ? "alerta-pulso border-red-300 bg-red-50"
                     : medicacionAmarillaGlobal
@@ -150,9 +160,11 @@ export default async function DashboardPage() {
                 >
                   {totalAlertasMedicacionGlobal}
                 </p>
-              </div>
-              <div
-                className={`rounded-2xl border p-5 ${
+              </Link>
+              <Link
+                href="/administrativa/informe-insumos"
+                target="_blank"
+                className={`rounded-2xl border p-5 transition-colors hover:border-brass ${
                   totalAlertasInsumosGlobal > 0
                     ? "alerta-pulso border-red-300 bg-red-50"
                     : "border-edge bg-card"
@@ -171,7 +183,7 @@ export default async function DashboardPage() {
                 >
                   {totalAlertasInsumosGlobal}
                 </p>
-              </div>
+              </Link>
             </div>
           </section>
         )}

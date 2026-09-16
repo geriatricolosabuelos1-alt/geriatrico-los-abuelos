@@ -77,15 +77,22 @@ export default async function DashboardSucursalPage({
         </div>
 
         <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
-          <div className="rounded-2xl border border-edge bg-card p-5">
+          <Link
+            href={`/sucursales/${id}/residentes`}
+            className="rounded-2xl border border-edge bg-card p-5 transition-colors hover:border-brass"
+          >
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
               Residentes activos
             </p>
             <p className="font-display text-3xl font-semibold tabular-nums lining-nums text-ink">
               {resumen.residentesActivos}
             </p>
-          </div>
-          <div className="relative overflow-hidden rounded-2xl border border-transparent bg-warn p-5">
+          </Link>
+          <Link
+            href={`/sucursales/${id}/cuotas/informe-deudores`}
+            target="_blank"
+            className="relative overflow-hidden rounded-2xl border border-transparent bg-warn p-5 transition-colors hover:border-brass"
+          >
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
               Monto pendiente de cobro
             </p>
@@ -95,10 +102,13 @@ export default async function DashboardSucursalPage({
             <p className="mt-1 text-xs text-ink-soft">
               {resumen.cantidadPendientes} cuota{resumen.cantidadPendientes === 1 ? "" : "s"}
               {resumen.cantidadVencidas > 0 ? `, ${resumen.cantidadVencidas} residente(s) con atraso` : ""}
+              {" · ver informe"}
             </p>
-          </div>
-          <div
-            className={`rounded-2xl border p-5 ${
+          </Link>
+          <Link
+            href={`/sucursales/${id}/medicacion/informe`}
+            target="_blank"
+            className={`rounded-2xl border p-5 transition-colors hover:border-brass ${
               medicacionRoja
                 ? "alerta-pulso border-red-300 bg-red-50"
                 : medicacionAmarilla
@@ -123,9 +133,11 @@ export default async function DashboardSucursalPage({
             >
               {resumen.alertasMedicacion.length}
             </p>
-          </div>
-          <div
-            className={`rounded-2xl border p-5 ${
+          </Link>
+          <Link
+            href={`/sucursales/${id}/inventario/informe-stock`}
+            target="_blank"
+            className={`rounded-2xl border p-5 transition-colors hover:border-brass ${
               resumen.alertasInsumos.length > 0
                 ? "alerta-pulso border-red-300 bg-red-50"
                 : "border-edge bg-card"
@@ -144,7 +156,7 @@ export default async function DashboardSucursalPage({
             >
               {resumen.alertasInsumos.length}
             </p>
-          </div>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
