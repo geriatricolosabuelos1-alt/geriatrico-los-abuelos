@@ -47,14 +47,14 @@ const ESTADO_DOSIS_INICIAL: ActualizarDosisEstado = { error: null };
 const ETIQUETA_MIN = "mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft";
 
 const ETIQUETA_ALERTA: Record<NivelAlertaMedicacion, string> = {
-  aviso_7: "≤ 7 días de stock",
+  aviso_7: "≤ 10 días de stock",
   aviso_5: "≤ 5 días de stock",
   sin_stock: "Sin stock",
 };
 
 const ESTILO_ALERTA: Record<NivelAlertaMedicacion, string> = {
   aviso_7: "bg-amber-100 text-amber-800 border-amber-300",
-  aviso_5: "bg-orange-100 text-orange-800 border-orange-300",
+  aviso_5: "bg-red-100 text-red-800 border-red-300",
   sin_stock: "bg-red-100 text-red-800 border-red-300",
 };
 

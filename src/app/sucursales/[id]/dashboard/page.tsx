@@ -2,22 +2,23 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
-import { obtenerResumenSucursal } from "@/lib/dashboard";
+import { hayAlertaAmarilla, hayAlertaRoja, obtenerResumenSucursal } from "@/lib/dashboard";
+import type { AlertaMedicacionResumen } from "@/lib/dashboard";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
 
-const ETIQUETA_NIVEL: Record<string, string> = {
-  aviso_7: "≤ 7 días",
-  aviso_5: "≤ 5 días",
-  sin_stock: "Sin stock",
-};
-
 const ESTILO_NIVEL: Record<string, string> = {
   aviso_7: "bg-amber-100 text-amber-800 border-amber-300",
-  aviso_5: "bg-orange-100 text-orange-800 border-orange-300",
+  aviso_5: "bg-red-100 text-red-800 border-red-300",
   sin_stock: "bg-red-100 text-red-800 border-red-300",
 };
+
+function etiquetaAlerta(a: AlertaMedicacionResumen): string {
+  if (a.nivel === "sin_stock") return "Sin stock";
+  if (a.diasRestantes === null) return "Stock bajo";
+  return `Quedan ${a.diasRestantes} día${a.diasRestantes === 1 ? "" : "s"}`;
+}
 
 function formatearMonto(monto: number): string {
   return `$${Math.round(monto).toLocaleString("es-AR")}`;
@@ -52,6 +53,9 @@ export default async function DashboardSucursalPage({
   if (!sucursal || !perfil) {
     notFound();
   }
+
+  const medicacionRoja = hayAlertaRoja(resumen.alertasMedicacion);
+  const medicacionAmarilla = hayAlertaAmarilla(resumen.alertasMedicacion);
 
   return (
     <div className="flex min-h-screen w-full">
@@ -91,20 +95,26 @@ export default async function DashboardSucursalPage({
           </div>
           <div
             className={`rounded-2xl border p-5 ${
-              resumen.alertasMedicacion.length > 0
+              medicacionRoja
                 ? "alerta-pulso border-red-300 bg-red-50"
-                : "border-edge bg-card"
+                : medicacionAmarilla
+                  ? "border-amber-300 bg-amber-50"
+                  : "border-edge bg-card"
             }`}
           >
             <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-              {resumen.alertasMedicacion.length > 0 && (
-                <span className="alerta-punto h-2 w-2 flex-shrink-0 rounded-full bg-red-600" />
+              {(medicacionRoja || medicacionAmarilla) && (
+                <span
+                  className={`h-2 w-2 flex-shrink-0 rounded-full ${
+                    medicacionRoja ? "alerta-punto bg-red-600" : "bg-amber-500"
+                  }`}
+                />
               )}
               Alertas de medicación
             </p>
             <p
               className={`font-display text-3xl font-semibold tabular-nums lining-nums ${
-                resumen.alertasMedicacion.length > 0 ? "text-red-700" : "text-ink"
+                medicacionRoja ? "text-red-700" : medicacionAmarilla ? "text-amber-700" : "text-ink"
               }`}
             >
               {resumen.alertasMedicacion.length}
@@ -139,35 +149,46 @@ export default async function DashboardSucursalPage({
               <h2 className="font-display text-sm font-semibold text-ink">
                 Stock de medicación bajo
               </h2>
-              <Link
-                href={`/sucursales/${id}/medicacion`}
-                className="text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
-              >
-                Ver módulo
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link
+                  href={`/sucursales/${id}/medicacion/informe`}
+                  className="text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                >
+                  Ver informe
+                </Link>
+                <Link
+                  href={`/sucursales/${id}/medicacion`}
+                  className="text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                >
+                  Ver módulo
+                </Link>
+              </div>
             </div>
             {resumen.alertasMedicacion.length === 0 ? (
               <p className="text-xs text-ink-soft">Sin alertas activas.</p>
             ) : (
               <ul className="space-y-2">
-                {resumen.alertasMedicacion.map((a) => (
-                  <li key={a.id} className="flex items-center justify-between gap-2 text-sm">
-                    <div>
-                      <p className="font-medium text-ink">{a.medicamentoNombre}</p>
-                      <p className="text-xs text-ink-soft">{a.residenteNombre}</p>
-                    </div>
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold ${ESTILO_NIVEL[a.nivel]} ${
-                        a.nivel === "sin_stock" ? "alerta-pulso" : ""
-                      }`}
-                    >
-                      {a.nivel === "sin_stock" && (
-                        <span className="alerta-punto h-1.5 w-1.5 flex-shrink-0 rounded-full bg-red-700" />
-                      )}
-                      {ETIQUETA_NIVEL[a.nivel]}
-                    </span>
-                  </li>
-                ))}
+                {resumen.alertasMedicacion
+                  .slice()
+                  .sort((a, b) => (a.diasRestantes ?? 0) - (b.diasRestantes ?? 0))
+                  .map((a) => (
+                    <li key={a.id} className="flex items-center justify-between gap-2 text-sm">
+                      <div>
+                        <p className="font-medium text-ink">{a.medicamentoNombre}</p>
+                        <p className="text-xs text-ink-soft">{a.residenteNombre}</p>
+                      </div>
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold ${ESTILO_NIVEL[a.nivel]} ${
+                          a.nivel === "sin_stock" ? "alerta-pulso" : ""
+                        }`}
+                      >
+                        {a.nivel === "sin_stock" && (
+                          <span className="alerta-punto h-1.5 w-1.5 flex-shrink-0 rounded-full bg-red-700" />
+                        )}
+                        {etiquetaAlerta(a)}
+                      </span>
+                    </li>
+                  ))}
               </ul>
             )}
           </section>

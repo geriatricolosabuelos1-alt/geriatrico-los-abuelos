@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
-import { obtenerResumenSucursal, type ResumenSucursalDashboard } from "@/lib/dashboard";
+import {
+  hayAlertaAmarilla,
+  hayAlertaRoja,
+  obtenerResumenSucursal,
+  type ResumenSucursalDashboard,
+} from "@/lib/dashboard";
 import { calcularOcupacionPorMes, type ResidenteOcupacion } from "@/lib/ocupacion";
 import type { Perfil, Sucursal } from "@/lib/types";
 
@@ -52,6 +57,9 @@ export default async function DashboardPage() {
     (acc, r) => acc + r.resumen.montoPendiente,
     0,
   );
+  const alertasMedicacionTodas = resumenes.flatMap((r) => r.resumen.alertasMedicacion);
+  const medicacionRojaGlobal = hayAlertaRoja(alertasMedicacionTodas);
+  const medicacionAmarillaGlobal = hayAlertaAmarilla(alertasMedicacionTodas);
   const totalAlertasMedicacionGlobal = resumenes.reduce(
     (acc, r) => acc + r.resumen.alertasMedicacion.length,
     0,
@@ -114,20 +122,30 @@ export default async function DashboardPage() {
               </div>
               <div
                 className={`rounded-2xl border p-5 ${
-                  totalAlertasMedicacionGlobal > 0
+                  medicacionRojaGlobal
                     ? "alerta-pulso border-red-300 bg-red-50"
-                    : "border-edge bg-card"
+                    : medicacionAmarillaGlobal
+                      ? "border-amber-300 bg-amber-50"
+                      : "border-edge bg-card"
                 }`}
               >
                 <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                  {totalAlertasMedicacionGlobal > 0 && (
-                    <span className="alerta-punto h-2 w-2 flex-shrink-0 rounded-full bg-red-600" />
+                  {(medicacionRojaGlobal || medicacionAmarillaGlobal) && (
+                    <span
+                      className={`h-2 w-2 flex-shrink-0 rounded-full ${
+                        medicacionRojaGlobal ? "alerta-punto bg-red-600" : "bg-amber-500"
+                      }`}
+                    />
                   )}
                   Alertas de medicación
                 </p>
                 <p
                   className={`font-display text-3xl font-semibold tabular-nums lining-nums ${
-                    totalAlertasMedicacionGlobal > 0 ? "text-red-700" : "text-ink"
+                    medicacionRojaGlobal
+                      ? "text-red-700"
+                      : medicacionAmarillaGlobal
+                        ? "text-amber-700"
+                        : "text-ink"
                   }`}
                 >
                   {totalAlertasMedicacionGlobal}
@@ -206,7 +224,10 @@ export default async function DashboardPage() {
             {esAdmin ? "Por sede" : "Tu sede"}
           </h2>
           <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-            {resumenesVisibles.map((r) => (
+            {resumenesVisibles.map((r) => {
+              const rojaSede = hayAlertaRoja(r.resumen.alertasMedicacion);
+              const amarillaSede = hayAlertaAmarilla(r.resumen.alertasMedicacion);
+              return (
               <Link
                 key={r.sucursal.id}
                 href={`/sucursales/${r.sucursal.id}/dashboard`}
@@ -232,14 +253,18 @@ export default async function DashboardPage() {
                   </div>
                   <div>
                     <p className="flex items-center gap-1 text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
-                      {r.resumen.alertasMedicacion.length > 0 && (
-                        <span className="alerta-punto h-1.5 w-1.5 flex-shrink-0 rounded-full bg-red-600" />
+                      {(rojaSede || amarillaSede) && (
+                        <span
+                          className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${
+                            rojaSede ? "alerta-punto bg-red-600" : "bg-amber-500"
+                          }`}
+                        />
                       )}
                       Alertas medicación
                     </p>
                     <p
                       className={`font-display text-xl font-semibold tabular-nums lining-nums ${
-                        r.resumen.alertasMedicacion.length > 0 ? "text-red-700" : "text-ink"
+                        rojaSede ? "text-red-700" : amarillaSede ? "text-amber-700" : "text-ink"
                       }`}
                     >
                       {r.resumen.alertasMedicacion.length}
@@ -262,7 +287,8 @@ export default async function DashboardPage() {
                   </div>
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
         </section>
       </main>

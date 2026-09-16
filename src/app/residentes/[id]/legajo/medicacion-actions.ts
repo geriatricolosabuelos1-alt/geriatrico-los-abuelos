@@ -212,7 +212,7 @@ async function recalcularAlertas(
   let nivel: NivelAlertaMedicacion | null = null;
   if (stockActual <= 0) nivel = "sin_stock";
   else if (diasRestantes <= 5) nivel = "aviso_5";
-  else if (diasRestantes <= 7) nivel = "aviso_7";
+  else if (diasRestantes <= 10) nivel = "aviso_7";
 
   if (nivel) {
     const { data: existente } = await supabase

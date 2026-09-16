@@ -18,6 +18,14 @@ export type AlertaInsumoResumen = {
   stockMinimo: number;
 };
 
+export function hayAlertaRoja(alertas: AlertaMedicacionResumen[]): boolean {
+  return alertas.some((a) => a.nivel === "aviso_5" || a.nivel === "sin_stock");
+}
+
+export function hayAlertaAmarilla(alertas: AlertaMedicacionResumen[]): boolean {
+  return alertas.some((a) => a.nivel === "aviso_7");
+}
+
 export type ResumenSucursalDashboard = {
   residentesActivos: number;
   montoPendiente: number;
