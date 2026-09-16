@@ -118,6 +118,13 @@ export default async function SeleccionarAreaPage() {
           icono="🩺"
           habilitada={puedeMedicina && !!sucursalMedicina}
         />
+        <Tarjeta
+          href="/fichado"
+          titulo="Fichado"
+          subtitulo="Marcar ingreso o egreso"
+          icono="🕒"
+          habilitada
+        />
       </div>
 
       <form action={cerrarSesion} className="mt-10">
