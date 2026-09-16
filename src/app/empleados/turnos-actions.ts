@@ -2,70 +2,59 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import type { TurnoCubierto } from "@/lib/types";
+import type { DiaSemana, TurnoProgramado } from "@/lib/types";
 
-export async function listarTurnos(
-  sucursalId: string,
-  mes: number,
-  anio: number,
-): Promise<TurnoCubierto[]> {
+export async function listarTurnosProgramados(sucursalId: string): Promise<TurnoProgramado[]> {
   const supabase = await createClient();
-  const desde = `${anio}-${String(mes).padStart(2, "0")}-01`;
-  const hasta = new Date(anio, mes, 0).toISOString().slice(0, 10);
 
   const { data } = await supabase
-    .from("turnos_cubiertos")
+    .from("turnos_programados")
     .select(
-      "id, empleado_id, sucursal_id, fecha, turno, hora_inicio, hora_fin, horas, observacion, registrado_por, created_at",
+      "id, empleado_id, sucursal_id, dia_semana, hora_inicio, hora_fin, vigente_desde, vigente_hasta, activo, created_at",
     )
     .eq("sucursal_id", sucursalId)
-    .gte("fecha", desde)
-    .lte("fecha", hasta)
-    .order("fecha", { ascending: false })
-    .returns<TurnoCubierto[]>();
+    .eq("activo", true)
+    .order("dia_semana", { ascending: true })
+    .order("hora_inicio", { ascending: true })
+    .returns<TurnoProgramado[]>();
 
   return data ?? [];
 }
 
-export type RegistrarTurnoEstado = { error: string | null };
+export type CrearTurnoProgramaEstado = { error: string | null };
 
-export async function registrarTurno(
-  _estado: RegistrarTurnoEstado,
+export async function crearTurnoPrograma(
+  _estado: CrearTurnoProgramaEstado,
   formData: FormData,
-): Promise<RegistrarTurnoEstado> {
+): Promise<CrearTurnoProgramaEstado> {
   const supabase = await createClient();
 
   const empleado_id = String(formData.get("empleado_id") ?? "");
   const sucursal_id = String(formData.get("sucursal_id") ?? "");
-  const fecha = String(formData.get("fecha") ?? "");
-  const turno = String(formData.get("turno") ?? "").trim();
-  const hora_inicio = String(formData.get("hora_inicio") ?? "").trim() || null;
-  const hora_fin = String(formData.get("hora_fin") ?? "").trim() || null;
-  const horas = Number(formData.get("horas") ?? 0);
-  const observacion = String(formData.get("observacion") ?? "").trim() || null;
+  const hora_inicio = String(formData.get("hora_inicio") ?? "");
+  const hora_fin = String(formData.get("hora_fin") ?? "");
+  const vigente_desde = String(formData.get("vigente_desde") ?? "");
+  const vigente_hasta = String(formData.get("vigente_hasta") ?? "");
+  const dias = formData.getAll("dias").map((d) => Number(d)) as DiaSemana[];
 
-  if (!empleado_id || !sucursal_id || !fecha || !turno) {
-    return { error: "Faltan datos obligatorios (empleado, sede, fecha y turno)." };
+  if (!empleado_id || !sucursal_id || !hora_inicio || !hora_fin || !vigente_desde || !vigente_hasta) {
+    return { error: "Completá empleado, horario y vigencia." };
   }
-  if (!horas || horas <= 0) {
-    return { error: "Las horas deben ser mayores a cero." };
+  if (dias.length === 0) {
+    return { error: "Elegí al menos un día de la semana." };
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { error } = await supabase.from("turnos_cubiertos").insert({
+  const filas = dias.map((dia_semana) => ({
     empleado_id,
     sucursal_id,
-    fecha,
-    turno,
+    dia_semana,
     hora_inicio,
     hora_fin,
-    horas,
-    observacion,
-    registrado_por: user?.id ?? null,
-  });
+    vigente_desde,
+    vigente_hasta,
+  }));
+
+  const { error } = await supabase.from("turnos_programados").insert(filas);
 
   if (error) {
     return { error: error.message };
@@ -75,8 +64,38 @@ export async function registrarTurno(
   return { error: null };
 }
 
-export async function eliminarTurno(turnoId: string): Promise<void> {
+export type ActualizarTurnoProgramaEstado = { error: string | null };
+
+export async function actualizarTurnoPrograma(
+  id: string,
+  formData: FormData,
+): Promise<ActualizarTurnoProgramaEstado> {
   const supabase = await createClient();
-  await supabase.from("turnos_cubiertos").delete().eq("id", turnoId);
+
+  const hora_inicio = String(formData.get("hora_inicio") ?? "");
+  const hora_fin = String(formData.get("hora_fin") ?? "");
+  const vigente_desde = String(formData.get("vigente_desde") ?? "");
+  const vigente_hasta = String(formData.get("vigente_hasta") ?? "");
+
+  if (!hora_inicio || !hora_fin || !vigente_desde || !vigente_hasta) {
+    return { error: "Completá horario y vigencia." };
+  }
+
+  const { error } = await supabase
+    .from("turnos_programados")
+    .update({ hora_inicio, hora_fin, vigente_desde, vigente_hasta })
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/empleados/turnos");
+  return { error: null };
+}
+
+export async function eliminarTurnoPrograma(id: string): Promise<void> {
+  const supabase = await createClient();
+  await supabase.from("turnos_programados").delete().eq("id", id);
   revalidatePath("/empleados/turnos");
 }

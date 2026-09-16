@@ -8,16 +8,18 @@ import {
   type ResumenSucursalDashboard,
 } from "@/lib/dashboard";
 import { calcularOcupacionPorMes, type ResidenteOcupacion } from "@/lib/ocupacion";
+import {
+  combinarResumenesFinancieros,
+  formatearMonto,
+  obtenerResumenFinanciero,
+} from "@/lib/finanzas";
+import { GraficoIngresosGastos, GraficoSueldos } from "@/components/GraficoFinanciero";
 import type { Perfil, Sucursal } from "@/lib/types";
 
 type ResumenSucursal = {
   sucursal: Sucursal;
   resumen: ResumenSucursalDashboard;
 };
-
-function formatearMonto(monto: number): string {
-  return `$${Math.round(monto).toLocaleString("es-AR")}`;
-}
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -88,6 +90,11 @@ export default async function DashboardPage() {
   );
   const maxOcupadas = Math.max(...mesesOcupacion.map((m) => m.ocupadas), 1);
   const escalaMaxOcupacion = Math.max(capacidadTotal, maxOcupadas);
+
+  const finanzasPorSede = await Promise.all(
+    resumenesVisibles.map((r) => obtenerResumenFinanciero(supabase, r.sucursal.id)),
+  );
+  const finanzas = combinarResumenesFinancieros(finanzasPorSede);
 
   return (
     <div className="flex min-h-screen w-full">
@@ -229,6 +236,42 @@ export default async function DashboardPage() {
             Los residentes sin fecha de ingreso cargada se estiman con su estado activo/inactivo
             actual.
           </p>
+        </section>
+
+        <section className="mb-7 space-y-6">
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+            <div className="rounded-2xl border border-edge bg-card p-5">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Disponible (ingresos − gastos) {esAdmin ? "· ambas sedes" : ""}
+              </p>
+              <p
+                className={`font-display text-3xl font-semibold tabular-nums lining-nums ${
+                  finanzas.disponibleSinSueldos < 0 ? "text-red-700" : "text-ink"
+                }`}
+              >
+                {formatearMonto(finanzas.disponibleSinSueldos)}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-edge bg-card p-5">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Disponible (ingresos − gastos − sueldos) {esAdmin ? "· ambas sedes" : ""}
+              </p>
+              <p
+                className={`font-display text-3xl font-semibold tabular-nums lining-nums ${
+                  finanzas.disponibleConSueldos < 0 ? "text-red-700" : "text-ink"
+                }`}
+              >
+                {formatearMonto(finanzas.disponibleConSueldos)}
+              </p>
+            </div>
+          </div>
+
+          <GraficoIngresosGastos
+            ingresosPorMes={finanzas.ingresosPorMes}
+            gastosPorMes={finanzas.gastosPorMes}
+          />
+
+          <GraficoSueldos sueldosPorMes={finanzas.sueldosPorMes} />
         </section>
 
         <section>

@@ -1,5 +1,6 @@
 export type RolUsuario =
   | "admin"
+  | "gerente_sede"
   | "enfermero"
   | "cuidador"
   | "medico"
@@ -505,17 +506,18 @@ export interface Empleado {
   activo: boolean;
 }
 
-export interface TurnoCubierto {
+export type DiaSemana = 1 | 2 | 3 | 4 | 5 | 6 | 7;
+
+export interface TurnoProgramado {
   id: string;
   empleado_id: string;
   sucursal_id: string;
-  fecha: string;
-  turno: string;
-  hora_inicio: string | null;
-  hora_fin: string | null;
-  horas: number;
-  observacion: string | null;
-  registrado_por: string | null;
+  dia_semana: DiaSemana;
+  hora_inicio: string;
+  hora_fin: string;
+  vigente_desde: string;
+  vigente_hasta: string;
+  activo: boolean;
   created_at: string;
 }
 
@@ -592,6 +594,17 @@ export interface Rendicion {
   descripcion: string | null;
   fecha: string;
   imagen_path: string;
+  created_at: string;
+}
+
+export type TipoFichada = "ingreso" | "egreso";
+
+export interface Fichada {
+  id: string;
+  empleado_id: string;
+  tipo: TipoFichada;
+  fecha: string;
+  hora: string;
   created_at: string;
 }
 

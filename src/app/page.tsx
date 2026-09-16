@@ -3,9 +3,10 @@ import { createClient } from "@/lib/supabase/server";
 import { cerrarSesion } from "@/app/actions";
 import type { Perfil, RolUsuario, Sucursal } from "@/lib/types";
 
-const ROLES_ADMINISTRATIVA: RolUsuario[] = ["admin", "administrativo"];
+const ROLES_ADMINISTRATIVA: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
 const ROLES_MEDICINA: RolUsuario[] = [
   "admin",
+  "gerente_sede",
   "medico",
   "nutricionista",
   "kinesiologo",
@@ -117,6 +118,13 @@ export default async function SeleccionarAreaPage() {
           subtitulo="Residentes y evolución"
           icono="🩺"
           habilitada={puedeMedicina && !!sucursalMedicina}
+        />
+        <Tarjeta
+          href="/fichado"
+          titulo="Fichado"
+          subtitulo="Marcar ingreso o egreso"
+          icono="🕒"
+          habilitada
         />
       </div>
 

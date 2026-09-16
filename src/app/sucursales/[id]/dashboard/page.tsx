@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { hayAlertaAmarilla, hayAlertaRoja, obtenerResumenSucursal } from "@/lib/dashboard";
 import type { AlertaMedicacionResumen } from "@/lib/dashboard";
+import { formatearMonto, obtenerResumenFinanciero } from "@/lib/finanzas";
+import { GraficoIngresosGastos, GraficoSueldos } from "@/components/GraficoFinanciero";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
@@ -24,10 +26,6 @@ function etiquetaAlerta(a: AlertaMedicacionResumen): string {
   return `Quedan ${a.diasRestantes} día${a.diasRestantes === 1 ? "" : "s"}`;
 }
 
-function formatearMonto(monto: number): string {
-  return `$${Math.round(monto).toLocaleString("es-AR")}`;
-}
-
 export default async function DashboardSucursalPage({
   params,
 }: {
@@ -40,7 +38,7 @@ export default async function DashboardSucursalPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: perfil }, { data: sucursal }, resumen] = await Promise.all([
+  const [{ data: perfil }, { data: sucursal }, resumen, finanzas] = await Promise.all([
     supabase
       .from("perfiles")
       .select("id, nombre_completo, rol, sucursal_id, activo")
@@ -52,6 +50,7 @@ export default async function DashboardSucursalPage({
       .eq("id", id)
       .single<{ id: string; nombre: string }>(),
     obtenerResumenSucursal(supabase, id),
+    obtenerResumenFinanciero(supabase, id),
   ]);
 
   if (!sucursal || !perfil) {
@@ -252,6 +251,42 @@ export default async function DashboardSucursalPage({
               </ul>
             )}
           </section>
+        </div>
+
+        <div className="mt-6 space-y-6">
+          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+            <div className="rounded-2xl border border-edge bg-card p-5">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Disponible (ingresos − gastos)
+              </p>
+              <p
+                className={`font-display text-3xl font-semibold tabular-nums lining-nums ${
+                  finanzas.disponibleSinSueldos < 0 ? "text-red-700" : "text-ink"
+                }`}
+              >
+                {formatearMonto(finanzas.disponibleSinSueldos)}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-edge bg-card p-5">
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Disponible (ingresos − gastos − sueldos)
+              </p>
+              <p
+                className={`font-display text-3xl font-semibold tabular-nums lining-nums ${
+                  finanzas.disponibleConSueldos < 0 ? "text-red-700" : "text-ink"
+                }`}
+              >
+                {formatearMonto(finanzas.disponibleConSueldos)}
+              </p>
+            </div>
+          </div>
+
+          <GraficoIngresosGastos
+            ingresosPorMes={finanzas.ingresosPorMes}
+            gastosPorMes={finanzas.gastosPorMes}
+          />
+
+          <GraficoSueldos sueldosPorMes={finanzas.sueldosPorMes} />
         </div>
       </main>
     </div>

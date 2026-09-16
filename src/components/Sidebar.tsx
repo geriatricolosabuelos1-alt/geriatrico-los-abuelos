@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { cerrarSesion } from "@/app/actions";
+import { ETIQUETA_ROL } from "@/lib/roles";
+import { SidebarIcon, type SidebarIconName } from "@/components/SidebarIcons";
 import type { CategoriaInsumo, Perfil, RolUsuario, Sucursal } from "@/lib/types";
 
 type Seccion =
@@ -22,7 +24,7 @@ type SubseccionNutricion = "dietas" | "cocina" | "disfagia" | "ingesta" | "menu-
 
 type Props = {
   perfil: Perfil;
-  activo?: { tipo: "dashboard" } | { tipo: "empleados" } | {
+  activo?: { tipo: "dashboard" } | { tipo: "empleados" } | { tipo: "claves" } | {
     tipo: "sucursal";
     sucursalId: string;
     seccion: Seccion;
@@ -39,73 +41,73 @@ const ETIQUETA_CATEGORIA_INVENTARIO: Record<CategoriaInsumo, string> = {
 
 const ORDEN_CATEGORIAS_INVENTARIO: CategoriaInsumo[] = ["medicos", "varios"];
 
+// Nutricionista solo ve Nutricion: no entra a la lista general de Residentes.
 const ROLES_RESIDENTES: RolUsuario[] = [
   "admin",
+  "gerente_sede",
   "administrativo",
   "enfermero",
   "cuidador",
   "medico",
-  "nutricionista",
   "kinesiologo",
 ];
 const ROLES_MEDICACION: RolUsuario[] = [
   "admin",
+  "gerente_sede",
   "administrativo",
   "medico",
   "enfermero",
   "cuidador",
 ];
-const ROLES_RECETARIO: RolUsuario[] = ["admin", "administrativo", "medico"];
-const ROLES_NUTRICION: RolUsuario[] = ["admin", "medico", "nutricionista", "enfermero", "cuidador"];
-const ROLES_NUTRICION_CLINICO: RolUsuario[] = ["admin", "medico", "nutricionista"];
-const ROLES_ACCION_MEDICA: RolUsuario[] = ["admin", "medico"];
-const ROLES_CUOTAS: RolUsuario[] = ["admin", "administrativo"];
-const ROLES_RENDICIONES: RolUsuario[] = ["admin", "administrativo"];
-const ROLES_GASTOS: RolUsuario[] = ["admin", "administrativo"];
-const ROLES_REPORTES: RolUsuario[] = ["admin", "administrativo"];
-const ROLES_LEGALES: RolUsuario[] = ["admin", "administrativo"];
-const ROLES_INVENTARIO: RolUsuario[] = ["admin", "administrativo"];
-const ROLES_EMPLEADOS: RolUsuario[] = ["admin", "administrativo"];
-const ROLES_DASHBOARD: RolUsuario[] = ["admin", "administrativo"];
+const ROLES_RECETARIO: RolUsuario[] = ["admin", "gerente_sede", "administrativo", "medico"];
+// Medico ya no ve Nutricion: solo Medicacion, Accion Medica y Evolucion (via Residentes).
+const ROLES_NUTRICION: RolUsuario[] = ["admin", "gerente_sede", "nutricionista", "enfermero", "cuidador"];
+const ROLES_NUTRICION_CLINICO: RolUsuario[] = ["admin", "gerente_sede", "nutricionista"];
+const ROLES_ACCION_MEDICA: RolUsuario[] = ["admin", "gerente_sede", "medico"];
+const ROLES_CUOTAS: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
+const ROLES_RENDICIONES: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
+const ROLES_GASTOS: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
+const ROLES_REPORTES: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
+const ROLES_LEGALES: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
+const ROLES_INVENTARIO: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
+const ROLES_EMPLEADOS: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
+const ROLES_DASHBOARD: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
 
-const ROLES_ADMINISTRATIVA: RolUsuario[] = ["admin", "administrativo"];
+// gerente_sede ve Administrativa y Medicina completas, pero solo de su propia
+// sede: sucursalesVisibles ya filtra por perfil.sucursal_id para todo rol que
+// no sea "admin", asi que no requiere logica extra ademas de sumarlo aqui.
+const ROLES_ADMINISTRATIVA: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
 const ROLES_MEDICINA: RolUsuario[] = [
   "admin",
+  "gerente_sede",
   "medico",
   "nutricionista",
   "kinesiologo",
   "enfermero",
   "cuidador",
 ];
-
-const ETIQUETA_ROL: Record<string, string> = {
-  admin: "Administradora",
-  administrativo: "Administrativo",
-  enfermero: "Enfermero/a",
-  cuidador: "Cuidador/a",
-  medico: "Médico/a",
-  nutricionista: "Nutricionista",
-  kinesiologo: "Kinesiólogo/a",
-};
 
 function NavRow({
   href,
   label,
   activo,
+  icono,
 }: {
   href: string;
   label: string;
   activo: boolean;
+  icono: SidebarIconName;
 }) {
   return (
     <Link
       href={href}
-      className={`block rounded-lg px-3 py-2.5 text-[0.83rem] font-medium transition-colors ${
+      className={`flex items-center gap-2.5 rounded-xl border px-3 py-2.5 text-[0.83rem] font-semibold transition-colors ${
         activo
-          ? "bg-brass text-btn-ink"
-          : "text-ink-soft hover:bg-panel-deep hover:text-ink"
+          ? "border-brass bg-brass text-btn-ink shadow-[0_4px_14px_-6px_var(--color-brass)]"
+          : "border-edge bg-card text-ink-soft hover:border-brass/40 hover:text-ink"
       }`}
     >
+      <SidebarIcon name={icono} />
       {label}
     </Link>
   );
@@ -115,24 +117,28 @@ function TabPrincipal({
   href,
   label,
   activo,
+  icono,
 }: {
   href: string;
   label: string;
   activo: boolean;
+  icono: SidebarIconName;
 }) {
-  return <NavRow href={href} label={label} activo={activo} />;
+  return <NavRow href={href} label={label} activo={activo} icono={icono} />;
 }
 
 function SubTab({
   href,
   label,
   activo,
+  icono,
 }: {
   href: string;
   label: string;
   activo: boolean;
+  icono: SidebarIconName;
 }) {
-  return <NavRow href={href} label={label} activo={activo} />;
+  return <NavRow href={href} label={label} activo={activo} icono={icono} />;
 }
 
 function SubSubTab({
@@ -147,12 +153,20 @@ function SubSubTab({
   return (
     <Link
       href={href}
-      className={`block rounded-md py-1.5 pl-10 pr-2.5 text-[0.75rem] ${
+      className={`block rounded-md py-1.5 pl-8 pr-2.5 text-[0.75rem] ${
         activo ? "font-semibold text-brass" : "text-ink-soft hover:text-ink"
       }`}
     >
       {label}
     </Link>
+  );
+}
+
+function GrupoConSub({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1 rounded-xl border border-dashed border-edge p-1.5">
+      {children}
+    </div>
   );
 }
 
@@ -176,7 +190,7 @@ export async function Sidebar({ perfil, activo }: Props) {
     activo?.tipo === "sucursal" && activo.area === "medicina" ? "medicina" : "administrativa";
 
   return (
-    <aside className="flex w-60 flex-shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-edge bg-panel-deep p-4">
+    <aside className="flex w-60 flex-shrink-0 flex-col gap-1.5 overflow-y-auto border-r border-edge bg-panel-deep p-4">
       <div className="mb-6 flex items-center gap-3 px-1">
         <Link href="/" className="flex items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -223,12 +237,13 @@ export async function Sidebar({ perfil, activo }: Props) {
         <TabPrincipal
           href="/administrativa"
           label="Dashboard"
+          icono="grid"
           activo={activo?.tipo === "dashboard"}
         />
       )}
 
       {sucursalesVisibles.map((s) => (
-        <div key={s.id} className="mt-3 flex flex-col gap-1">
+        <div key={s.id} className="mt-3 flex flex-col gap-1.5">
           <p className="mb-0.5 flex items-center gap-1.5 rounded-md bg-sede-soft px-2.5 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-sede">
             <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-sede" />
             {s.nombre}
@@ -237,6 +252,7 @@ export async function Sidebar({ perfil, activo }: Props) {
             <SubTab
               href={`/sucursales/${s.id}/dashboard`}
               label="Dashboard"
+              icono="grid"
               activo={
                 activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
@@ -248,6 +264,7 @@ export async function Sidebar({ perfil, activo }: Props) {
             <SubTab
               href={`/sucursales/${s.id}/residentes${areaActual === "medicina" ? "?vista=medicina" : ""}`}
               label="Residentes"
+              icono="users"
               activo={
                 activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
@@ -255,48 +272,46 @@ export async function Sidebar({ perfil, activo }: Props) {
               }
             />
           )}
-          {ROLES_MEDICACION.includes(perfil.rol) && (
-            <>
-              <SubTab
-                href={`/sucursales/${s.id}/medicacion${areaActual === "medicina" ? "?vista=medicina" : ""}`}
-                label={areaActual === "medicina" ? "Medicamentos" : "Medicación"}
-                activo={
-                  activo?.tipo === "sucursal" &&
-                  activo.sucursalId === s.id &&
-                  activo.seccion === "medicacion" &&
-                  !activo.subseccion
-                }
-              />
-              {areaActual === "administrativa" && ROLES_RECETARIO.includes(perfil.rol) && (
-                <>
+          {ROLES_MEDICACION.includes(perfil.rol) &&
+            (() => {
+              const medicacionActiva =
+                activo?.tipo === "sucursal" &&
+                activo.sucursalId === s.id &&
+                activo.seccion === "medicacion";
+              const filaMedicacion = (
+                <SubTab
+                  href={`/sucursales/${s.id}/medicacion${areaActual === "medicina" ? "?vista=medicina" : ""}`}
+                  label={areaActual === "medicina" ? "Medicamentos" : "Medicación"}
+                  icono="pill"
+                  activo={medicacionActiva && !activo.subseccion}
+                />
+              );
+
+              if (!medicacionActiva || areaActual !== "administrativa" || !ROLES_RECETARIO.includes(perfil.rol)) {
+                return filaMedicacion;
+              }
+
+              return (
+                <GrupoConSub>
+                  {filaMedicacion}
                   <SubSubTab
                     href={`/sucursales/${s.id}/medicacion/recetario`}
                     label="Recetario"
-                    activo={
-                      activo?.tipo === "sucursal" &&
-                      activo.sucursalId === s.id &&
-                      activo.seccion === "medicacion" &&
-                      activo.subseccion === "recetario"
-                    }
+                    activo={activo.subseccion === "recetario"}
                   />
                   <SubSubTab
                     href={`/sucursales/${s.id}/medicacion/vacunacion`}
                     label="Vacunación"
-                    activo={
-                      activo?.tipo === "sucursal" &&
-                      activo.sucursalId === s.id &&
-                      activo.seccion === "medicacion" &&
-                      activo.subseccion === "vacunacion"
-                    }
+                    activo={activo.subseccion === "vacunacion"}
                   />
-                </>
-              )}
-            </>
-          )}
+                </GrupoConSub>
+              );
+            })()}
           {ROLES_ACCION_MEDICA.includes(perfil.rol) && areaActual === "medicina" && (
             <SubTab
               href={`/sucursales/${s.id}/accion-medica`}
               label="Acción Médica"
+              icono="shield"
               activo={
                 activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
@@ -304,61 +319,66 @@ export async function Sidebar({ perfil, activo }: Props) {
               }
             />
           )}
-          {ROLES_NUTRICION.includes(perfil.rol) && areaActual === "medicina" && (
-            <>
-              <SubTab
-                href={`/sucursales/${s.id}/nutricion`}
-                label="Nutrición"
-                activo={
-                  activo?.tipo === "sucursal" &&
-                  activo.sucursalId === s.id &&
-                  activo.seccion === "nutricion" &&
-                  !activo.subseccion
-                }
-              />
-              {activo?.tipo === "sucursal" &&
+          {ROLES_NUTRICION.includes(perfil.rol) &&
+            areaActual === "medicina" &&
+            (() => {
+              const nutricionActiva =
+                activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
-                activo.seccion === "nutricion" && (
-                  <>
-                    {ROLES_NUTRICION_CLINICO.includes(perfil.rol) && (
-                      <>
-                        <SubSubTab
-                          href={`/sucursales/${s.id}/nutricion/dietas`}
-                          label="Prescripción dietaria"
-                          activo={activo.subseccion === "dietas"}
-                        />
-                        <SubSubTab
-                          href={`/sucursales/${s.id}/nutricion/cocina`}
-                          label="Cocina"
-                          activo={activo.subseccion === "cocina"}
-                        />
-                        <SubSubTab
-                          href={`/sucursales/${s.id}/nutricion/disfagia`}
-                          label="Disfagia"
-                          activo={activo.subseccion === "disfagia"}
-                        />
-                      </>
-                    )}
-                    <SubSubTab
-                      href={`/sucursales/${s.id}/nutricion/ingesta`}
-                      label="Ingesta diaria"
-                      activo={activo.subseccion === "ingesta"}
-                    />
-                    {ROLES_NUTRICION_CLINICO.includes(perfil.rol) && (
+                activo.seccion === "nutricion";
+              const filaNutricion = (
+                <SubTab
+                  href={`/sucursales/${s.id}/nutricion`}
+                  label="Nutrición"
+                  icono="utensils"
+                  activo={nutricionActiva && !activo.subseccion}
+                />
+              );
+
+              if (!nutricionActiva) return filaNutricion;
+
+              return (
+                <GrupoConSub>
+                  {filaNutricion}
+                  {ROLES_NUTRICION_CLINICO.includes(perfil.rol) && (
+                    <>
                       <SubSubTab
-                        href={`/sucursales/${s.id}/nutricion/menu-semanal`}
-                        label="Menú semanal"
-                        activo={activo.subseccion === "menu-semanal"}
+                        href={`/sucursales/${s.id}/nutricion/dietas`}
+                        label="Prescripción dietaria"
+                        activo={activo.subseccion === "dietas"}
                       />
-                    )}
-                  </>
-                )}
-            </>
-          )}
+                      <SubSubTab
+                        href={`/sucursales/${s.id}/nutricion/cocina`}
+                        label="Cocina"
+                        activo={activo.subseccion === "cocina"}
+                      />
+                      <SubSubTab
+                        href={`/sucursales/${s.id}/nutricion/disfagia`}
+                        label="Disfagia"
+                        activo={activo.subseccion === "disfagia"}
+                      />
+                    </>
+                  )}
+                  <SubSubTab
+                    href={`/sucursales/${s.id}/nutricion/ingesta`}
+                    label="Ingesta diaria"
+                    activo={activo.subseccion === "ingesta"}
+                  />
+                  {ROLES_NUTRICION_CLINICO.includes(perfil.rol) && (
+                    <SubSubTab
+                      href={`/sucursales/${s.id}/nutricion/menu-semanal`}
+                      label="Menú semanal"
+                      activo={activo.subseccion === "menu-semanal"}
+                    />
+                  )}
+                </GrupoConSub>
+              );
+            })()}
           {ROLES_CUOTAS.includes(perfil.rol) && areaActual === "administrativa" && (
             <SubTab
               href={`/sucursales/${s.id}/cuotas`}
               label="Aranceles"
+              icono="coin"
               activo={
                 activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
@@ -366,35 +386,43 @@ export async function Sidebar({ perfil, activo }: Props) {
               }
             />
           )}
-          {ROLES_INVENTARIO.includes(perfil.rol) && areaActual === "administrativa" && (
-            <>
-              <SubTab
-                href={`/sucursales/${s.id}/inventario`}
-                label="Inventario"
-                activo={
-                  activo?.tipo === "sucursal" &&
-                  activo.sucursalId === s.id &&
-                  activo.seccion === "inventario" &&
-                  !activo.categoriaInventario
-                }
-              />
-              {activo?.tipo === "sucursal" &&
+          {ROLES_INVENTARIO.includes(perfil.rol) &&
+            areaActual === "administrativa" &&
+            (() => {
+              const inventarioActivo =
+                activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
-                activo.seccion === "inventario" &&
-                ORDEN_CATEGORIAS_INVENTARIO.map((cat) => (
-                  <SubSubTab
-                    key={cat}
-                    href={`/sucursales/${s.id}/inventario?categoria=${cat}`}
-                    label={ETIQUETA_CATEGORIA_INVENTARIO[cat]}
-                    activo={activo.categoriaInventario === cat}
-                  />
-                ))}
-            </>
-          )}
+                activo.seccion === "inventario";
+              const filaInventario = (
+                <SubTab
+                  href={`/sucursales/${s.id}/inventario`}
+                  label="Inventario"
+                  icono="box"
+                  activo={inventarioActivo && !activo.categoriaInventario}
+                />
+              );
+
+              if (!inventarioActivo) return filaInventario;
+
+              return (
+                <GrupoConSub>
+                  {filaInventario}
+                  {ORDEN_CATEGORIAS_INVENTARIO.map((cat) => (
+                    <SubSubTab
+                      key={cat}
+                      href={`/sucursales/${s.id}/inventario?categoria=${cat}`}
+                      label={ETIQUETA_CATEGORIA_INVENTARIO[cat]}
+                      activo={activo.categoriaInventario === cat}
+                    />
+                  ))}
+                </GrupoConSub>
+              );
+            })()}
           {ROLES_RENDICIONES.includes(perfil.rol) && areaActual === "administrativa" && (
             <SubTab
               href={`/sucursales/${s.id}/rendiciones`}
               label="Rendiciones"
+              icono="receipt"
               activo={
                 activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
@@ -406,6 +434,7 @@ export async function Sidebar({ perfil, activo }: Props) {
             <SubTab
               href={`/sucursales/${s.id}/gastos`}
               label="Gastos"
+              icono="wallet"
               activo={
                 activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
@@ -417,6 +446,7 @@ export async function Sidebar({ perfil, activo }: Props) {
             <SubTab
               href={`/sucursales/${s.id}/reportes`}
               label="Reportes"
+              icono="chart"
               activo={
                 activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
@@ -424,40 +454,45 @@ export async function Sidebar({ perfil, activo }: Props) {
               }
             />
           )}
-          {ROLES_LEGALES.includes(perfil.rol) && areaActual === "administrativa" && (
-            <>
-              <SubTab
-                href={`/sucursales/${s.id}/legales/habilitacion`}
-                label="Legales"
-                activo={
-                  activo?.tipo === "sucursal" &&
-                  activo.sucursalId === s.id &&
-                  activo.seccion === "legales"
-                }
-              />
-              {activo?.tipo === "sucursal" &&
+          {ROLES_LEGALES.includes(perfil.rol) &&
+            areaActual === "administrativa" &&
+            (() => {
+              const legalesActivo =
+                activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
-                activo.seccion === "legales" && (
-                  <>
-                    <SubSubTab
-                      href={`/sucursales/${s.id}/legales/habilitacion`}
-                      label="Habilitación"
-                      activo={activo.subseccion === "habilitacion"}
-                    />
-                    <SubSubTab
-                      href={`/sucursales/${s.id}/legales/libro-foliado`}
-                      label="Libro foliado"
-                      activo={activo.subseccion === "libro-foliado"}
-                    />
-                    <SubSubTab
-                      href={`/sucursales/${s.id}/legales/certificaciones`}
-                      label="Certificaciones y proveedores"
-                      activo={activo.subseccion === "certificaciones"}
-                    />
-                  </>
-                )}
-            </>
-          )}
+                activo.seccion === "legales";
+              const filaLegales = (
+                <SubTab
+                  href={`/sucursales/${s.id}/legales/habilitacion`}
+                  label="Legales"
+                  icono="scale"
+                  activo={legalesActivo}
+                />
+              );
+
+              if (!legalesActivo) return filaLegales;
+
+              return (
+                <GrupoConSub>
+                  {filaLegales}
+                  <SubSubTab
+                    href={`/sucursales/${s.id}/legales/habilitacion`}
+                    label="Habilitación"
+                    activo={activo.subseccion === "habilitacion"}
+                  />
+                  <SubSubTab
+                    href={`/sucursales/${s.id}/legales/libro-foliado`}
+                    label="Libro foliado"
+                    activo={activo.subseccion === "libro-foliado"}
+                  />
+                  <SubSubTab
+                    href={`/sucursales/${s.id}/legales/certificaciones`}
+                    label="Certificaciones y proveedores"
+                    activo={activo.subseccion === "certificaciones"}
+                  />
+                </GrupoConSub>
+              );
+            })()}
         </div>
       ))}
 
@@ -466,7 +501,19 @@ export async function Sidebar({ perfil, activo }: Props) {
           <TabPrincipal
             href="/empleados"
             label="Empleados"
+            icono="badge"
             activo={activo?.tipo === "empleados"}
+          />
+        </div>
+      )}
+
+      {perfil.rol === "admin" && (
+        <div className="mt-3">
+          <TabPrincipal
+            href="/admin/claves"
+            label="Claves"
+            icono="key"
+            activo={activo?.tipo === "claves"}
           />
         </div>
       )}
