@@ -93,10 +93,13 @@ function EditorStock({
           setValor(medicamento.cantidad_stock);
           setEditando(true);
         }}
-        className="text-sm font-semibold text-ink underline decoration-dotted decoration-ink-soft/50 hover:decoration-brass"
-        title="Ajustar stock manualmente"
+        className="inline-flex items-center gap-1 rounded-lg border border-edge bg-panel px-2 py-1 text-sm font-semibold text-ink hover:border-brass hover:bg-panel-deep"
+        title="Tocar para editar el stock"
       >
         {medicamento.cantidad_stock}
+        <span className="text-xs text-ink-soft" aria-hidden="true">
+          ✎
+        </span>
       </button>
     );
   }
