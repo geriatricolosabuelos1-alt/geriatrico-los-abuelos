@@ -587,16 +587,6 @@ export interface MovimientoInventario {
 export type EstadoPago = "pendiente" | "parcial" | "pagado";
 export type MetodoPago = "efectivo" | "transferencia" | "mercado_pago";
 
-export interface Rendicion {
-  id: string;
-  sucursal_id: string;
-  monto: number | null;
-  descripcion: string | null;
-  fecha: string;
-  imagen_path: string | null;
-  created_at: string;
-}
-
 export type TipoFichada = "ingreso" | "egreso";
 
 export interface Fichada {

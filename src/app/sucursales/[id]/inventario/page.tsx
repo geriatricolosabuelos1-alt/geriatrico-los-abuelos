@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { InventarioForm } from "@/components/InventarioForm";
+import { InventarioTicketForm } from "@/components/InventarioTicketForm";
 import { InventarioTable } from "@/components/InventarioTable";
 import type { CategoriaInsumo, Insumo, Perfil } from "@/lib/types";
 
@@ -163,6 +164,8 @@ export default async function InventarioSucursalPage({
           insumos={listaInsumosCategoria}
           residentes={residentes ?? []}
         />
+
+        <InventarioTicketForm sucursalId={id} />
 
         <InventarioTable insumos={filasInsumo} esAdmin={esAdmin} />
       </main>
