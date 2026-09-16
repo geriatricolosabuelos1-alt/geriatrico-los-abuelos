@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { cerrarSesion } from "@/app/actions";
+import { ETIQUETA_ROL } from "@/lib/roles";
 import type { CategoriaInsumo, Perfil, RolUsuario, Sucursal } from "@/lib/types";
 
 type Seccion =
@@ -22,7 +23,7 @@ type SubseccionNutricion = "dietas" | "cocina" | "disfagia" | "ingesta" | "menu-
 
 type Props = {
   perfil: Perfil;
-  activo?: { tipo: "dashboard" } | { tipo: "empleados" } | {
+  activo?: { tipo: "dashboard" } | { tipo: "empleados" } | { tipo: "claves" } | {
     tipo: "sucursal";
     sucursalId: string;
     seccion: Seccion;
@@ -84,17 +85,6 @@ const ROLES_MEDICINA: RolUsuario[] = [
   "enfermero",
   "cuidador",
 ];
-
-const ETIQUETA_ROL: Record<string, string> = {
-  admin: "Administradora",
-  gerente_sede: "Gerente de sede",
-  administrativo: "Administrativo",
-  enfermero: "Enfermero/a",
-  cuidador: "Cuidador/a",
-  medico: "Médico/a",
-  nutricionista: "Nutricionista",
-  kinesiologo: "Kinesiólogo/a",
-};
 
 function NavRow({
   href,
@@ -475,6 +465,16 @@ export async function Sidebar({ perfil, activo }: Props) {
             href="/empleados"
             label="Empleados"
             activo={activo?.tipo === "empleados"}
+          />
+        </div>
+      )}
+
+      {perfil.rol === "admin" && (
+        <div className="mt-3">
+          <TabPrincipal
+            href="/admin/claves"
+            label="Claves"
+            activo={activo?.tipo === "claves"}
           />
         </div>
       )}
