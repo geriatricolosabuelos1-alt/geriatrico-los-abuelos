@@ -71,24 +71,25 @@ export function MarcacionEmpleado({ empleadoId, empleadoNombre }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [periodo, setPeriodo] = useState<Periodo>("mes");
   const [fechaRef, setFechaRef] = useState(() => formatearFecha(new Date()));
-  const [cargando, setCargando] = useState(false);
   const [filas, setFilas] = useState<FilaResumen[]>([]);
+  const [claveCargada, setClaveCargada] = useState<string | null>(null);
 
   const rango = calcularRango(periodo, fechaRef);
+  const claveActual = `${empleadoId}_${rango.desde}_${rango.hasta}`;
+  const cargando = abierto && claveCargada !== claveActual;
 
   useEffect(() => {
     if (!abierto) return;
     let cancelado = false;
-    setCargando(true);
     listarFichadasPorEmpleado(empleadoId, rango.desde, rango.hasta).then((data) => {
       if (cancelado) return;
       setFilas(agruparPorDia(data));
-      setCargando(false);
+      setClaveCargada(claveActual);
     });
     return () => {
       cancelado = true;
     };
-  }, [abierto, empleadoId, rango.desde, rango.hasta]);
+  }, [abierto, empleadoId, rango.desde, rango.hasta, claveActual]);
 
   function exportarPdf() {
     descargarPdf(
