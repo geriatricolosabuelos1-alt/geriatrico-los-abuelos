@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { actualizarEmpleado, eliminarEmpleado } from "@/app/empleados/actions";
+import { MarcacionEmpleado } from "@/components/MarcacionEmpleado";
 import type { Sucursal } from "@/lib/types";
 
 type FilaEmpleado = {
@@ -70,7 +71,7 @@ function FilaEdicion({
 
   return (
     <tr className="border-b border-edge bg-panel-deep last:border-0">
-      <td colSpan={10} className="p-3">
+      <td colSpan={11} className="p-3">
         <form onSubmit={manejarSubmit} className="grid grid-cols-2 gap-2 sm:grid-cols-5">
           <select name="sucursal_id" defaultValue={empleado.sucursal_id} required className={CAMPO}>
             {sucursales.map((s) => (
@@ -206,6 +207,7 @@ export function EmpleadosTable({ empleados, sucursales, puedeBorrar }: Props) {
               <th className="px-4 py-3">Pago</th>
               <th className="px-4 py-3">Turno</th>
               <th className="px-4 py-3">Sueldo</th>
+              <th className="px-4 py-3">Marcación</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -246,6 +248,9 @@ export function EmpleadosTable({ empleados, sucursales, puedeBorrar }: Props) {
                   <td className="px-4 py-3 text-ink-soft whitespace-nowrap">
                     {e.sueldo != null ? `$${e.sueldo}` : "—"}
                   </td>
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <MarcacionEmpleado empleadoId={e.id} empleadoNombre={e.nombre_completo} />
+                  </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
                     <button
                       onClick={() => setEditandoId(e.id)}
@@ -267,7 +272,7 @@ export function EmpleadosTable({ empleados, sucursales, puedeBorrar }: Props) {
             )}
             {filtrados.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-4 py-6 text-center text-ink-soft">
+                <td colSpan={11} className="px-4 py-6 text-center text-ink-soft">
                   Ningún empleado coincide con el filtro.
                 </td>
               </tr>

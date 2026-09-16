@@ -26,3 +26,23 @@ export async function listarFichadas(
 
   return data ?? [];
 }
+
+export async function listarFichadasPorEmpleado(
+  empleadoId: string,
+  desde: string,
+  hasta: string,
+): Promise<Fichada[]> {
+  const supabase = await createClient();
+
+  const { data } = await supabase
+    .from("fichadas")
+    .select("id, empleado_id, tipo, fecha, hora, created_at")
+    .eq("empleado_id", empleadoId)
+    .gte("fecha", desde)
+    .lte("fecha", hasta)
+    .order("fecha", { ascending: false })
+    .order("hora", { ascending: false })
+    .returns<Fichada[]>();
+
+  return data ?? [];
+}
