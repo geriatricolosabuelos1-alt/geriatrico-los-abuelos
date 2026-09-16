@@ -54,12 +54,20 @@ export default async function EmpleadosPage() {
       <main className="flex-1 space-y-6 px-9 py-8">
         <div className="flex items-center justify-between">
           <h1 className="font-display text-[32px] font-semibold text-ink">Empleados</h1>
-          <Link
-            href="/empleados/turnos"
-            className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
-          >
-            Turnos cubiertos
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href="/empleados/fichadas"
+              className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
+            >
+              Fichado (ingreso/egreso)
+            </Link>
+            <Link
+              href="/empleados/turnos"
+              className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
+            >
+              Turnos cubiertos
+            </Link>
+          </div>
         </div>
 
         <EmpleadoForm sucursales={sucursales ?? []} />

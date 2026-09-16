@@ -595,6 +595,17 @@ export interface Rendicion {
   created_at: string;
 }
 
+export type TipoFichada = "ingreso" | "egreso";
+
+export interface Fichada {
+  id: string;
+  empleado_id: string;
+  tipo: TipoFichada;
+  fecha: string;
+  hora: string;
+  created_at: string;
+}
+
 export interface Pago {
   id: string;
   residente_id: string;
