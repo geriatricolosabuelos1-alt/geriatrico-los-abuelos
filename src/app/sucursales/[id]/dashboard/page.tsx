@@ -89,8 +89,17 @@ export default async function DashboardSucursalPage({
               {resumen.cantidadVencidas > 0 ? `, ${resumen.cantidadVencidas} residente(s) con atraso` : ""}
             </p>
           </div>
-          <div className="rounded-2xl border border-edge bg-card p-5">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+          <div
+            className={`rounded-2xl border p-5 ${
+              resumen.alertasMedicacion.length > 0
+                ? "alerta-pulso border-red-300 bg-red-50"
+                : "border-edge bg-card"
+            }`}
+          >
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              {resumen.alertasMedicacion.length > 0 && (
+                <span className="alerta-punto h-2 w-2 flex-shrink-0 rounded-full bg-red-600" />
+              )}
               Alertas de medicación
             </p>
             <p
@@ -101,8 +110,17 @@ export default async function DashboardSucursalPage({
               {resumen.alertasMedicacion.length}
             </p>
           </div>
-          <div className="rounded-2xl border border-edge bg-card p-5">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+          <div
+            className={`rounded-2xl border p-5 ${
+              resumen.alertasInsumos.length > 0
+                ? "alerta-pulso border-red-300 bg-red-50"
+                : "border-edge bg-card"
+            }`}
+          >
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              {resumen.alertasInsumos.length > 0 && (
+                <span className="alerta-punto h-2 w-2 flex-shrink-0 rounded-full bg-red-600" />
+              )}
               Alertas de insumos
             </p>
             <p
@@ -139,8 +157,13 @@ export default async function DashboardSucursalPage({
                       <p className="text-xs text-ink-soft">{a.residenteNombre}</p>
                     </div>
                     <span
-                      className={`rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold ${ESTILO_NIVEL[a.nivel]}`}
+                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold ${ESTILO_NIVEL[a.nivel]} ${
+                        a.nivel === "sin_stock" ? "alerta-pulso" : ""
+                      }`}
                     >
+                      {a.nivel === "sin_stock" && (
+                        <span className="alerta-punto h-1.5 w-1.5 flex-shrink-0 rounded-full bg-red-700" />
+                      )}
                       {ETIQUETA_NIVEL[a.nivel]}
                     </span>
                   </li>
@@ -173,7 +196,14 @@ export default async function DashboardSucursalPage({
                         {i.categoria === "medicos" ? "Insumo médico" : "Insumo varios"}
                       </p>
                     </div>
-                    <span className="rounded-full border border-red-300 bg-red-100 px-2 py-0.5 text-[0.65rem] font-semibold text-red-800">
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full border border-red-300 bg-red-100 px-2 py-0.5 text-[0.65rem] font-semibold text-red-800 ${
+                        i.stockActual <= 0 ? "alerta-pulso" : ""
+                      }`}
+                    >
+                      {i.stockActual <= 0 && (
+                        <span className="alerta-punto h-1.5 w-1.5 flex-shrink-0 rounded-full bg-red-700" />
+                      )}
                       {i.stockActual} / mín. {i.stockMinimo}
                     </span>
                   </li>

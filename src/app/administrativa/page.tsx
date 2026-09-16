@@ -95,8 +95,17 @@ export default async function DashboardPage() {
                   {formatearMonto(totalMontoPendienteGlobal)}
                 </p>
               </div>
-              <div className="rounded-2xl border border-edge bg-card p-5">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              <div
+                className={`rounded-2xl border p-5 ${
+                  totalAlertasMedicacionGlobal > 0
+                    ? "alerta-pulso border-red-300 bg-red-50"
+                    : "border-edge bg-card"
+                }`}
+              >
+                <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  {totalAlertasMedicacionGlobal > 0 && (
+                    <span className="alerta-punto h-2 w-2 flex-shrink-0 rounded-full bg-red-600" />
+                  )}
                   Alertas de medicación
                 </p>
                 <p
@@ -107,8 +116,17 @@ export default async function DashboardPage() {
                   {totalAlertasMedicacionGlobal}
                 </p>
               </div>
-              <div className="rounded-2xl border border-edge bg-card p-5">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              <div
+                className={`rounded-2xl border p-5 ${
+                  totalAlertasInsumosGlobal > 0
+                    ? "alerta-pulso border-red-300 bg-red-50"
+                    : "border-edge bg-card"
+                }`}
+              >
+                <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                  {totalAlertasInsumosGlobal > 0 && (
+                    <span className="alerta-punto h-2 w-2 flex-shrink-0 rounded-full bg-red-600" />
+                  )}
                   Alertas de insumos
                 </p>
                 <p
@@ -153,7 +171,10 @@ export default async function DashboardPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+                    <p className="flex items-center gap-1 text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+                      {r.resumen.alertasMedicacion.length > 0 && (
+                        <span className="alerta-punto h-1.5 w-1.5 flex-shrink-0 rounded-full bg-red-600" />
+                      )}
                       Alertas medicación
                     </p>
                     <p
@@ -165,7 +186,10 @@ export default async function DashboardPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+                    <p className="flex items-center gap-1 text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+                      {r.resumen.alertasInsumos.length > 0 && (
+                        <span className="alerta-punto h-1.5 w-1.5 flex-shrink-0 rounded-full bg-red-600" />
+                      )}
                       Alertas insumos
                     </p>
                     <p

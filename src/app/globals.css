@@ -1,5 +1,43 @@
 @import "tailwindcss";
 
+/* Pulso para señalar alertas activas (stock de medicación / insumos) */
+@keyframes alerta-pulso {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(185 28 28 / 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgb(185 28 28 / 0);
+  }
+}
+
+@keyframes alerta-punto {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.6;
+  }
+}
+
+.alerta-pulso {
+  animation: alerta-pulso 1.8s ease-in-out infinite;
+}
+
+.alerta-punto {
+  animation: alerta-punto 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .alerta-pulso,
+  .alerta-punto {
+    animation: none;
+  }
+}
+
 /* ─────────────────────────────────────────────────────────────
    Estilo "Táctil": crema en relieve, verde profundo de marca.
    Los nombres de token son los mismos de antes, así que ningún
