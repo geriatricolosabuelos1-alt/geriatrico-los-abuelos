@@ -33,11 +33,16 @@ export function HistorialPagos({ montoTotal, montoPagado, historial }: Props) {
   // Puede haber pagos previos a que existiera este historial: el punto de
   // partida es lo ya pagado menos lo que sí quedó registrado acá.
   const registrado = historial.reduce((acc, h) => acc + h.monto, 0);
-  let acumulado = montoPagado - registrado;
-  const filas = ordenado.map((h) => {
-    acumulado += h.monto;
-    return { ...h, restante: montoTotal - acumulado };
-  });
+  const acumulados: number[] = [];
+  ordenado.reduce((acumulado, h) => {
+    const nuevoAcumulado = acumulado + h.monto;
+    acumulados.push(nuevoAcumulado);
+    return nuevoAcumulado;
+  }, montoPagado - registrado);
+  const filas = ordenado.map((h, i) => ({
+    ...h,
+    restante: montoTotal - acumulados[i],
+  }));
 
   const tabla = (
     <table className="mt-2 w-full max-w-sm border-l-2 border-brass-soft text-xs print:max-w-none print:border-neutral-300">
