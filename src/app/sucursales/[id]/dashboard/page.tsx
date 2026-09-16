@@ -15,6 +15,10 @@ const ESTILO_NIVEL: Record<string, string> = {
 };
 
 function etiquetaAlerta(a: AlertaMedicacionResumen): string {
+  if (a.sinDosisDiaria) {
+    if (a.nivel === "sin_stock") return "Sin stock (sin dosis diaria cargada)";
+    return `${a.stockActual} unid. — sin dosis diaria cargada`;
+  }
   if (a.nivel === "sin_stock") return "Sin stock";
   if (a.diasRestantes === null) return "Stock bajo";
   return `Quedan ${a.diasRestantes} día${a.diasRestantes === 1 ? "" : "s"}`;
@@ -170,7 +174,11 @@ export default async function DashboardSucursalPage({
               <ul className="space-y-2">
                 {resumen.alertasMedicacion
                   .slice()
-                  .sort((a, b) => (a.diasRestantes ?? 0) - (b.diasRestantes ?? 0))
+                  .sort(
+                    (a, b) =>
+                      (a.diasRestantes ?? a.stockActual ?? 99) -
+                      (b.diasRestantes ?? b.stockActual ?? 99),
+                  )
                   .map((a) => (
                     <li key={a.id} className="flex items-center justify-between gap-2 text-sm">
                       <div>

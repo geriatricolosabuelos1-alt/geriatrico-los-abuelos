@@ -8,6 +8,10 @@ export type AlertaMedicacionResumen = {
   medicamentoNombre: string;
   nivel: "aviso_7" | "aviso_5" | "sin_stock";
   diasRestantes: number | null;
+  /** true cuando no hay "dosis diaria" cargada y el aviso sale por cantidad
+   * absoluta de stock, no por días reales restantes. */
+  sinDosisDiaria?: boolean;
+  stockActual?: number;
 };
 
 export type AlertaInsumoResumen = {
@@ -43,6 +47,15 @@ type ResidenteConFicha = {
   } | null;
 };
 
+type MedSinDosisRaw = {
+  id: string;
+  nombre: string;
+  cantidad_stock: number;
+  dosis_diaria: number | null;
+  residente_id: string;
+  residentes: { nombre: string; apellido: string; sucursal_id: string };
+};
+
 type AlertaMedicacionRaw = {
   id: string;
   dias_restantes: number | null;
@@ -73,6 +86,7 @@ export async function obtenerResumenSucursal(
     { data: residentesConFicha },
     { data: pagos },
     { data: alertasRaw },
+    { data: medsSinDosisDiaria },
     { data: insumos },
     { data: movimientos },
   ] = await Promise.all([
@@ -101,6 +115,15 @@ export async function obtenerResumenSucursal(
       .eq("resuelta", false)
       .eq("medicamentos_residente.residentes.sucursal_id", sucursalId)
       .returns<AlertaMedicacionRaw[]>(),
+    supabase
+      .from("medicamentos_residente")
+      .select(
+        "id, nombre, cantidad_stock, dosis_diaria, residente_id, residentes!inner(nombre, apellido, sucursal_id)",
+      )
+      .eq("activo", true)
+      .eq("residentes.sucursal_id", sucursalId)
+      .lte("cantidad_stock", 5)
+      .returns<MedSinDosisRaw[]>(),
     supabase
       .from("insumos")
       .select("id, nombre, categoria, stock_minimo, activo")
@@ -148,7 +171,7 @@ export async function obtenerResumenSucursal(
     if (resumen.diasMoraMax > 0) cantidadVencidas += 1;
   });
 
-  const alertasMedicacion: AlertaMedicacionResumen[] = (alertasRaw ?? []).map((a) => ({
+  const alertasConDosisDiaria: AlertaMedicacionResumen[] = (alertasRaw ?? []).map((a) => ({
     id: a.id,
     residenteId: a.medicamentos_residente.residente_id,
     residenteNombre: `${a.medicamentos_residente.residentes.apellido}, ${a.medicamentos_residente.residentes.nombre}`,
@@ -156,6 +179,27 @@ export async function obtenerResumenSucursal(
     nivel: a.nivel,
     diasRestantes: a.dias_restantes,
   }));
+
+  // Respaldo: medicamentos sin "dosis diaria" cargada (no se les puede calcular
+  // días restantes), pero con muy poco stock. Se alertan por cantidad absoluta
+  // para no dejarlos pasar en blanco.
+  const alertasSinDosisDiaria: AlertaMedicacionResumen[] = (medsSinDosisDiaria ?? [])
+    .filter((m) => !m.dosis_diaria || m.dosis_diaria <= 0)
+    .map((m) => ({
+      id: `sin-dosis-${m.id}`,
+      residenteId: m.residente_id,
+      residenteNombre: `${m.residentes.apellido}, ${m.residentes.nombre}`,
+      medicamentoNombre: m.nombre,
+      nivel: m.cantidad_stock <= 0 ? "sin_stock" : ("aviso_7" as const),
+      diasRestantes: null,
+      sinDosisDiaria: true,
+      stockActual: m.cantidad_stock,
+    }));
+
+  const alertasMedicacion: AlertaMedicacionResumen[] = [
+    ...alertasConDosisDiaria,
+    ...alertasSinDosisDiaria,
+  ];
 
   const resumenPorInsumo = new Map<string, number>();
   (movimientos ?? []).forEach((m) => {
