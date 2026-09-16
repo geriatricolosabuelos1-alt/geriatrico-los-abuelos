@@ -97,7 +97,6 @@ export async function obtenerResumenSucursal(
       .from("insumos")
       .select("id, nombre, categoria, stock_minimo, activo")
       .eq("activo", true)
-      .gt("stock_minimo", 0)
       .returns<InsumoRaw[]>(),
     supabase
       .from("movimientos_inventario")
@@ -157,6 +156,9 @@ export async function obtenerResumenSucursal(
   });
 
   const alertasInsumos: AlertaInsumoResumen[] = (insumos ?? [])
+    // Solo insumos con movimientos cargados en esta sede (evita alertar por
+    // ítems del catálogo general que acá nunca se llegaron a usar/stockear).
+    .filter((i) => resumenPorInsumo.has(i.id))
     .map((i) => ({
       id: i.id,
       nombre: i.nombre,
@@ -164,7 +166,7 @@ export async function obtenerResumenSucursal(
       stockActual: resumenPorInsumo.get(i.id) ?? 0,
       stockMinimo: i.stock_minimo,
     }))
-    .filter((i) => i.stockActual <= i.stockMinimo);
+    .filter((i) => i.stockActual <= 0 || (i.stockMinimo > 0 && i.stockActual <= i.stockMinimo));
 
   return {
     residentesActivos: residentesActivos ?? 0,
