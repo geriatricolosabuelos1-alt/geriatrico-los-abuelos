@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { obtenerResumenSucursal, type ResumenSucursalDashboard } from "@/lib/dashboard";
+import { calcularOcupacionPorMes, type ResidenteOcupacion } from "@/lib/ocupacion";
 import type { Perfil, Sucursal } from "@/lib/types";
 
 type ResumenSucursal = {
@@ -63,6 +64,22 @@ export default async function DashboardPage() {
   const resumenesVisibles = resumenes.filter(
     (r) => esAdmin || r.sucursal.id === perfil?.sucursal_id,
   );
+
+  const { data: residentesOcupacion } = await supabase
+    .from("residentes")
+    .select("fecha_ingreso, fecha_egreso, activo, sucursal_id")
+    .returns<(ResidenteOcupacion & { sucursal_id: string })[]>();
+
+  const listaResidentesOcupacion = (residentesOcupacion ?? []).filter(
+    (r) => esAdmin || r.sucursal_id === perfil?.sucursal_id,
+  );
+  const mesesOcupacion = calcularOcupacionPorMes(listaResidentesOcupacion, 9);
+  const capacidadTotal = resumenesVisibles.reduce(
+    (acc, r) => acc + (r.sucursal.capacidad_camas ?? 0),
+    0,
+  );
+  const maxOcupadas = Math.max(...mesesOcupacion.map((m) => m.ocupadas), 1);
+  const escalaMaxOcupacion = Math.max(capacidadTotal, maxOcupadas);
 
   return (
     <div className="flex min-h-screen w-full">
@@ -140,6 +157,49 @@ export default async function DashboardPage() {
             </div>
           </section>
         )}
+
+        <section className="mb-7 rounded-2xl border border-edge bg-card p-6">
+          <div className="mb-5 flex items-center justify-between">
+            <h2 className="font-display text-lg font-semibold text-ink">
+              Evolución de ocupación {esAdmin ? "· ambas sedes" : ""}
+            </h2>
+            <div className="flex items-center gap-4 text-xs text-ink-soft">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-brass" /> Camas ocupadas
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-edge" /> Libres
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-9 items-end gap-3" style={{ height: 200 }}>
+            {mesesOcupacion.map((m) => {
+              const altura = (m.ocupadas / escalaMaxOcupacion) * 100;
+              return (
+                <div key={m.label} className="flex h-full flex-col items-center justify-end">
+                  <p className="mb-1.5 text-xs font-semibold text-ink">{m.ocupadas}</p>
+                  <div className="flex w-full flex-1 flex-col justify-end overflow-hidden rounded-t-xl bg-edge">
+                    <div
+                      className="w-full rounded-t-xl bg-brass"
+                      style={{ height: `${altura}%` }}
+                    />
+                  </div>
+                  <p className="mt-2 text-[0.65rem] uppercase tracking-wide text-ink-soft">
+                    {m.label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-4 text-xs text-ink-soft">
+            {capacidadTotal > 0
+              ? `${mesesOcupacion[mesesOcupacion.length - 1].ocupadas} de ${capacidadTotal} camas ocupadas este mes.`
+              : "Cargá la capacidad de camas de cada sede para ver el % de ocupación."}{" "}
+            Los residentes sin fecha de ingreso cargada se estiman con su estado activo/inactivo
+            actual.
+          </p>
+        </section>
 
         <section>
           <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-soft">

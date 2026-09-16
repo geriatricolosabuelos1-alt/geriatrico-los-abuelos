@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { BotonExportarPdf } from "@/components/BotonExportarPdf";
+import { calcularOcupacionPorMes } from "@/lib/ocupacion";
 import type { NivelCuidado, Perfil } from "@/lib/types";
 
 type Params = { id: string };
@@ -14,11 +15,6 @@ type FilaResidenteOcupacion = {
   nivel_cuidado: NivelCuidado | null;
 };
 
-const MESES_CORTOS = [
-  "ene", "feb", "mar", "abr", "may", "jun",
-  "jul", "ago", "sep", "oct", "nov", "dic",
-];
-
 const ETIQUETA_NIVEL: Record<NivelCuidado, string> = {
   autovalido: "Autoválido",
   asistido: "Asistido",
@@ -26,24 +22,6 @@ const ETIQUETA_NIVEL: Record<NivelCuidado, string> = {
 };
 
 const ORDEN_NIVELES: NivelCuidado[] = ["autovalido", "asistido", "dependiente"];
-
-function estuvoActivoEnMes(
-  r: FilaResidenteOcupacion,
-  inicioMes: Date,
-  finMes: Date,
-): boolean {
-  const ingreso = r.fecha_ingreso ? new Date(r.fecha_ingreso + "T00:00:00") : null;
-  const egreso = r.fecha_egreso ? new Date(r.fecha_egreso + "T00:00:00") : null;
-
-  // Sin fecha de ingreso cargada (legajo incompleto): no podemos saber
-  // desde cuando ocupa la cama, asi que se toma el estado "activo" actual
-  // como mejor estimacion disponible para todo el rango del grafico.
-  if (!ingreso) return r.activo;
-
-  if (ingreso > finMes) return false;
-  if (egreso && egreso < inicioMes) return false;
-  return true;
-}
 
 export default async function ReportesSucursalPage({
   params,
@@ -82,18 +60,7 @@ export default async function ReportesSucursalPage({
   const listaResidentes = residentes ?? [];
   const ahora = new Date();
 
-  const meses = Array.from({ length: 9 }).map((_, i) => {
-    const fecha = new Date(ahora.getFullYear(), ahora.getMonth() - (8 - i), 1);
-    const inicioMes = new Date(fecha.getFullYear(), fecha.getMonth(), 1);
-    const finMes = new Date(fecha.getFullYear(), fecha.getMonth() + 1, 0);
-    const ocupadas = listaResidentes.filter((r) =>
-      estuvoActivoEnMes(r, inicioMes, finMes),
-    ).length;
-    return {
-      label: MESES_CORTOS[fecha.getMonth()],
-      ocupadas,
-    };
-  });
+  const meses = calcularOcupacionPorMes(listaResidentes, 9);
 
   const capacidad = sucursal.capacidad_camas ?? Math.max(...meses.map((m) => m.ocupadas), 1);
   const maxOcupadas = Math.max(...meses.map((m) => m.ocupadas), 1);
