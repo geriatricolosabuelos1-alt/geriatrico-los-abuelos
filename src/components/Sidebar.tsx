@@ -4,6 +4,7 @@ import { cerrarSesion } from "@/app/actions";
 import type { CategoriaInsumo, Perfil, RolUsuario, Sucursal } from "@/lib/types";
 
 type Seccion =
+  | "dashboard"
   | "residentes"
   | "cuotas"
   | "inventario"
@@ -232,6 +233,17 @@ export async function Sidebar({ perfil, activo }: Props) {
             <span className="h-1.5 w-1.5 flex-shrink-0 rounded-full bg-sede" />
             {s.nombre}
           </p>
+          {ROLES_DASHBOARD.includes(perfil.rol) && areaActual === "administrativa" && (
+            <SubTab
+              href={`/sucursales/${s.id}/dashboard`}
+              label="Dashboard"
+              activo={
+                activo?.tipo === "sucursal" &&
+                activo.sucursalId === s.id &&
+                activo.seccion === "dashboard"
+              }
+            />
+          )}
           {ROLES_RESIDENTES.includes(perfil.rol) && (
             <SubTab
               href={`/sucursales/${s.id}/residentes${areaActual === "medicina" ? "?vista=medicina" : ""}`}
