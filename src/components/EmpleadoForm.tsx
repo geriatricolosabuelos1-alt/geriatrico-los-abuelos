@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { crearEmpleado, type CrearEmpleadoEstado } from "@/app/empleados/actions";
 import type { Sucursal } from "@/lib/types";
 
@@ -15,16 +15,44 @@ const CAMPO =
 const ETIQUETA = "mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft";
 
 export function EmpleadoForm({ sucursales }: Props) {
+  const [abierto, setAbierto] = useState(false);
   const [estado, formAction, enviando] = useActionState(crearEmpleado, ESTADO_INICIAL);
+  const enviandoAnterior = useRef(enviando);
+
+  useEffect(() => {
+    if (enviandoAnterior.current && !enviando && !estado.error) {
+      setAbierto(false);
+    }
+    enviandoAnterior.current = enviando;
+  }, [enviando, estado.error]);
+
+  if (!abierto) {
+    return (
+      <button
+        type="button"
+        onClick={() => setAbierto(true)}
+        className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
+      >
+        + Nuevo empleado
+      </button>
+    );
+  }
 
   return (
     <form
       action={formAction}
       className="grid grid-cols-1 gap-4 rounded-2xl border border-edge bg-card p-5 sm:grid-cols-2"
     >
-      <h2 className="col-span-full font-display text-sm font-semibold text-ink">
-        Nuevo empleado
-      </h2>
+      <div className="col-span-full flex items-center justify-between">
+        <h2 className="font-display text-sm font-semibold text-ink">Nuevo empleado</h2>
+        <button
+          type="button"
+          onClick={() => setAbierto(false)}
+          className="text-sm text-ink-soft hover:text-ink"
+        >
+          ✕
+        </button>
+      </div>
 
       <div>
         <label className={ETIQUETA}>Sucursal</label>
