@@ -1,5 +1,6 @@
 export type RolUsuario =
   | "admin"
+  | "gerente_sede"
   | "enfermero"
   | "cuidador"
   | "medico"

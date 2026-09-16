@@ -39,38 +39,45 @@ const ETIQUETA_CATEGORIA_INVENTARIO: Record<CategoriaInsumo, string> = {
 
 const ORDEN_CATEGORIAS_INVENTARIO: CategoriaInsumo[] = ["medicos", "varios"];
 
+// Nutricionista solo ve Nutricion: no entra a la lista general de Residentes.
 const ROLES_RESIDENTES: RolUsuario[] = [
   "admin",
+  "gerente_sede",
   "administrativo",
   "enfermero",
   "cuidador",
   "medico",
-  "nutricionista",
   "kinesiologo",
 ];
 const ROLES_MEDICACION: RolUsuario[] = [
   "admin",
+  "gerente_sede",
   "administrativo",
   "medico",
   "enfermero",
   "cuidador",
 ];
-const ROLES_RECETARIO: RolUsuario[] = ["admin", "administrativo", "medico"];
-const ROLES_NUTRICION: RolUsuario[] = ["admin", "medico", "nutricionista", "enfermero", "cuidador"];
-const ROLES_NUTRICION_CLINICO: RolUsuario[] = ["admin", "medico", "nutricionista"];
-const ROLES_ACCION_MEDICA: RolUsuario[] = ["admin", "medico"];
-const ROLES_CUOTAS: RolUsuario[] = ["admin", "administrativo"];
-const ROLES_RENDICIONES: RolUsuario[] = ["admin", "administrativo"];
-const ROLES_GASTOS: RolUsuario[] = ["admin", "administrativo"];
-const ROLES_REPORTES: RolUsuario[] = ["admin", "administrativo"];
-const ROLES_LEGALES: RolUsuario[] = ["admin", "administrativo"];
-const ROLES_INVENTARIO: RolUsuario[] = ["admin", "administrativo"];
-const ROLES_EMPLEADOS: RolUsuario[] = ["admin", "administrativo"];
-const ROLES_DASHBOARD: RolUsuario[] = ["admin", "administrativo"];
+const ROLES_RECETARIO: RolUsuario[] = ["admin", "gerente_sede", "administrativo", "medico"];
+// Medico ya no ve Nutricion: solo Medicacion, Accion Medica y Evolucion (via Residentes).
+const ROLES_NUTRICION: RolUsuario[] = ["admin", "gerente_sede", "nutricionista", "enfermero", "cuidador"];
+const ROLES_NUTRICION_CLINICO: RolUsuario[] = ["admin", "gerente_sede", "nutricionista"];
+const ROLES_ACCION_MEDICA: RolUsuario[] = ["admin", "gerente_sede", "medico"];
+const ROLES_CUOTAS: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
+const ROLES_RENDICIONES: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
+const ROLES_GASTOS: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
+const ROLES_REPORTES: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
+const ROLES_LEGALES: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
+const ROLES_INVENTARIO: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
+const ROLES_EMPLEADOS: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
+const ROLES_DASHBOARD: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
 
-const ROLES_ADMINISTRATIVA: RolUsuario[] = ["admin", "administrativo"];
+// gerente_sede ve Administrativa y Medicina completas, pero solo de su propia
+// sede: sucursalesVisibles ya filtra por perfil.sucursal_id para todo rol que
+// no sea "admin", asi que no requiere logica extra ademas de sumarlo aqui.
+const ROLES_ADMINISTRATIVA: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
 const ROLES_MEDICINA: RolUsuario[] = [
   "admin",
+  "gerente_sede",
   "medico",
   "nutricionista",
   "kinesiologo",
@@ -80,6 +87,7 @@ const ROLES_MEDICINA: RolUsuario[] = [
 
 const ETIQUETA_ROL: Record<string, string> = {
   admin: "Administradora",
+  gerente_sede: "Gerente de sede",
   administrativo: "Administrativo",
   enfermero: "Enfermero/a",
   cuidador: "Cuidador/a",
