@@ -19,7 +19,7 @@ const ESTADO_INICIAL: CrearRendicionEstado = { error: null };
 
 const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
-const ETIQUETA = "mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft";
+const ETIQUETA = "mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft";
 
 const ETIQUETA_CATEGORIA: Record<CategoriaInsumo, string> = {
   medicos: "Insumos médicos",
@@ -147,7 +147,7 @@ export function RendicionForm({ sucursalId }: Props) {
             <p className="text-xs text-red-700">{ocrError}</p>
           ) : (
             <>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-ink-soft">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wide text-ink-soft">
                 {items.length > 0
                   ? "Productos detectados — revisá antes de sumar al stock"
                   : "No se reconoció ningún producto en el ticket"}

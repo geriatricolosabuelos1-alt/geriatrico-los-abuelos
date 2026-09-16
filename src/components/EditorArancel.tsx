@@ -19,7 +19,7 @@ const ESTADO_INICIAL: ActualizarArancelEstado = { error: null };
 const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none print:border-neutral-300 print:bg-white print:px-0 print:text-black";
 const ETIQUETA =
-  "mb-1 block text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft print:text-neutral-500";
+  "mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft print:text-neutral-500";
 
 function formatearMonto(monto: number | null): string {
   return monto != null ? `$${monto.toLocaleString("es-AR")}` : "—";

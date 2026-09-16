@@ -11,9 +11,13 @@ type Seccion =
   | "gastos"
   | "reportes"
   | "medicacion"
+  | "nutricion"
+  | "accion-medica"
   | "legales";
 
-type SubseccionLegales = "habilitacion";
+type SubseccionLegales = "habilitacion" | "libro-foliado" | "certificaciones";
+type SubseccionMedicacion = "recetario" | "vacunacion";
+type SubseccionNutricion = "dietas" | "cocina" | "disfagia" | "ingesta" | "menu-semanal";
 
 type Props = {
   perfil: Perfil;
@@ -22,7 +26,7 @@ type Props = {
     sucursalId: string;
     seccion: Seccion;
     categoriaInventario?: CategoriaInsumo;
-    subseccion?: SubseccionLegales;
+    subseccion?: SubseccionLegales | SubseccionMedicacion | SubseccionNutricion;
     area?: "administrativa" | "medicina";
   };
 };
@@ -50,6 +54,10 @@ const ROLES_MEDICACION: RolUsuario[] = [
   "enfermero",
   "cuidador",
 ];
+const ROLES_RECETARIO: RolUsuario[] = ["admin", "administrativo", "medico"];
+const ROLES_NUTRICION: RolUsuario[] = ["admin", "medico", "nutricionista", "enfermero", "cuidador"];
+const ROLES_NUTRICION_CLINICO: RolUsuario[] = ["admin", "medico", "nutricionista"];
+const ROLES_ACCION_MEDICA: RolUsuario[] = ["admin", "medico"];
 const ROLES_CUOTAS: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_RENDICIONES: RolUsuario[] = ["admin", "administrativo"];
 const ROLES_GASTOS: RolUsuario[] = ["admin", "administrativo"];
@@ -170,14 +178,17 @@ export async function Sidebar({ perfil, activo }: Props) {
     <aside className="flex w-60 flex-shrink-0 flex-col gap-0.5 overflow-y-auto border-r border-edge bg-panel-deep p-4">
       <div className="mb-6 flex items-center gap-3 px-1">
         <Link href="/" className="flex items-center gap-3">
-          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-brass font-display text-[0.9rem] font-semibold text-btn-ink">
-            LA
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-vektor.png"
+            alt="Vektor Geriatrixs"
+            className="h-9 w-9 flex-shrink-0 rounded-[10px] object-cover"
+          />
           <span>
             <p className="font-display text-[0.95rem] font-semibold leading-tight tracking-tight text-ink">
-              Los Abuelos
+              Vektor
             </p>
-            <p className="text-[0.7rem] text-ink-soft">Residencia geriátrica</p>
+            <p className="text-[0.7rem] text-ink-soft">Geriatrixs</p>
           </span>
         </Link>
       </div>
@@ -233,15 +244,104 @@ export async function Sidebar({ perfil, activo }: Props) {
             />
           )}
           {ROLES_MEDICACION.includes(perfil.rol) && (
+            <>
+              <SubTab
+                href={`/sucursales/${s.id}/medicacion${areaActual === "medicina" ? "?vista=medicina" : ""}`}
+                label={areaActual === "medicina" ? "Medicamentos" : "Medicación"}
+                activo={
+                  activo?.tipo === "sucursal" &&
+                  activo.sucursalId === s.id &&
+                  activo.seccion === "medicacion" &&
+                  !activo.subseccion
+                }
+              />
+              {areaActual === "administrativa" && ROLES_RECETARIO.includes(perfil.rol) && (
+                <>
+                  <SubSubTab
+                    href={`/sucursales/${s.id}/medicacion/recetario`}
+                    label="Recetario"
+                    activo={
+                      activo?.tipo === "sucursal" &&
+                      activo.sucursalId === s.id &&
+                      activo.seccion === "medicacion" &&
+                      activo.subseccion === "recetario"
+                    }
+                  />
+                  <SubSubTab
+                    href={`/sucursales/${s.id}/medicacion/vacunacion`}
+                    label="Vacunación"
+                    activo={
+                      activo?.tipo === "sucursal" &&
+                      activo.sucursalId === s.id &&
+                      activo.seccion === "medicacion" &&
+                      activo.subseccion === "vacunacion"
+                    }
+                  />
+                </>
+              )}
+            </>
+          )}
+          {ROLES_ACCION_MEDICA.includes(perfil.rol) && areaActual === "medicina" && (
             <SubTab
-              href={`/sucursales/${s.id}/medicacion${areaActual === "medicina" ? "?vista=medicina" : ""}`}
-              label="Medicación"
+              href={`/sucursales/${s.id}/accion-medica`}
+              label="Acción Médica"
               activo={
                 activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
-                activo.seccion === "medicacion"
+                activo.seccion === "accion-medica"
               }
             />
+          )}
+          {ROLES_NUTRICION.includes(perfil.rol) && areaActual === "medicina" && (
+            <>
+              <SubTab
+                href={`/sucursales/${s.id}/nutricion`}
+                label="Nutrición"
+                activo={
+                  activo?.tipo === "sucursal" &&
+                  activo.sucursalId === s.id &&
+                  activo.seccion === "nutricion" &&
+                  !activo.subseccion
+                }
+              />
+              {activo?.tipo === "sucursal" &&
+                activo.sucursalId === s.id &&
+                activo.seccion === "nutricion" && (
+                  <>
+                    {ROLES_NUTRICION_CLINICO.includes(perfil.rol) && (
+                      <>
+                        <SubSubTab
+                          href={`/sucursales/${s.id}/nutricion/dietas`}
+                          label="Prescripción dietaria"
+                          activo={activo.subseccion === "dietas"}
+                        />
+                        <SubSubTab
+                          href={`/sucursales/${s.id}/nutricion/cocina`}
+                          label="Cocina"
+                          activo={activo.subseccion === "cocina"}
+                        />
+                        <SubSubTab
+                          href={`/sucursales/${s.id}/nutricion/disfagia`}
+                          label="Disfagia"
+                          activo={activo.subseccion === "disfagia"}
+                        />
+                      </>
+                    )}
+                    <SubSubTab
+                      href={`/sucursales/${s.id}/nutricion/ingesta`}
+                      label="Ingesta diaria"
+                      activo={activo.subseccion === "ingesta"}
+                    />
+                    {ROLES_NUTRICION_CLINICO.includes(perfil.rol) && (
+                      <SubSubTab
+                        href={`/sucursales/${s.id}/nutricion/menu-semanal`}
+                        label="Menú semanal"
+                        activo={activo.subseccion === "menu-semanal"}
+                      />
+                    )}
+                  </>
+                )}
+            </>
           )}
           {ROLES_CUOTAS.includes(perfil.rol) && areaActual === "administrativa" && (
             <SubTab
@@ -326,11 +426,23 @@ export async function Sidebar({ perfil, activo }: Props) {
               {activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
                 activo.seccion === "legales" && (
-                  <SubSubTab
-                    href={`/sucursales/${s.id}/legales/habilitacion`}
-                    label="Habilitación"
-                    activo={activo.subseccion === "habilitacion"}
-                  />
+                  <>
+                    <SubSubTab
+                      href={`/sucursales/${s.id}/legales/habilitacion`}
+                      label="Habilitación"
+                      activo={activo.subseccion === "habilitacion"}
+                    />
+                    <SubSubTab
+                      href={`/sucursales/${s.id}/legales/libro-foliado`}
+                      label="Libro foliado"
+                      activo={activo.subseccion === "libro-foliado"}
+                    />
+                    <SubSubTab
+                      href={`/sucursales/${s.id}/legales/certificaciones`}
+                      label="Certificaciones y proveedores"
+                      activo={activo.subseccion === "certificaciones"}
+                    />
+                  </>
                 )}
             </>
           )}

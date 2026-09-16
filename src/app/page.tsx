@@ -32,7 +32,7 @@ function Tarjeta({
       <p className="mt-4 font-display text-lg font-semibold text-ink">{titulo}</p>
       <p className="mt-1 text-sm text-ink-soft">{subtitulo}</p>
       {!habilitada && (
-        <span className="mt-4 rounded-full bg-white/5 px-3 py-1 text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
+        <span className="mt-4 rounded-full bg-white/5 px-3 py-1 text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
           Sin acceso
         </span>
       )}
@@ -87,9 +87,15 @@ export default async function SeleccionarAreaPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-panel px-4">
-      <div className="mb-10 text-center">
+      <div className="mb-10 flex flex-col items-center text-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/logo-vektor.png"
+          alt="Vektor Geriatrixs"
+          className="mb-3 h-14 w-14 rounded-2xl object-cover"
+        />
         <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-brass">
-          Los Abuelos
+          Vektor Geriatrixs
         </p>
         <h1 className="mt-1 font-display text-[32px] font-semibold text-ink">
           ¿A qué área querés entrar?

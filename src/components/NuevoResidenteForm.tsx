@@ -14,7 +14,7 @@ const ESTADO_INICIAL: CrearResidenteEstado = { error: null };
 
 const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-4 py-3 text-base text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
-const ETIQUETA = "mb-1.5 block text-sm font-medium uppercase tracking-wide text-ink-soft";
+const ETIQUETA = "mb-1.5 block text-sm font-bold uppercase tracking-wide text-ink-soft";
 const SECCION = "mb-4 font-display text-lg font-semibold text-ink";
 
 function Campo({

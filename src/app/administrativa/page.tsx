@@ -116,7 +116,7 @@ export default async function DashboardPage() {
                   </p>
                   <div className="flex gap-7">
                     <div>
-                      <p className="text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
+                      <p className="text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
                         Residentes
                       </p>
                       <p className="font-display text-xl font-semibold tabular-nums lining-nums text-brass">
@@ -124,7 +124,7 @@ export default async function DashboardPage() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
+                      <p className="text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
                         Pagos pendientes
                       </p>
                       <p className="font-display text-xl font-semibold tabular-nums lining-nums text-brass">

@@ -20,6 +20,7 @@ import {
   type RegistrarIngresoEstado,
 } from "@/app/residentes/[id]/legajo/medicacion-actions";
 import { BotonDarDosis } from "@/components/BotonDarDosis";
+import type { AvisoPolifarmacia } from "@/app/residentes/[id]/legajo/medicacion-actions";
 import type {
   AlertaMedicacion,
   CatalogoMedicamento,
@@ -35,6 +36,7 @@ type Props = {
   alertas: AlertaMedicacion[];
   catalogo: CatalogoMedicamento[];
   sucursalId?: string;
+  polifarmacia?: AvisoPolifarmacia;
 };
 
 const ESTADO_INICIAL: MedicamentoEstado = { error: null };
@@ -42,7 +44,7 @@ const ESTADO_INGRESO_INICIAL: RegistrarIngresoEstado = { error: null };
 const ESTADO_STOCK_INICIAL: AjustarStockEstado = { error: null };
 const ESTADO_DOSIS_INICIAL: ActualizarDosisEstado = { error: null };
 
-const ETIQUETA_MIN = "mb-1 block text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft";
+const ETIQUETA_MIN = "mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft";
 
 const ETIQUETA_ALERTA: Record<NivelAlertaMedicacion, string> = {
   aviso_7: "≤ 7 días de stock",
@@ -530,6 +532,50 @@ function FormularioPrescripcion({
         />
       </div>
       <div>
+        <label className={ETIQUETA_MIN} title="Horas exactas para la planilla MAR de Medicina">
+          Horarios MAR (separados por coma)
+        </label>
+        <input
+          name="horarios"
+          defaultValue={medicamento.horarios?.join(", ") ?? ""}
+          placeholder="08:00, 12:00, 20:00"
+          className="w-40 rounded-lg border border-edge bg-panel px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
+        />
+      </div>
+      <div>
+        <label className={ETIQUETA_MIN}>Vía</label>
+        <input
+          name="via_administracion"
+          defaultValue={medicamento.via_administracion ?? ""}
+          placeholder="Oral, IM, subcutánea..."
+          className="w-28 rounded-lg border border-edge bg-panel px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
+        />
+      </div>
+      <div>
+        <label className={ETIQUETA_MIN}>Tipo</label>
+        <select
+          name="tipo_administracion"
+          defaultValue={medicamento.tipo_administracion}
+          className="rounded-lg border border-edge bg-panel px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
+        >
+          <option value="continua">Continua</option>
+          <option value="sos">SOS (según necesidad)</option>
+        </select>
+      </div>
+      <div>
+        <label className={ETIQUETA_MIN} title="Solo para SOS: tope de unidades por día">
+          Dosis máx. diaria (SOS)
+        </label>
+        <input
+          type="number"
+          name="dosis_maxima_diaria"
+          min={0}
+          step="0.5"
+          defaultValue={medicamento.dosis_maxima_diaria ?? ""}
+          className="w-28 rounded-lg border border-edge bg-panel px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
+        />
+      </div>
+      <div>
         <label
           className={ETIQUETA_MIN}
           title="Unidades consumidas por día, usado para calcular días de stock restante"
@@ -717,6 +763,7 @@ export function MedicacionResidente({
   alertas,
   catalogo,
   sucursalId,
+  polifarmacia,
 }: Props) {
   const accionConId = agregarMedicamento.bind(null, residenteId);
   const [estado, formAction, enviando] = useActionState(accionConId, ESTADO_INICIAL);
@@ -736,14 +783,32 @@ export function MedicacionResidente({
 
   return (
     <section className="rounded-2xl border border-edge bg-card p-5 lg:col-span-2 xl:col-span-3">
-      <div className="mb-3 flex items-center justify-between">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-display text-base font-semibold text-ink">Medicación</h2>
-        {alertas.length > 0 && (
-          <span className="text-xs font-semibold text-red-700">
-            {alertas.length} alerta{alertas.length > 1 ? "s" : ""} de stock activa
-            {alertas.length > 1 ? "s" : ""}
-          </span>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {polifarmacia && polifarmacia.esPolifarmacia && (
+            <span
+              className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[0.65rem] font-semibold text-amber-800"
+              title="5 u más fármacos activos: revisar polifarmacia"
+            >
+              Polifarmacia: {polifarmacia.totalActivos} fármacos
+            </span>
+          )}
+          {polifarmacia && polifarmacia.duplicados.length > 0 && (
+            <span
+              className="rounded-full border border-red-300 bg-red-100 px-2 py-0.5 text-[0.65rem] font-semibold text-red-800"
+              title={polifarmacia.duplicados.join(", ")}
+            >
+              Posible duplicidad
+            </span>
+          )}
+          {alertas.length > 0 && (
+            <span className="text-xs font-semibold text-red-700">
+              {alertas.length} alerta{alertas.length > 1 ? "s" : ""} de stock activa
+              {alertas.length > 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
       </div>
 
       {medicamentosActivos.length === 0 ? (
@@ -752,7 +817,7 @@ export function MedicacionResidente({
         <div className="mb-4 overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="text-[0.65rem] font-medium uppercase tracking-wide text-ink-soft">
+              <tr className="text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
                 <th className="px-3 py-2">Medicamento</th>
                 <th className="px-3 py-2">Dosis</th>
                 <th className="px-3 py-2">Horario</th>
@@ -847,6 +912,47 @@ export function MedicacionResidente({
             name="horario"
             className="w-40 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none"
             placeholder="08:00, 16:00, 00:00"
+          />
+        </div>
+        <div>
+          <label className={ETIQUETA_MIN} title="Horas exactas para la planilla MAR de Medicina">
+            Horarios MAR (separados por coma)
+          </label>
+          <input
+            name="horarios"
+            className="w-40 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none"
+            placeholder="08:00, 12:00, 20:00"
+          />
+        </div>
+        <div>
+          <label className={ETIQUETA_MIN}>Vía</label>
+          <input
+            name="via_administracion"
+            className="w-28 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none"
+            placeholder="Oral, IM..."
+          />
+        </div>
+        <div>
+          <label className={ETIQUETA_MIN}>Tipo</label>
+          <select
+            name="tipo_administracion"
+            defaultValue="continua"
+            className="rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none"
+          >
+            <option value="continua">Continua</option>
+            <option value="sos">SOS (según necesidad)</option>
+          </select>
+        </div>
+        <div>
+          <label className={ETIQUETA_MIN} title="Solo para SOS: tope de unidades por día">
+            Dosis máx. diaria (SOS)
+          </label>
+          <input
+            type="number"
+            name="dosis_maxima_diaria"
+            min={0}
+            step="0.5"
+            className="w-28 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none"
           />
         </div>
         <div>

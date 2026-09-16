@@ -19,7 +19,7 @@ const ESTADO_INICIAL: RegistrarMovimientoEstado = { error: null };
 
 const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
-const ETIQUETA = "mb-1 block text-xs font-medium uppercase tracking-wide text-ink-soft";
+const ETIQUETA = "mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft";
 
 const ETIQUETA_CATEGORIA: Record<CategoriaInsumo, string> = {
   medicos: "Insumos médicos",

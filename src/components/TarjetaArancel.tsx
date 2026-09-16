@@ -30,7 +30,7 @@ function formatearMonto(monto: number): string {
 function Dato({ etiqueta, children }: { etiqueta: string; children: React.ReactNode }) {
   return (
     <div>
-      <p className="whitespace-nowrap text-[0.6rem] font-medium uppercase tracking-wide text-ink-soft">
+      <p className="whitespace-nowrap text-[0.6rem] font-bold uppercase tracking-wide text-ink-soft">
         {etiqueta}
       </p>
       <p className="text-sm">{children}</p>
