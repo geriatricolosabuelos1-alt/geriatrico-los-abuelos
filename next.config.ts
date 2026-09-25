@@ -1,6 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Permite subir fotos/PDF (libretas, informes de interconsulta, documentos)
+  // por Server Actions. Vercel admite hasta 4,5 MB por request.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "4mb",
+    },
+  },
   async headers() {
     return [
       {

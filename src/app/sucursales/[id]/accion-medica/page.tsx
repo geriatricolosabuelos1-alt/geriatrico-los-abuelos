@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
+import { listarInterconsultasPendientesSede } from "@/app/residentes/[id]/accion-medica/interconsultas-actions";
+import { ETIQUETA_TIPO_INTERCONSULTA } from "@/lib/interconsultas";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
@@ -15,7 +17,7 @@ export default async function AccionMedicaListaPage({ params }: { params: Promis
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: perfil }, { data: sucursal }, { data: residentes }] = await Promise.all([
+  const [{ data: perfil }, { data: sucursal }, { data: residentes }, interconsultas] = await Promise.all([
     supabase
       .from("perfiles")
       .select("id, nombre_completo, rol, sucursal_id, activo")
@@ -33,6 +35,7 @@ export default async function AccionMedicaListaPage({ params }: { params: Promis
       .eq("activo", true)
       .order("habitacion")
       .returns<ResidenteBasico[]>(),
+    listarInterconsultasPendientesSede(id),
   ]);
 
   if (!sucursal || !perfil) notFound();
@@ -52,6 +55,38 @@ export default async function AccionMedicaListaPage({ params }: { params: Promis
             Elegí un residente para cargar la evolución del pase y revisar su kardex.
           </p>
         </div>
+
+        {interconsultas.length > 0 && (
+          <section className="rounded-2xl border border-amber-300 bg-amber-50 p-5">
+            <h2 className="mb-2 font-display text-sm font-semibold text-amber-900">
+              Interconsultas pendientes de resultado ({interconsultas.length})
+            </h2>
+            <ul className="space-y-1 text-sm">
+              {interconsultas.map((i) => (
+                <li key={i.id}>
+                  <Link
+                    href={`/residentes/${i.residentes.id}/accion-medica`}
+                    className="text-ink hover:text-brass"
+                  >
+                    <span className="font-medium">
+                      {i.residentes.apellido}, {i.residentes.nombre}
+                    </span>{" "}
+                    — {ETIQUETA_TIPO_INTERCONSULTA[i.tipo]}
+                    {i.detalle && ` · ${i.detalle}`}
+                    <span className="text-xs text-ink-soft">
+                      {" "}
+                      (pedida el{" "}
+                      {new Date((i.fecha_pedido ?? i.created_at.slice(0, 10)) + "T00:00:00").toLocaleDateString(
+                        "es-AR",
+                      )}
+                      )
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {(residentes ?? []).map((r) => (

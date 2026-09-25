@@ -162,6 +162,16 @@ export interface Interconsulta {
   created_at: string;
 }
 
+export interface InterconsultaCompleta extends Interconsulta {
+  fecha_pedido: string | null;
+  motivo: string | null;
+  profesional: string | null;
+  fecha_resultado: string | null;
+  resultado: string | null;
+  archivo_path: string | null;
+  nombre_archivo: string | null;
+}
+
 export type TipoAdministracion = "continua" | "sos";
 
 export interface MedicamentoResidente {

@@ -12,6 +12,8 @@ import {
   listarKardexResidente,
   tienePinConfigurado,
 } from "@/app/residentes/[id]/accion-medica/actions";
+import { listarInterconsultasCompletas } from "@/app/residentes/[id]/accion-medica/interconsultas-actions";
+import { InterconsultasResidente } from "@/components/InterconsultasResidente";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
@@ -51,13 +53,15 @@ export default async function AccionMedicaResidentePage({ params }: { params: Pr
   const indiceActual = orden.indexOf(id);
   const siguienteId = indiceActual >= 0 && indiceActual < orden.length - 1 ? orden[indiceActual + 1] : null;
 
-  const [evoluciones, kardex, catalogo, interconsultas, cambios, pinConfigurado] = await Promise.all([
+  const [evoluciones, kardex, catalogo, interconsultas, cambios, pinConfigurado, interconsultasCompletas] =
+    await Promise.all([
     listarEvolucionesMedicas(id),
     listarKardexResidente(id),
     listarCatalogo(),
     listarInterconsultas(id),
     listarCambiosRecientes(id),
     tienePinConfigurado(),
+    listarInterconsultasCompletas(id),
   ]);
 
   return (
@@ -91,6 +95,7 @@ export default async function AccionMedicaResidentePage({ params }: { params: Pr
             interconsultas={interconsultas}
             pinConfigurado={pinConfigurado}
           />
+          <InterconsultasResidente residenteId={id} interconsultas={interconsultasCompletas} />
         </div>
       </main>
     </div>
