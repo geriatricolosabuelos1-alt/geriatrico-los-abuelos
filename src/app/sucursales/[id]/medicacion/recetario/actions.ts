@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { calcularAlertasRecetas, fechaHoyArgentina, type AlertasRecetas } from "@/lib/recetas";
 import type { EstadoReceta, RecetaMedicamento } from "@/lib/types";
 
 export async function listarRecetas(sucursalId: string): Promise<
@@ -78,8 +79,8 @@ export async function actualizarEstadoReceta(
   const supabase = await createClient();
 
   const patch: Record<string, unknown> = { estado };
-  if (estado === "pedida") patch.fecha_pedido = new Date().toISOString().slice(0, 10);
-  if (estado === "recibida") patch.fecha_recibido = new Date().toISOString().slice(0, 10);
+  if (estado === "pedida") patch.fecha_pedido = fechaHoyArgentina();
+  if (estado === "recibida") patch.fecha_recibido = fechaHoyArgentina();
 
   await supabase.from("recetas_medicamento").update(patch).eq("id", recetaId);
 
@@ -90,4 +91,31 @@ export async function eliminarReceta(sucursalId: string, recetaId: string): Prom
   const supabase = await createClient();
   await supabase.from("recetas_medicamento").delete().eq("id", recetaId);
   revalidatePath(`/sucursales/${sucursalId}/medicacion/recetario`);
+}
+
+// Marca como pedidas (con la fecha de hoy) las recetas incluidas en el pedido impreso.
+export async function marcarRecetasPedidas(sucursalId: string, recetaIds: string[]): Promise<void> {
+  if (recetaIds.length === 0) return;
+  const supabase = await createClient();
+  await supabase
+    .from("recetas_medicamento")
+    .update({ estado: "pedida", fecha_pedido: fechaHoyArgentina() })
+    .in("id", recetaIds)
+    .eq("estado", "pendiente_pedir");
+
+  revalidatePath(`/sucursales/${sucursalId}/medicacion/recetario`);
+  revalidatePath(`/sucursales/${sucursalId}/medicacion/recetario/pedido`);
+  revalidatePath(`/sucursales/${sucursalId}/dashboard`);
+}
+
+export async function alertasRecetasSucursal(sucursalId: string): Promise<AlertasRecetas> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("recetas_medicamento")
+    .select("estado, fecha_pedido, fecha_vencimiento, residentes!inner(sucursal_id)")
+    .eq("residentes.sucursal_id", sucursalId)
+    .neq("estado", "recibida")
+    .returns<Pick<RecetaMedicamento, "estado" | "fecha_pedido" | "fecha_vencimiento">[]>();
+
+  return calcularAlertasRecetas(data ?? []);
 }

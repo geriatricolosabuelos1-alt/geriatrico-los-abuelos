@@ -184,6 +184,12 @@ function FilaReceta({ sucursalId, receta }: { sucursalId: string; receta: Receta
             className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold ${ESTILO_ESTADO[receta.estado]}`}
           >
             {ETIQUETA_ESTADO[receta.estado]}
+            {receta.estado === "pedida" &&
+              receta.fecha_pedido &&
+              ` el ${new Date(receta.fecha_pedido + "T00:00:00").toLocaleDateString("es-AR")}`}
+            {receta.estado === "recibida" &&
+              receta.fecha_recibido &&
+              ` el ${new Date(receta.fecha_recibido + "T00:00:00").toLocaleDateString("es-AR")}`}
           </span>
           {receta.estado !== "recibida" &&
             (() => {

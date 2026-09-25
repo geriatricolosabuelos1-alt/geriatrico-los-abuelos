@@ -7,6 +7,7 @@ import type { AlertaMedicacionResumen } from "@/lib/dashboard";
 import { formatearMonto, obtenerResumenFinanciero } from "@/lib/finanzas";
 import { GraficoIngresosGastos, GraficoSueldos } from "@/components/GraficoFinanciero";
 import { resumenLibretas } from "@/app/sucursales/[id]/legales/libretas-actions";
+import { alertasRecetasSucursal } from "@/app/sucursales/[id]/medicacion/recetario/actions";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
@@ -39,7 +40,7 @@ export default async function DashboardSucursalPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: perfil }, { data: sucursal }, resumen, finanzas, libretas] = await Promise.all([
+  const [{ data: perfil }, { data: sucursal }, resumen, finanzas, libretas, recetas] = await Promise.all([
     supabase
       .from("perfiles")
       .select("id, nombre_completo, rol, sucursal_id, activo")
@@ -53,6 +54,7 @@ export default async function DashboardSucursalPage({
     obtenerResumenSucursal(supabase, id),
     obtenerResumenFinanciero(supabase, id),
     resumenLibretas(id),
+    alertasRecetasSucursal(id),
   ]);
 
   if (!sucursal || !perfil) {
@@ -77,6 +79,24 @@ export default async function DashboardSucursalPage({
           </p>
           <h1 className="font-display text-[32px] font-semibold text-ink">Dashboard</h1>
         </div>
+
+        {recetas.total > 0 && (
+          <Link
+            href={`/sucursales/${id}/medicacion/recetario`}
+            className="alerta-pulso flex flex-wrap items-center gap-2 rounded-2xl border border-red-300 bg-red-50 px-5 py-3 text-sm text-red-800 transition-colors hover:border-brass"
+          >
+            <span className="alerta-punto h-2 w-2 flex-shrink-0 rounded-full bg-red-600" />
+            <span className="font-semibold">Recetas:</span>
+            {[
+              recetas.paraPedir > 0 && `${recetas.paraPedir} para pedir`,
+              recetas.pedidasDemoradas > 0 && `${recetas.pedidasDemoradas} pedidas sin recibir`,
+              recetas.porVencer > 0 && `${recetas.porVencer} por vencer`,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+            <span className="text-xs underline decoration-red-400 underline-offset-2">ver</span>
+          </Link>
+        )}
 
         {libretasConAlerta > 0 && (
           <Link
