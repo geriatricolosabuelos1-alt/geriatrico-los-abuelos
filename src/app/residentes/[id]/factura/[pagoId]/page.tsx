@@ -23,7 +23,25 @@ type Factura = {
   doc_nro: string;
   condicion_venta: string | null;
   medio_pago: string | null;
+  condicion_iva_receptor_id: number | null;
 };
+
+// Códigos de ARCA para la condición frente al IVA del receptor.
+const CONDICION_IVA_RECEPTOR: Record<number, string> = {
+  1: "Responsable Inscripto",
+  4: "Exento",
+  5: "Consumidor Final",
+  6: "Monotributo",
+};
+
+function documentoReceptor(docTipo: number, docNro: string): string {
+  if (docTipo === 96) return `DNI ${docNro}`;
+  if (docTipo === 80) {
+    const n = docNro.replace(/\D/g, "");
+    return n.length === 11 ? `CUIT ${n.slice(0, 2)}-${n.slice(2, 10)}-${n.slice(10)}` : `CUIT ${docNro}`;
+  }
+  return "Consumidor Final";
+}
 
 const ETIQUETA_CONDICION_VENTA: Record<string, string> = {
   contado: "Contado",
@@ -84,7 +102,7 @@ export default async function FacturaPage({
       supabase
         .from("facturas_arca")
         .select(
-          "tipo_cbte, pto_vta, cbte_nro, cae, cae_vencimiento, importe, fecha_emision, doc_tipo, doc_nro, condicion_venta, medio_pago",
+          "tipo_cbte, pto_vta, cbte_nro, cae, cae_vencimiento, importe, fecha_emision, doc_tipo, doc_nro, condicion_venta, medio_pago, condicion_iva_receptor_id",
         )
         .eq("pago_id", pagoId)
         .single<Factura>(),
@@ -171,12 +189,11 @@ export default async function FacturaPage({
                 {residente.apellido}, {residente.nombre}
               </p>
               <p className="text-xs text-ink-soft print:text-neutral-600">
-                {factura.doc_tipo === 96
-                  ? `DNI ${factura.doc_nro}`
-                  : "Consumidor Final"}
+                {documentoReceptor(factura.doc_tipo, factura.doc_nro)}
               </p>
               <p className="text-xs text-ink-soft print:text-neutral-600">
-                Condición frente al IVA: Consumidor Final
+                Condición frente al IVA:{" "}
+                {CONDICION_IVA_RECEPTOR[factura.condicion_iva_receptor_id ?? 5] ?? "Consumidor Final"}
               </p>
             </div>
             <div>
