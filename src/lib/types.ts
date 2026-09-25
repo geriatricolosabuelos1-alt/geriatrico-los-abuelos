@@ -262,6 +262,22 @@ export interface LibretaSanitaria {
   created_at: string;
 }
 
+export interface Emergencia {
+  id: string;
+  sucursal_id: string;
+  residente_id: string | null;
+  fecha: string;
+  hora: string | null;
+  prestador: string;
+  motivo: string | null;
+  demora_minutos: number | null;
+  traslado: boolean;
+  satisfactoria: boolean | null;
+  observaciones: string | null;
+  registrado_por: string | null;
+  created_at: string;
+}
+
 export interface RetiroResiduoPatogenico {
   id: string;
   sucursal_id: string;
