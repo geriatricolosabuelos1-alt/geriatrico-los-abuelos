@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { eliminarEmergencia, registrarEmergencia } from "@/app/sucursales/[id]/emergencias/actions";
+import { eliminarEmergencia, registrarEmergencia } from "@/app/sucursales/[id]/legales/emergencias-actions";
 
 type Estado = { error: string | null };
 const INICIAL: Estado = { error: null };
@@ -43,7 +43,7 @@ export function FormularioEmergencia({
       className="grid grid-cols-1 gap-3 rounded-2xl border border-edge bg-card p-5 sm:grid-cols-2 lg:grid-cols-4 print:hidden"
     >
       <h2 className="font-display text-base font-semibold text-ink sm:col-span-2 lg:col-span-4">
-        Registrar llamada de emergencia
+        Registrar llamada de ambulancia / emergencia
       </h2>
       <div>
         <label className={ETIQUETA_MIN}>Fecha</label>

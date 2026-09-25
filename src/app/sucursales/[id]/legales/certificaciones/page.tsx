@@ -2,13 +2,22 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { CertificacionesClient } from "@/components/CertificacionesClient";
+import { EmergenciasSeccion } from "@/components/EmergenciasSeccion";
 import { listarContratosSalud, listarRetirosResiduos } from "@/app/sucursales/[id]/legales/sanitario-actions";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
 
-export default async function CertificacionesPage({ params }: { params: Promise<Params> }) {
+export default async function CertificacionesPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<Params>;
+  searchParams: Promise<{ anio?: string }>;
+}) {
   const { id } = await params;
+  const { anio: anioParam } = await searchParams;
+  const anio = anioParam && /^\d{4}$/.test(anioParam) ? Number(anioParam) : new Date().getFullYear();
   const supabase = await createClient();
 
   const {
@@ -49,11 +58,13 @@ export default async function CertificacionesPage({ params }: { params: Promise<
           <p className="text-xs font-semibold uppercase tracking-widest text-brass">{sucursal!.nombre}</p>
           <h1 className="font-display text-[32px] font-semibold text-ink">Certificaciones y proveedores</h1>
           <p className="mt-1 text-sm text-ink-soft">
-            Contratos de Área Protegida y retiro de residuos patogénicos con sus manifiestos de carga.
+            Contratos de Área Protegida, retiro de residuos patogénicos y registro de llamadas a ambulancias.
           </p>
         </div>
 
         <CertificacionesClient sucursalId={id} contratos={contratos} residuos={residuos} />
+
+        <EmergenciasSeccion sucursalId={id} anio={anio} />
       </main>
     </div>
   );

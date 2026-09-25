@@ -5,8 +5,20 @@ import { createClient } from "@/lib/supabase/server";
 
 type Estado = { error: string | null };
 
-function ruta(sucursalId: string): string {
-  return `/sucursales/${sucursalId}/emergencias`;
+const ROLES_LEGALES = ["admin", "gerente_sede", "administrativo"];
+
+async function puedeGestionar(supabase: Awaited<ReturnType<typeof createClient>>): Promise<string | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: perfil } = await supabase.from("perfiles").select("rol").eq("id", user.id).single<{ rol: string }>();
+  return perfil && ROLES_LEGALES.includes(perfil.rol) ? user.id : null;
+}
+
+function revalidar(sucursalId: string) {
+  revalidatePath(`/sucursales/${sucursalId}/legales/certificaciones`);
+  revalidatePath(`/sucursales/${sucursalId}/legales/emergencias`);
 }
 
 export async function registrarEmergencia(
@@ -23,9 +35,8 @@ export async function registrarEmergencia(
 
   if (!fecha || !prestador) return { error: "Completá la fecha y el prestador." };
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const userId = await puedeGestionar(supabase);
+  if (!userId) return { error: "Solo administración puede registrar llamadas de emergencia." };
 
   const { error } = await supabase.from("emergencias").insert({
     sucursal_id: sucursalId,
@@ -38,16 +49,17 @@ export async function registrarEmergencia(
     traslado: formData.get("traslado") === "on",
     satisfactoria: satisfactoriaRaw === "si" ? true : satisfactoriaRaw === "no" ? false : null,
     observaciones: String(formData.get("observaciones") ?? "").trim() || null,
-    registrado_por: user?.id ?? null,
+    registrado_por: userId,
   });
 
   if (error) return { error: error.message };
-  revalidatePath(ruta(sucursalId));
+  revalidar(sucursalId);
   return { error: null };
 }
 
 export async function eliminarEmergencia(sucursalId: string, emergenciaId: string): Promise<void> {
   const supabase = await createClient();
+  if (!(await puedeGestionar(supabase))) return;
   await supabase.from("emergencias").delete().eq("id", emergenciaId);
-  revalidatePath(ruta(sucursalId));
+  revalidar(sucursalId);
 }
