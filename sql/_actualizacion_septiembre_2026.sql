@@ -94,7 +94,7 @@ grant execute on function public.proximo_tipo_fichada(uuid) to anon, authenticat
 -- Interconsultas: pedido (fecha, motivo) y resultado (fecha, informe, archivo)
 
 alter table public.interconsultas
-  add column if not exists fecha_pedido date default ((now() at time zone 'America/Argentina/Buenos_Aires')::date),
+  add column if not exists fecha_pedido date,
   add column if not exists motivo text,
   add column if not exists profesional text,
   add column if not exists fecha_resultado date,
@@ -106,6 +106,10 @@ alter table public.interconsultas
 update public.interconsultas
 set fecha_pedido = (created_at at time zone 'America/Argentina/Buenos_Aires')::date
 where fecha_pedido is null;
+
+-- Las nuevas toman la fecha de hoy si no se indica
+alter table public.interconsultas
+  alter column fecha_pedido set default ((now() at time zone 'America/Argentina/Buenos_Aires')::date);
 
 -- ===== emergencias.sql =====
 -- Registro de llamadas a emergencias (Area Protegida / prestador)
