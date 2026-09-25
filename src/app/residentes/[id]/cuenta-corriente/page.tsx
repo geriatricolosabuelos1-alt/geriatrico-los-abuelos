@@ -25,7 +25,8 @@ type FilaPago = {
   fecha_pago: string | null;
   tipo_pago: "obra_social" | "paciente";
   pagos_historial: { monto: number; fecha: string; metodo_pago: MetodoPago | null }[];
-  facturas_arca: { id: string }[] | null;
+  // pago_id es único en facturas_arca: Supabase devuelve un objeto (o null), no una lista.
+  facturas_arca: { id: string } | { id: string }[] | null;
 };
 
 const ETIQUETA_ESTADO: Record<FilaPago["estado"], string> = {
@@ -245,7 +246,9 @@ export default async function CuentaCorrientePage({
                             pagoId={p.id}
                             montoSugerido={p.monto_pagado}
                             dniResidente={residente.dni}
-                            yaFacturado={(p.facturas_arca?.length ?? 0) > 0}
+                            yaFacturado={
+                              Array.isArray(p.facturas_arca) ? p.facturas_arca.length > 0 : !!p.facturas_arca
+                            }
                           />
                         )}
                         <AccionesPago
