@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { eliminarResidente } from "@/app/sucursales/[id]/residentes/actions";
 import type { InsumoMedicoConStock } from "@/app/sucursales/[id]/residentes/insumos-actions";
 import { AgregarInsumoResidente } from "@/components/AgregarInsumoResidente";
+import { BotonDarDeBaja, BotonReincorporar } from "@/components/EgresoResidente";
 import { calcularEdad } from "@/lib/residentes";
 
 type FilaResidente = {
@@ -14,6 +15,8 @@ type FilaResidente = {
   fecha_nacimiento: string | null;
   fecha_ingreso: string | null;
   fecha_egreso: string | null;
+  motivo_egreso: string | null;
+  detalle_egreso: string | null;
   contacto_familiar: string | null;
   telefono_familiar: string | null;
   foto_url: string | null;
@@ -28,6 +31,8 @@ type Props = {
   esAdministrativo: boolean;
   puedeCargarInsumos: boolean;
   insumosMedicos: InsumoMedicoConStock[];
+  vistaBajas: boolean;
+  puedeGestionarEgresos: boolean;
 };
 
 type Columna = "nombre" | "ingreso" | "egreso";
@@ -69,9 +74,10 @@ export function ResidentesTable({
   esAdministrativo,
   puedeCargarInsumos,
   insumosMedicos,
+  vistaBajas,
+  puedeGestionarEgresos,
 }: Props) {
   const [busqueda, setBusqueda] = useState("");
-  const [estadoFiltro, setEstadoFiltro] = useState<"todos" | "activo" | "inactivo">("todos");
   const [orden, setOrden] = useState<{ columna: Columna; direccion: Direccion }>({
     columna: "nombre",
     direccion: "asc",
@@ -87,17 +93,9 @@ export function ResidentesTable({
 
   const filtrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
-    let lista = residentes.filter((r) => {
-      const coincideTexto =
-        !texto ||
-        r.nombre.toLowerCase().includes(texto) ||
-        r.apellido.toLowerCase().includes(texto);
-      const coincideEstado =
-        estadoFiltro === "todos" ||
-        (estadoFiltro === "activo" && r.activo) ||
-        (estadoFiltro === "inactivo" && !r.activo);
-      return coincideTexto && coincideEstado;
-    });
+    let lista = residentes.filter(
+      (r) => !texto || r.nombre.toLowerCase().includes(texto) || r.apellido.toLowerCase().includes(texto),
+    );
 
     lista = [...lista].sort((a, b) => {
       let comparacion = 0;
@@ -112,7 +110,7 @@ export function ResidentesTable({
     });
 
     return lista;
-  }, [residentes, busqueda, estadoFiltro, orden]);
+  }, [residentes, busqueda, orden]);
 
   async function manejarBorrar(id: string, nombre: string) {
     if (!window.confirm(`¿Eliminar a ${nombre}?`)) return;
@@ -129,15 +127,6 @@ export function ResidentesTable({
           onChange={(e) => setBusqueda(e.target.value)}
           className="w-64 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none"
         />
-        <select
-          value={estadoFiltro}
-          onChange={(e) => setEstadoFiltro(e.target.value as typeof estadoFiltro)}
-          className="rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none"
-        >
-          <option value="todos">Todos los estados</option>
-          <option value="activo">Activos</option>
-          <option value="inactivo">Inactivos</option>
-        </select>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-edge bg-card">
@@ -204,8 +193,22 @@ export function ResidentesTable({
                   <td className="px-4 py-3 align-middle text-ink-soft whitespace-nowrap">
                     {formatearFecha(r.fecha_ingreso)}
                   </td>
-                  <td className="px-4 py-3 align-middle text-ink-soft whitespace-nowrap">
-                    {formatearFecha(r.fecha_egreso)}
+                  <td className="px-4 py-3 align-middle text-ink-soft">
+                    {vistaBajas ? (
+                      <>
+                        <span className="whitespace-nowrap">{formatearFecha(r.fecha_egreso)}</span>
+                        {r.motivo_egreso && <p className="text-xs font-medium text-ink">{r.motivo_egreso}</p>}
+                        {r.detalle_egreso && <p className="text-xs text-ink-soft">{r.detalle_egreso}</p>}
+                      </>
+                    ) : puedeGestionarEgresos ? (
+                      <BotonDarDeBaja
+                        sucursalId={sucursalId}
+                        residenteId={r.id}
+                        nombre={`${r.apellido}, ${r.nombre}`}
+                      />
+                    ) : (
+                      "—"
+                    )}
                   </td>
                   {esAdministrativo && (
                     <td className="px-4 py-3 align-middle text-ink-soft">
@@ -232,7 +235,7 @@ export function ResidentesTable({
                           : "rounded-full bg-edge px-2 py-0.5 text-xs font-medium text-ink-soft"
                       }
                     >
-                      {r.activo ? "Activo" : "Inactivo"}
+                      {r.activo ? "Activo" : "Dado de baja"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right align-middle whitespace-nowrap">
@@ -242,7 +245,24 @@ export function ResidentesTable({
                     >
                       Evolución
                     </Link>
-                    {puedeCargarInsumos && (
+                    {vistaBajas && (
+                      <Link
+                        href={`/residentes/${r.id}/legajo/completo`}
+                        className="mr-3 text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                      >
+                        Legajo completo (PDF)
+                      </Link>
+                    )}
+                    {vistaBajas && puedeGestionarEgresos && (
+                      <span className="mr-3">
+                        <BotonReincorporar
+                          sucursalId={sucursalId}
+                          residenteId={r.id}
+                          nombre={`${r.apellido}, ${r.nombre}`}
+                        />
+                      </span>
+                    )}
+                    {!vistaBajas && puedeCargarInsumos && (
                       <span className="mr-3">
                         <AgregarInsumoResidente
                           sucursalId={sucursalId}
@@ -269,7 +289,7 @@ export function ResidentesTable({
                   colSpan={esAdministrativo ? 8 : 7}
                   className="px-4 py-6 text-center text-ink-soft"
                 >
-                  Ningún residente coincide con el filtro.
+                  {vistaBajas ? "No hay residentes dados de baja." : "Ningún residente coincide con el filtro."}
                 </td>
               </tr>
             )}

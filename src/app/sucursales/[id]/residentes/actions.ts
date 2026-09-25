@@ -97,3 +97,58 @@ export async function eliminarResidente(sucursalId: string, residenteId: string)
   await supabase.from("residentes").delete().eq("id", residenteId);
   revalidatePath(`/sucursales/${sucursalId}/residentes`);
 }
+
+// ---------- Egreso (baja) y reincorporación ----------
+
+const ROLES_EGRESO = ["admin", "gerente_sede", "administrativo"];
+
+async function puedeGestionarEgresos(supabase: Awaited<ReturnType<typeof createClient>>): Promise<boolean> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { data: perfil } = await supabase.from("perfiles").select("rol").eq("id", user.id).single<{ rol: string }>();
+  return !!perfil && ROLES_EGRESO.includes(perfil.rol);
+}
+
+export async function darDeBajaResidente(
+  sucursalId: string,
+  residenteId: string,
+  datos: { fecha: string; motivo: string; detalle: string },
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  if (!(await puedeGestionarEgresos(supabase))) return { error: "No tenés permiso para dar de baja residentes." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(datos.fecha)) return { error: "Indicá la fecha de egreso." };
+  if (!datos.motivo.trim()) return { error: "Elegí el motivo del egreso." };
+
+  const { error } = await supabase
+    .from("residentes")
+    .update({
+      activo: false,
+      fecha_egreso: datos.fecha,
+      motivo_egreso: datos.motivo.trim(),
+      detalle_egreso: datos.detalle.trim() || null,
+    })
+    .eq("id", residenteId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/sucursales/${sucursalId}/residentes`);
+  return { error: null };
+}
+
+export async function reincorporarResidente(
+  sucursalId: string,
+  residenteId: string,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  if (!(await puedeGestionarEgresos(supabase))) return { error: "No tenés permiso para reincorporar residentes." };
+
+  const { error } = await supabase
+    .from("residentes")
+    .update({ activo: true, fecha_egreso: null, motivo_egreso: null, detalle_egreso: null })
+    .eq("id", residenteId);
+  if (error) return { error: error.message };
+
+  revalidatePath(`/sucursales/${sucursalId}/residentes`);
+  return { error: null };
+}

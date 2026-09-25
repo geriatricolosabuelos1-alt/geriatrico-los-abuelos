@@ -7,7 +7,7 @@ import { listarInsumosMedicosConStock } from "./insumos-actions";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
-type SearchParams = { vista?: string };
+type SearchParams = { vista?: string; bajas?: string };
 
 type FilaResidente = {
   id: string;
@@ -16,6 +16,8 @@ type FilaResidente = {
   fecha_nacimiento: string | null;
   fecha_ingreso: string | null;
   fecha_egreso: string | null;
+  motivo_egreso: string | null;
+  detalle_egreso: string | null;
   contacto_familiar: string | null;
   telefono_familiar: string | null;
   foto_url: string | null;
@@ -31,7 +33,8 @@ export default async function ResidentesSucursalPage({
   searchParams: Promise<SearchParams>;
 }) {
   const { id } = await params;
-  const { vista } = await searchParams;
+  const { vista, bajas } = await searchParams;
+  const vistaBajas = bajas === "1";
   const supabase = await createClient();
 
   const {
@@ -62,10 +65,11 @@ export default async function ResidentesSucursalPage({
     supabase
       .from("residentes")
       .select(
-        "id, nombre, apellido, fecha_nacimiento, fecha_ingreso, fecha_egreso, contacto_familiar, telefono_familiar, foto_url, activo, ficha_administrativa(obra_social, tipo_cobertura, cuota_mensual)",
+        "id, nombre, apellido, fecha_nacimiento, fecha_ingreso, fecha_egreso, motivo_egreso, detalle_egreso, contacto_familiar, telefono_familiar, foto_url, activo, ficha_administrativa(obra_social, tipo_cobertura, cuota_mensual)",
       )
       .eq("sucursal_id", id)
-      .order("apellido")
+      .eq("activo", !vistaBajas)
+      .order(vistaBajas ? "fecha_egreso" : "apellido", { ascending: !vistaBajas })
       .returns<FilaResidente[]>(),
     listarInsumosMedicosConStock(id),
   ]);
@@ -87,10 +91,29 @@ export default async function ResidentesSucursalPage({
           <p className="text-xs font-semibold uppercase tracking-widest text-brass">
             {sucursal.nombre}
           </p>
-          <h1 className="font-display text-[32px] font-semibold text-ink">Residentes</h1>
+          <h1 className="font-display text-[32px] font-semibold text-ink">
+            {vistaBajas ? "Residentes dados de baja" : "Residentes"}
+          </h1>
+          {vistaBajas && (
+            <p className="mt-1 text-sm text-ink-soft">
+              Residentes que egresaron. Se conserva toda su información y se puede sacar su legajo completo.
+            </p>
+          )}
         </div>
 
-        {puedeCrear && (
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            href={`/sucursales/${id}/residentes?${new URLSearchParams({
+              ...(vista ? { vista } : {}),
+              ...(vistaBajas ? {} : { bajas: "1" }),
+            }).toString()}`}
+            className="rounded-full border border-edge px-4 py-2 text-sm font-semibold text-ink-soft hover:border-brass hover:text-ink"
+          >
+            {vistaBajas ? "← Volver a residentes activos" : "Residentes dados de baja"}
+          </Link>
+        </div>
+
+        {puedeCrear && !vistaBajas && (
           <Link
             href={`/sucursales/${id}/residentes/nuevo`}
             className="inline-block rounded-full bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90"
@@ -106,6 +129,8 @@ export default async function ResidentesSucursalPage({
           esAdministrativo={["admin", "administrativo"].includes(perfil.rol)}
           puedeCargarInsumos={puedeCrear}
           insumosMedicos={insumosMedicos}
+          vistaBajas={vistaBajas}
+          puedeGestionarEgresos={["admin", "gerente_sede", "administrativo"].includes(perfil.rol)}
         />
       </main>
     </div>

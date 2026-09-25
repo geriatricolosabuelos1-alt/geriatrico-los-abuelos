@@ -53,6 +53,8 @@ export interface Residente {
   nacionalidad: string | null;
   fecha_ingreso: string | null;
   fecha_egreso: string | null;
+  motivo_egreso?: string | null;
+  detalle_egreso?: string | null;
   habitacion: string | null;
   contacto_familiar: string | null;
   telefono_familiar: string | null;

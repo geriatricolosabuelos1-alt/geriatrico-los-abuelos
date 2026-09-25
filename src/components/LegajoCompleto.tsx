@@ -189,7 +189,13 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
           <Campo etiqueta="Fecha de nacimiento" valor={fecha(residente.fecha_nacimiento)} />
           <Campo etiqueta="Nacionalidad" valor={residente.nacionalidad} />
           <Campo etiqueta="Nivel de cuidado" valor={residente.nivel_cuidado} />
-          <Campo etiqueta="Estado" valor={residente.activo ? "Activo" : "Inactivo"} />
+          <Campo etiqueta="Estado" valor={residente.activo ? "Activo" : "Dado de baja"} />
+          {!residente.activo && (
+            <Campo
+              etiqueta="Motivo de egreso"
+              valor={[residente.motivo_egreso, residente.detalle_egreso].filter(Boolean).join(" — ")}
+            />
+          )}
           <Campo etiqueta="Contacto familiar" valor={residente.contacto_familiar} />
           <Campo etiqueta="Teléfono familiar" valor={residente.telefono_familiar} />
         </div>
