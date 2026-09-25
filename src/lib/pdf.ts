@@ -59,5 +59,17 @@ export function descargarPdf(nombreArchivo: string, encabezado: EncabezadoPdf, s
     }
   }
 
+  // Foliado: número de hoja en el pie de cada página.
+  const totalPaginas = doc.getNumberOfPages();
+  for (let pagina = 1; pagina <= totalPaginas; pagina++) {
+    doc.setPage(pagina);
+    doc.setFontSize(8);
+    doc.setTextColor(110);
+    doc.text(encabezado.titulo, 40, 820);
+    doc.setTextColor(0);
+    doc.setFontSize(9);
+    doc.text(`Folio ${pagina} de ${totalPaginas}`, 555, 820, { align: "right" });
+  }
+
   doc.save(nombreArchivo);
 }

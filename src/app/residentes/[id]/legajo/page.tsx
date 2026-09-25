@@ -91,6 +91,12 @@ export default async function LegajoResidentePage({
           </div>
           <div className="flex items-center gap-4">
             <Link
+              href={`/residentes/${id}/legajo/completo`}
+              className="text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+            >
+              Legajo completo (PDF)
+            </Link>
+            <Link
               href={`/residentes/${id}/contrato`}
               className="text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
             >
