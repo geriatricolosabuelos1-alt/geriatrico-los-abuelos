@@ -13,7 +13,8 @@ export type EncabezadoPdf = {
   fecha?: string;
 };
 
-export function descargarPdf(nombreArchivo: string, encabezado: EncabezadoPdf, secciones: SeccionPdf[]): void {
+// Arma el documento (encabezado + tablas) sin guardarlo.
+export function crearPdfTablas(encabezado: EncabezadoPdf, secciones: SeccionPdf[]): jsPDF {
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   let y = 44;
 
@@ -58,6 +59,12 @@ export function descargarPdf(nombreArchivo: string, encabezado: EncabezadoPdf, s
       y = 44;
     }
   }
+
+  return doc;
+}
+
+export function descargarPdf(nombreArchivo: string, encabezado: EncabezadoPdf, secciones: SeccionPdf[]): void {
+  const doc = crearPdfTablas(encabezado, secciones);
 
   // Foliado: número de hoja en el pie de cada página.
   const totalPaginas = doc.getNumberOfPages();

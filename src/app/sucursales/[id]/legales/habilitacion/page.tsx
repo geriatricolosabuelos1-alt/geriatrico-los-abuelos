@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { HabilitacionChecklist } from "@/components/HabilitacionChecklist";
+import { BotonCarpetaLegales } from "@/components/BotonCarpetaLegales";
 import { listarDocumentosHabilitacion, listarItemsHabilitacion } from "./actions";
 import type { Perfil } from "@/lib/types";
 
@@ -60,12 +60,7 @@ export default async function HabilitacionSucursalPage({
               actualizado subiendo el archivo o registrando la fecha de presentación.
             </p>
           </div>
-          <Link
-            href={`/sucursales/${id}/legales/informe`}
-            className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90"
-          >
-            Sacar todo junto (PDF)
-          </Link>
+          <BotonCarpetaLegales sucursalId={id} />
         </div>
 
         <HabilitacionChecklist sucursalId={id} items={items} documentos={documentos} />
