@@ -95,7 +95,11 @@ export default async function AccionMedicaResidentePage({ params }: { params: Pr
             interconsultas={interconsultas}
             pinConfigurado={pinConfigurado}
           />
-          <InterconsultasResidente residenteId={id} interconsultas={interconsultasCompletas} />
+          <InterconsultasResidente
+            residenteId={id}
+            interconsultas={interconsultasCompletas}
+            puedeEliminar={perfil!.rol !== "medico"}
+          />
         </div>
       </main>
     </div>

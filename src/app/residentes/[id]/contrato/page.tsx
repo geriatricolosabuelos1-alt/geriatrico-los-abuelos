@@ -90,7 +90,7 @@ export default async function ContratoResidentePage({
       .maybeSingle<{ parrafos: string[] }>(),
   ]);
 
-  const puedeEditar = !!perfil && ["admin", "administrativo"].includes(perfil.rol);
+  const puedeEditar = !!perfil && ["admin", "gerente_sede", "administrativo"].includes(perfil.rol);
 
   const ahora = new Date();
   const [anioHoy, mesHoy, diaHoy] = hoyArgentina().split("-").map(Number);

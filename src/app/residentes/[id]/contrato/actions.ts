@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 
-const ROLES_CONTRATO = ["admin", "administrativo"];
+const ROLES_CONTRATO = ["admin", "gerente_sede", "administrativo"];
 
 type Resultado = { error: string | null };
 

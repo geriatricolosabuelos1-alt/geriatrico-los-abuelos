@@ -94,15 +94,27 @@ export async function actualizarLegajo(
     return { error: errorFichaAdmin.message };
   }
 
-  const { error: errorFichaMedica } = await supabase
-    .from("ficha_medica")
-    .upsert(
-      { residente_id: residenteId, medico_cabecera, grupo_sanguineo, diagnosticos, alergias },
-      { onConflict: "residente_id" },
-    );
+  // La ficha médica solo la guardan admin y gerentes de sede; para el resto se deja como está.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const { data: perfil } = await supabase
+    .from("perfiles")
+    .select("rol")
+    .eq("id", user?.id ?? "")
+    .maybeSingle<{ rol: string }>();
 
-  if (errorFichaMedica) {
-    return { error: errorFichaMedica.message };
+  if (perfil && ["admin", "gerente_sede"].includes(perfil.rol)) {
+    const { error: errorFichaMedica } = await supabase
+      .from("ficha_medica")
+      .upsert(
+        { residente_id: residenteId, medico_cabecera, grupo_sanguineo, diagnosticos, alergias },
+        { onConflict: "residente_id" },
+      );
+
+    if (errorFichaMedica) {
+      return { error: errorFichaMedica.message };
+    }
   }
 
   revalidatePath(`/residentes/${residenteId}/legajo`);

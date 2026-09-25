@@ -71,7 +71,12 @@ export default async function VacunacionPage({ params }: { params: Promise<Param
           </Link>
         </div>
 
-        <VacunacionClient sucursalId={id} residentes={residentes ?? []} vacunaciones={vacunaciones} />
+        <VacunacionClient
+          sucursalId={id}
+          residentes={residentes ?? []}
+          vacunaciones={vacunaciones}
+          puedeEliminar={perfil!.rol !== "medico"}
+        />
       </main>
     </div>
   );

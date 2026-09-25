@@ -75,7 +75,15 @@ function FormularioResultado({
   );
 }
 
-function FilaInterconsulta({ residenteId, interconsulta }: { residenteId: string; interconsulta: InterconsultaConUrl }) {
+function FilaInterconsulta({
+  residenteId,
+  interconsulta,
+  puedeEliminar,
+}: {
+  residenteId: string;
+  interconsulta: InterconsultaConUrl;
+  puedeEliminar: boolean;
+}) {
   const [cargando, setCargando] = useState(false);
   const i = interconsulta;
   const diasEspera = i.fecha_pedido
@@ -125,9 +133,11 @@ function FilaInterconsulta({ residenteId, interconsulta }: { residenteId: string
               Cargar resultado
             </button>
           )}
-          <button type="button" onClick={borrar} className="text-xs text-red-700 hover:text-red-500">
-            Eliminar
-          </button>
+          {puedeEliminar && (
+            <button type="button" onClick={borrar} className="text-xs text-red-700 hover:text-red-500">
+              Eliminar
+            </button>
+          )}
         </div>
       </div>
 
@@ -161,9 +171,11 @@ function FilaInterconsulta({ residenteId, interconsulta }: { residenteId: string
 export function InterconsultasResidente({
   residenteId,
   interconsultas,
+  puedeEliminar,
 }: {
   residenteId: string;
   interconsultas: InterconsultaConUrl[];
+  puedeEliminar: boolean;
 }) {
   const accion = crearInterconsulta.bind(null, residenteId);
   const [estado, formAction, enviando] = useActionState(accion, INICIAL);
@@ -209,7 +221,7 @@ export function InterconsultasResidente({
 
       <div className="space-y-2">
         {interconsultas.map((i) => (
-          <FilaInterconsulta key={i.id} residenteId={residenteId} interconsulta={i} />
+          <FilaInterconsulta key={i.id} residenteId={residenteId} interconsulta={i} puedeEliminar={puedeEliminar} />
         ))}
         {interconsultas.length === 0 && <p className="text-xs text-ink-soft">Sin interconsultas registradas.</p>}
       </div>

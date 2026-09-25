@@ -57,9 +57,9 @@ export default async function ResidentesSucursalPage({
     notFound();
   }
 
-  const puedeCrear = ["admin", "administrativo", "enfermero", "cuidador"].includes(
-    perfil.rol,
-  );
+  // Alta de residentes: solo admin y gerentes de sede.
+  const puedeCrear = ["admin", "gerente_sede"].includes(perfil.rol);
+  const puedeCargarInsumos = ["admin", "administrativo", "enfermero", "cuidador"].includes(perfil.rol);
 
   const [{ data: residentes }, insumosMedicos] = await Promise.all([
     supabase
@@ -127,7 +127,7 @@ export default async function ResidentesSucursalPage({
           residentes={residentes ?? []}
           puedeBorrar={perfil.rol === "admin"}
           esAdministrativo={["admin", "administrativo"].includes(perfil.rol)}
-          puedeCargarInsumos={puedeCrear}
+          puedeCargarInsumos={puedeCargarInsumos}
           insumosMedicos={insumosMedicos}
           vistaBajas={vistaBajas}
           puedeGestionarEgresos={["admin", "gerente_sede", "administrativo"].includes(perfil.rol)}

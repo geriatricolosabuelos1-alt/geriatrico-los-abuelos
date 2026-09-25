@@ -12,6 +12,7 @@ type Props = {
   sucursalId: string;
   sucursalNombre: string;
   menus: MenuSemanal[];
+  puedeEliminar: boolean;
 };
 
 const DIAS: { valor: string; label: string }[] = [
@@ -270,7 +271,7 @@ function VistaMenu({ menu }: { menu: MenuSemanal }) {
   );
 }
 
-export function MenuSemanalClient({ sucursalId, sucursalNombre, menus }: Props) {
+export function MenuSemanalClient({ sucursalId, sucursalNombre, menus, puedeEliminar }: Props) {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [expandido, setExpandido] = useState<string | null>(menus[0]?.id ?? null);
 
@@ -305,13 +306,15 @@ export function MenuSemanalClient({ sucursalId, sucursalNombre, menus }: Props) 
               </button>
               <div className="flex items-center gap-3">
                 {expandido === m.id && <ExportarPdfMenuSemanal menu={m} sucursalNombre={sucursalNombre} />}
-                <button
-                  type="button"
-                  onClick={() => borrar(m.id)}
-                  className="text-xs text-red-700 hover:text-red-500"
-                >
-                  Eliminar
-                </button>
+                {puedeEliminar && (
+                  <button
+                    type="button"
+                    onClick={() => borrar(m.id)}
+                    className="text-xs text-red-700 hover:text-red-500"
+                  >
+                    Eliminar
+                  </button>
+                )}
               </div>
             </div>
             {expandido === m.id && <VistaMenu menu={m} />}

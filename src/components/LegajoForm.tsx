@@ -63,6 +63,9 @@ function Campo({
   );
 }
 
+// Ficha médica: solo admin y gerentes de sede (debe coincidir con la regla de la base).
+const ROLES_FICHA_MEDICA = ["admin", "gerente_sede"];
+
 export function LegajoForm({
   residente,
   fichaAdministrativa,
@@ -73,6 +76,7 @@ export function LegajoForm({
   catalogoMedicamentos,
 }: Props) {
   const accionConIds = actualizarLegajo.bind(null, residente.id, residente.sucursal_id);
+  const puedeEditarFichaMedica = ROLES_FICHA_MEDICA.includes(rolActual);
   const [estado, formAction, enviando] = useActionState(accionConIds, ESTADO_INICIAL);
 
   return (
@@ -235,7 +239,10 @@ export function LegajoForm({
 
         <section className="rounded-2xl border border-edge bg-card p-5 lg:col-span-2 xl:col-span-2">
           <h2 className={SECCION}>Ficha médica</h2>
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+          {!puedeEditarFichaMedica && (
+            <p className="mb-2 text-xs text-ink-soft">Solo administración y gerencia pueden modificar la ficha médica.</p>
+          )}
+          <fieldset disabled={!puedeEditarFichaMedica} className="grid grid-cols-1 gap-3 disabled:opacity-70 lg:grid-cols-2">
             <Campo
               label="Médico de cabecera"
               name="medico_cabecera"
@@ -265,7 +272,7 @@ export function LegajoForm({
                 className={CAMPO}
               />
             </div>
-          </div>
+          </fieldset>
         </section>
 
         <DocumentosResidente residenteId={residente.id} rolActual={rolActual} />

@@ -112,7 +112,12 @@ export default async function RecetarioPage({ params }: { params: Promise<Params
           </div>
         )}
 
-        <RecetarioClient sucursalId={id} residentes={residentes ?? []} recetas={recetas} />
+        <RecetarioClient
+          sucursalId={id}
+          residentes={residentes ?? []}
+          recetas={recetas}
+          puedeEliminar={perfil!.rol !== "medico"}
+        />
       </main>
     </div>
   );

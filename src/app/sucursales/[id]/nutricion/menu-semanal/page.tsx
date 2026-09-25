@@ -53,7 +53,12 @@ export default async function MenuSemanalPage({ params }: { params: Promise<Para
           </p>
         </div>
 
-        <MenuSemanalClient sucursalId={id} sucursalNombre={sucursal!.nombre} menus={menus} />
+        <MenuSemanalClient
+          sucursalId={id}
+          sucursalNombre={sucursal!.nombre}
+          menus={menus}
+          puedeEliminar={perfil!.rol !== "medico"}
+        />
       </main>
     </div>
   );

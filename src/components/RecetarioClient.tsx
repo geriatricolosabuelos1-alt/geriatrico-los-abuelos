@@ -26,6 +26,7 @@ type Props = {
   sucursalId: string;
   residentes: ResidenteConMeds[];
   recetas: RecetaConNombres[];
+  puedeEliminar: boolean;
 };
 
 const ESTADO_INICIAL: RecetaEstado = { error: null };
@@ -168,7 +169,15 @@ function FormularioNuevaReceta({
   );
 }
 
-function FilaReceta({ sucursalId, receta }: { sucursalId: string; receta: RecetaConNombres }) {
+function FilaReceta({
+  sucursalId,
+  receta,
+  puedeEliminar,
+}: {
+  sucursalId: string;
+  receta: RecetaConNombres;
+  puedeEliminar: boolean;
+}) {
   const [enviando, setEnviando] = useState(false);
   const siguiente = SIGUIENTE_ESTADO[receta.estado];
 
@@ -228,16 +237,18 @@ function FilaReceta({ sucursalId, receta }: { sucursalId: string; receta: Receta
               Marcar {ETIQUETA_ESTADO[siguiente].toLowerCase()}
             </button>
           )}
-          <button type="button" onClick={borrar} className="text-xs text-red-700 hover:text-red-500">
-            Eliminar
-          </button>
+          {puedeEliminar && (
+            <button type="button" onClick={borrar} className="text-xs text-red-700 hover:text-red-500">
+              Eliminar
+            </button>
+          )}
         </div>
       </td>
     </tr>
   );
 }
 
-export function RecetarioClient({ sucursalId, residentes, recetas }: Props) {
+export function RecetarioClient({ sucursalId, residentes, recetas, puedeEliminar }: Props) {
   return (
     <div className="space-y-4">
       <FormularioNuevaReceta
@@ -260,7 +271,7 @@ export function RecetarioClient({ sucursalId, residentes, recetas }: Props) {
           </thead>
           <tbody>
             {recetas.map((r) => (
-              <FilaReceta key={r.id} sucursalId={sucursalId} receta={r} />
+              <FilaReceta key={r.id} sucursalId={sucursalId} receta={r} puedeEliminar={puedeEliminar} />
             ))}
             {recetas.length === 0 && (
               <tr>

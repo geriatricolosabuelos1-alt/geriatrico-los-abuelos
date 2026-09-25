@@ -19,6 +19,7 @@ type Props = {
   sucursalId: string;
   residentes: ResidenteBasico[];
   vacunaciones: VacunacionConResidente[];
+  puedeEliminar: boolean;
 };
 
 const ETIQUETA_MIN = "mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft";
@@ -97,7 +98,7 @@ function FormularioVacunacion({ sucursalId, residentes }: { sucursalId: string; 
   );
 }
 
-export function VacunacionClient({ sucursalId, residentes, vacunaciones }: Props) {
+export function VacunacionClient({ sucursalId, residentes, vacunaciones, puedeEliminar }: Props) {
   async function borrar(id: string) {
     if (!window.confirm("¿Eliminar este registro de vacunación?")) return;
     await eliminarVacunacion(sucursalId, id);
@@ -145,9 +146,11 @@ export function VacunacionClient({ sucursalId, residentes, vacunaciones }: Props
                   {v.proxima_dosis ? new Date(v.proxima_dosis + "T00:00:00").toLocaleDateString("es-AR") : "—"}
                 </td>
                 <td className="px-3 py-2 text-right">
-                  <button type="button" onClick={() => borrar(v.id)} className="text-xs text-red-700 hover:text-red-500">
-                    Eliminar
-                  </button>
+                  {puedeEliminar && (
+                    <button type="button" onClick={() => borrar(v.id)} className="text-xs text-red-700 hover:text-red-500">
+                      Eliminar
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
