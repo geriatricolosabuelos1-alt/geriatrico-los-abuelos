@@ -5,7 +5,7 @@ import { BotonExportarPdf } from "@/components/BotonExportarPdf";
 import type { EstadoDosis, MedicamentoResidente } from "@/lib/types";
 
 type Params = { id: string };
-type Busqueda = { tipo?: string; desde?: string; hasta?: string };
+type Busqueda = { tipo?: string; desde?: string; hasta?: string; residente?: string };
 
 const ZONA = "America/Argentina/Buenos_Aires";
 
@@ -69,28 +69,38 @@ export default async function RegistroMedicacionPage({
 
   const supabase = await createClient();
 
-  const { data: sucursal } = await supabase
-    .from("sucursales")
-    .select("id, nombre")
-    .eq("id", id)
-    .single<{ id: string; nombre: string }>();
+  const [{ data: sucursal }, { data: listaResidentes }] = await Promise.all([
+    supabase.from("sucursales").select("id, nombre").eq("id", id).single<{ id: string; nombre: string }>(),
+    supabase
+      .from("residentes")
+      .select("id, nombre, apellido")
+      .eq("sucursal_id", id)
+      .eq("activo", true)
+      .order("apellido")
+      .returns<{ id: string; nombre: string; apellido: string }[]>(),
+  ]);
 
   if (!sucursal) notFound();
+
+  // Residente en particular (vacío = todos). Solo se aceptan residentes de esta sede.
+  const residenteElegido = (listaResidentes ?? []).find((r) => r.id === busqueda.residente) ?? null;
 
   let residentes: ResidenteConMeds[] = [];
   let dosis: DosisConDatos[] = [];
   const nombrePorPerfil = new Map<string, string>();
 
   if (tipo === "indicada") {
-    const { data } = await supabase
+    const consulta = supabase
       .from("residentes")
       .select(
         "id, nombre, apellido, dni, habitacion, medicamentos_residente(id, nombre, dosis, dosis_diaria, frecuencia, horario, horarios, via_administracion, tipo_administracion, instrucciones, cantidad_stock, activo)",
       )
       .eq("sucursal_id", id)
       .eq("activo", true)
-      .order("apellido")
-      .returns<ResidenteConMeds[]>();
+      .order("apellido");
+    const { data } = await (residenteElegido ? consulta.eq("id", residenteElegido.id) : consulta).returns<
+      ResidenteConMeds[]
+    >();
     residentes = (data ?? [])
       .map((r) => ({
         ...r,
@@ -100,7 +110,7 @@ export default async function RegistroMedicacionPage({
       }))
       .filter((r) => r.medicamentos_residente.length > 0);
   } else {
-    const { data } = await supabase
+    const consultaDosis = supabase
       .from("dosis_administradas")
       .select(
         "id, cantidad, estado, motivo, horario_previsto, administrado_por, fecha, residentes!inner(nombre, apellido, dni, sucursal_id), medicamentos_residente(nombre, dosis)",
@@ -109,8 +119,11 @@ export default async function RegistroMedicacionPage({
       .gte("fecha", `${desde}T00:00:00-03:00`)
       .lte("fecha", `${hasta}T23:59:59.999-03:00`)
       .order("fecha", { ascending: true })
-      .limit(5000)
-      .returns<DosisConDatos[]>();
+      .limit(5000);
+    const { data } = await (residenteElegido
+      ? consultaDosis.eq("residente_id", residenteElegido.id)
+      : consultaDosis
+    ).returns<DosisConDatos[]>();
     dosis = (data ?? []).sort(
       (a, b) =>
         `${a.residentes.apellido} ${a.residentes.nombre}`.localeCompare(
@@ -163,6 +176,23 @@ export default async function RegistroMedicacionPage({
           </div>
           <div>
             <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+              Residente
+            </label>
+            <select
+              name="residente"
+              defaultValue={residenteElegido?.id ?? ""}
+              className="rounded-lg border border-edge bg-card px-3 py-2 text-sm text-ink"
+            >
+              <option value="">Todos los residentes</option>
+              {(listaResidentes ?? []).map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.apellido}, {r.nombre}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
               Desde
             </label>
             <input
@@ -199,6 +229,7 @@ export default async function RegistroMedicacionPage({
           <p className="text-xs uppercase tracking-widest text-ink-soft print:text-neutral-600">
             {tipo === "indicada" ? "Registro de medicación indicada" : "Registro de dosis administradas"} ·{" "}
             {sucursal.nombre}
+            {residenteElegido && ` · ${residenteElegido.apellido}, ${residenteElegido.nombre}`}
           </p>
           <p className="mt-1 text-xs text-ink-soft print:text-neutral-600">
             {tipo === "administrada"
