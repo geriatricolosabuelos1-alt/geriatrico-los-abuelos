@@ -26,6 +26,12 @@ function todayArca(): string {
   return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
 }
 
+// ARCA puede devolver <Events> (avisos informativos, ej. código 39) junto con la respuesta:
+// no son errores. Solo se toman como error los códigos dentro de <Errors>.
+function sinEventos(xml: string): string {
+  return xml.replace(/<Events[^>]*>[\s\S]*?<\/Events>/g, "");
+}
+
 function parseErrors(xml: string): string | null {
   const codes = extractAllTags(xml, "Code");
   const msgs = extractAllTags(xml, "Msg");
@@ -61,8 +67,8 @@ export async function obtenerUltimoAutorizado(
     soapBody,
   );
 
-  const resultBlock = extractTag(response, "FECompUltimoAutorizadoResult") ?? response;
-  const errors = parseErrors(resultBlock);
+  const resultBlock = sinEventos(extractTag(response, "FECompUltimoAutorizadoResult") ?? response);
+  const errors = parseErrors(extractTag(resultBlock, "Errors") ?? "");
   if (errors) {
     throw new Error(`ARCA rechazó la consulta de último comprobante: ${errors}`);
   }
@@ -125,16 +131,16 @@ export async function solicitarCAE(
 
   const response = await soapRequest(HOST, PATH, `${NS}FECAESolicitar`, soapBody);
 
-  const resultBlock = extractTag(response, "FECAESolicitarResult") ?? response;
+  const resultBlock = sinEventos(extractTag(response, "FECAESolicitarResult") ?? response);
 
   const resultado = extractTag(resultBlock, "Resultado");
-  const detErrors = parseErrors(extractTag(resultBlock, "FeDetResp") ?? resultBlock);
-  const cabErrors = parseErrors(extractTag(resultBlock, "FeCabResp") ?? "");
-  const topErrors = parseErrors(extractTag(resultBlock, "Errors") ?? "");
+  const errores = parseErrors(extractTag(resultBlock, "Errors") ?? "");
+  // Las observaciones explican el rechazo cuando Resultado = "R"; con "A" son solo informativas.
+  const observaciones = parseErrors(extractTag(resultBlock, "Observaciones") ?? "");
 
-  if (resultado !== "A" || detErrors || topErrors || cabErrors) {
+  if (resultado !== "A" || errores) {
     throw new Error(
-      `ARCA rechazó la factura: ${detErrors ?? topErrors ?? cabErrors ?? `resultado=${resultado}`}`,
+      `ARCA rechazó la factura: ${[errores, observaciones].filter(Boolean).join("; ") || `resultado=${resultado ?? "sin respuesta"}`}`,
     );
   }
 
