@@ -112,14 +112,22 @@ export default async function MedicacionSucursalPage({
                 : "Cargá, editá o dá de baja medicación, registrá ingresos y administrá dosis — todo se refleja también en el legajo de cada residente."}
             </p>
           </div>
-          {!esMedicina && (
+          <div className="flex flex-wrap gap-2">
             <Link
-              href={`/sucursales/${id}/medicacion/informe`}
+              href={`/sucursales/${id}/medicacion/registro`}
               className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
             >
-              Ver informe de stock
+              Registro de medicación (PDF)
             </Link>
-          )}
+            {!esMedicina && (
+              <Link
+                href={`/sucursales/${id}/medicacion/informe`}
+                className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
+              >
+                Ver informe de stock
+              </Link>
+            )}
+          </div>
         </div>
 
         <div className="space-y-4">
