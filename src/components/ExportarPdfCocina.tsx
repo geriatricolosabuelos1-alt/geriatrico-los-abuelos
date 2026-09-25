@@ -23,7 +23,7 @@ export function ExportarPdfCocina({ sucursalNombre, filas }: Props) {
       {
         titulo: "Sábana de cocina",
         subtitulo: sucursalNombre,
-        fecha: `Generado el ${new Date().toLocaleDateString("es-AR")}`,
+        fecha: `Generado el ${new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}`,
       },
       [
         {

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { CategoriaInsumo } from "@/lib/types";
+import { hoyArgentina, mesAnioArgentina } from "@/lib/fechas";
 
 export type RegistrarMovimientoEstado = { error: string | null };
 
@@ -18,14 +19,14 @@ async function crearGastoDeCompra(
   monto: number,
   descripcion: string,
 ): Promise<{ error: string | null }> {
-  const hoy = new Date();
+  const { mes, anio } = mesAnioArgentina();
   const { error } = await supabase.from("gastos").insert({
     sucursal_id: sucursalId,
     categoria: ETIQUETA_CATEGORIA_GASTO[categoria],
     monto,
-    mes: hoy.getMonth() + 1,
-    anio: hoy.getFullYear(),
-    fecha: hoy.toISOString().slice(0, 10),
+    mes,
+    anio,
+    fecha: hoyArgentina(),
     descripcion,
     tipo: "variable",
   });

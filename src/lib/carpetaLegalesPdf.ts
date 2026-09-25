@@ -1,6 +1,7 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
 import { crearPdfTablas, type SeccionPdf } from "@/lib/pdf";
 import type { DatosCarpeta, ItemCarpeta } from "@/app/sucursales/[id]/legales/carpeta-actions";
+import { diasHastaFecha } from "@/lib/fechas";
 
 // A4 en puntos
 const ANCHO = 595.28;
@@ -20,9 +21,7 @@ function fecha(valor: string | null): string {
 
 function estadoVencimiento(valor: string | null): string {
   if (!valor) return "—";
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  const dias = Math.ceil((new Date(valor + "T00:00:00").getTime() - hoy.getTime()) / 86_400_000);
+  const dias = diasHastaFecha(valor);
   if (dias < 0) return "VENCIDO";
   if (dias <= 30) return `Vence en ${dias} días`;
   return "Vigente";
@@ -88,7 +87,7 @@ function crearResumen(datos: DatosCarpeta, conArchivo: Set<ItemCarpeta>): ArrayB
     {
       titulo: `Documentación legal · Residencia ${datos.sede}`,
       subtitulo: datos.direccion ?? undefined,
-      fecha: `Emitido el ${new Date().toLocaleDateString("es-AR")}`,
+      fecha: `Emitido el ${new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}`,
     },
     secciones,
   );

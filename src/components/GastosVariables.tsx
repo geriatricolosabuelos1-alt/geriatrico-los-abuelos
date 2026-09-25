@@ -8,6 +8,7 @@ import {
   eliminarGasto,
   type EstadoFormulario,
 } from "@/app/sucursales/[id]/gastos/actions";
+import { hoyArgentina } from "@/lib/fechas";
 
 type FilaGastoVariable = {
   id: string;
@@ -31,7 +32,7 @@ const ETIQUETA = "mb-1 block text-xs font-bold uppercase tracking-wide text-ink-
 const ESTADO_INICIAL: EstadoFormulario = { error: null };
 
 function hoyISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return hoyArgentina();
 }
 
 function FilaEdicion({

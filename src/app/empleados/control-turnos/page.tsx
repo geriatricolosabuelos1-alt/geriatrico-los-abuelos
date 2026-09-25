@@ -3,12 +3,12 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { controlDeTurnos, type EstadoTurno } from "@/app/empleados/control-turnos-actions";
 import type { Perfil, Sucursal } from "@/lib/types";
+import { hoyArgentina } from "@/lib/fechas";
 
 type SearchParams = { sucursal?: string; fecha?: string };
 
 function hoy(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return hoyArgentina();
 }
 
 const ETIQUETA_ESTADO: Record<EstadoTurno, { texto: string; clase: string }> = {

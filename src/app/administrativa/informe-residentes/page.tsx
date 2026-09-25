@@ -46,7 +46,7 @@ export default async function InformeResidentesGeneralPage() {
               Residentes activos · Ambas sedes
             </p>
             <p className="mt-1 text-xs text-ink-soft print:text-neutral-600">
-              Generado el {new Date().toLocaleDateString("es-AR")} · {filas.length} residentes
+              Generado el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} · {filas.length} residentes
             </p>
           </div>
           <div className="print:hidden">

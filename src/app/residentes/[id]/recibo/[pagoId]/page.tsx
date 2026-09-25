@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BotonImprimir } from "@/components/BotonImprimir";
+import { hoyArgentina } from "@/lib/fechas";
 
 type Params = { id: string; pagoId: string };
 
@@ -72,7 +73,7 @@ export default async function ReciboPage({
 
   const importe = pago.monto_pagado > 0 ? pago.monto_pagado : pago.monto;
   const ahora = new Date();
-  const numeroRecibo = `${ahora.getFullYear()}${String(ahora.getMonth() + 1).padStart(2, "0")}${String(ahora.getDate()).padStart(2, "0")}-${pago.id.slice(0, 8).toUpperCase()}`;
+  const numeroRecibo = `${hoyArgentina().replace(/-/g, "")}-${pago.id.slice(0, 8).toUpperCase()}`;
 
   return (
     <div className="flex min-h-screen w-full justify-center bg-panel px-4 py-10 print:block print:min-h-0 print:bg-white print:px-0 print:py-0">
@@ -98,7 +99,7 @@ export default async function ReciboPage({
             </p>
             <p className="mt-1 text-xs text-ink-soft print:text-neutral-600">Nº {numeroRecibo}</p>
             <p className="text-xs text-ink-soft print:text-neutral-600">
-              {ahora.toLocaleDateString("es-AR")} · {ahora.toLocaleTimeString("es-AR")}
+              {ahora.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} · {ahora.toLocaleTimeString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}
             </p>
           </div>
         </div>

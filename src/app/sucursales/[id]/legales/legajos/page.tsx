@@ -42,7 +42,7 @@ export default async function LegajosFoliadosPage({ params }: { params: Promise<
         <section className="text-black">
           <h1 className="text-xl font-bold">Legajos de residentes — {sucursal.nombre}</h1>
           <p className="text-xs text-neutral-600">
-            Emitido el {new Date().toLocaleDateString("es-AR")} · {lista.length} residentes activos · hojas foliadas
+            Emitido el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} · {lista.length} residentes activos · hojas foliadas
             en forma correlativa
           </p>
           <ol className="mt-4 list-decimal pl-5 text-sm">

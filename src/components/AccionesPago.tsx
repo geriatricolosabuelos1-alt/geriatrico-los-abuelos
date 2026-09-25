@@ -7,6 +7,7 @@ import {
   registrarPago,
 } from "@/app/residentes/[id]/cuenta-corriente/actions";
 import type { MetodoPago } from "@/lib/types";
+import { hoyArgentina } from "@/lib/fechas";
 
 type Props = {
   residenteId: string;
@@ -37,10 +38,10 @@ export function AccionesPago({
   const [nuevoMonto, setNuevoMonto] = useState(String(monto));
   const [nuevoPagado, setNuevoPagado] = useState(String(montoPagado));
   const [nuevaFecha, setNuevaFecha] = useState(
-    fechaPago ?? new Date().toISOString().slice(0, 10),
+    fechaPago ?? hoyArgentina(),
   );
   const [montoAPagar, setMontoAPagar] = useState(String(restante));
-  const [fechaPagoNueva, setFechaPagoNueva] = useState(new Date().toISOString().slice(0, 10));
+  const [fechaPagoNueva, setFechaPagoNueva] = useState(hoyArgentina());
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("efectivo");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);

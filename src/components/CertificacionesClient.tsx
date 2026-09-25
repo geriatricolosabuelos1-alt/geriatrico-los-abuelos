@@ -8,6 +8,7 @@ import {
   eliminarRetiroResiduos,
 } from "@/app/sucursales/[id]/legales/sanitario-actions";
 import type { ContratoProveedorSalud, RetiroResiduoPatogenico } from "@/lib/types";
+import { hoyArgentina } from "@/lib/fechas";
 
 type Estado = { error: string | null };
 const INICIAL: Estado = { error: null };
@@ -135,7 +136,7 @@ function SeccionResiduos({ sucursalId, residuos }: { sucursalId: string; residuo
       <form action={formAction} className="mb-4 flex flex-wrap items-end gap-3">
         <div>
           <label className={ETIQUETA_MIN}>Fecha</label>
-          <input type="date" name="fecha" defaultValue={new Date().toISOString().slice(0, 10)} className={CAMPO} />
+          <input type="date" name="fecha" defaultValue={hoyArgentina()} className={CAMPO} />
         </div>
         <div>
           <label className={ETIQUETA_MIN}>Empresa transportista</label>

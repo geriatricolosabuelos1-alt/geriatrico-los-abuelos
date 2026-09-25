@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BotonImprimir } from "@/components/BotonImprimir";
 import { ContratoEditable } from "@/components/ContratoEditable";
+import { hoyArgentina } from "@/lib/fechas";
 
 type Params = { id: string };
 
@@ -92,6 +93,7 @@ export default async function ContratoResidentePage({
   const puedeEditar = !!perfil && ["admin", "administrativo"].includes(perfil.rol);
 
   const ahora = new Date();
+  const [anioHoy, mesHoy, diaHoy] = hoyArgentina().split("-").map(Number);
   const nombreSucursal = sucursal?.nombre ?? "";
   const direccionSucursal = sucursal?.direccion ?? "";
   const nombreResidente = `${residente.apellido} ${residente.nombre}`;
@@ -346,7 +348,7 @@ export default async function ContratoResidentePage({
           <p>
             En prueba de conformidad a todo lo expuesto en el presente contrato se firma el mismo
             en dos ejemplares del mismo tenor y a un solo efecto en la ciudad de Mendoza a los{" "}
-            {ahora.getDate()} días del mes de {MESES[ahora.getMonth()]} del año {ahora.getFullYear()}.
+            {diaHoy} días del mes de {MESES[mesHoy - 1]} del año {anioHoy}.
           </p>
             </>
           )}
@@ -364,7 +366,7 @@ export default async function ContratoResidentePage({
         </div>
 
         <p className="pt-6 text-center text-[0.65rem] text-ink-soft print:text-neutral-500">
-          Documento generado automáticamente el {ahora.toLocaleDateString("es-AR")} a partir de
+          Documento generado automáticamente el {ahora.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} a partir de
           los datos cargados en el legajo del residente. Sujeto a revisión y completamiento del
           ANEXO I (evaluación médica) antes de su firma.
         </p>

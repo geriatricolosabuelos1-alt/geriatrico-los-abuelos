@@ -82,7 +82,7 @@ export default async function InformeDeudoresGeneralPage() {
               Informe de deudores · Ambas sedes
             </p>
             <p className="mt-1 text-xs text-ink-soft print:text-neutral-600">
-              Generado el {new Date().toLocaleDateString("es-AR")}
+              Generado el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}
             </p>
           </div>
           <div className="print:hidden">

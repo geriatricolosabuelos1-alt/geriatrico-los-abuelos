@@ -8,6 +8,7 @@ import {
 } from "@/app/sucursales/[id]/medicacion/vacunacion-actions";
 import { calcularEdad } from "@/lib/residentes";
 import type { TipoVacuna } from "@/lib/types";
+import { hoyArgentina } from "@/lib/fechas";
 
 type Estado = { error: string | null };
 const INICIAL: Estado = { error: null };
@@ -74,7 +75,7 @@ function FormularioVacunacion({ sucursalId, residentes }: { sucursalId: string; 
       )}
       <div>
         <label className={ETIQUETA_MIN}>Fecha de aplicación</label>
-        <input type="date" name="fecha_aplicacion" required defaultValue={new Date().toISOString().slice(0, 10)} className={CAMPO} />
+        <input type="date" name="fecha_aplicacion" required defaultValue={hoyArgentina()} className={CAMPO} />
       </div>
       <div>
         <label className={ETIQUETA_MIN}>N° de dosis</label>

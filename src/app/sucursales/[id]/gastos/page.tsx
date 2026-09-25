@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { GastosFijos } from "@/components/GastosFijos";
 import { GastosVariables } from "@/components/GastosVariables";
 import type { Gasto, GastoFijoCatalogo, Perfil } from "@/lib/types";
+import { mesAnioArgentina } from "@/lib/fechas";
 
 type Params = { id: string };
 type SearchParams = { mes?: string; anio?: string };
@@ -32,9 +33,9 @@ export default async function GastosSucursalPage({
 }) {
   const { id } = await params;
   const sp = await searchParams;
-  const ahora = new Date();
-  const mes = Number(sp.mes) || ahora.getMonth() + 1;
-  const anio = Number(sp.anio) || ahora.getFullYear();
+  const ahora = mesAnioArgentina();
+  const mes = Number(sp.mes) || ahora.mes;
+  const anio = Number(sp.anio) || ahora.anio;
 
   const supabase = await createClient();
 

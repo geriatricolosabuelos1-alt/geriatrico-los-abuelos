@@ -181,7 +181,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
               .join(" · ")}
           </p>
         </div>
-        <p className="text-right text-[0.62rem] text-neutral-600">Emitido el {new Date().toLocaleDateString("es-AR")}</p>
+        <p className="text-right text-[0.62rem] text-neutral-600">Emitido el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}</p>
       </header>
 
       <Seccion titulo="1. Datos personales">

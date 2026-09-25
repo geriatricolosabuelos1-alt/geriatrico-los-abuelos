@@ -86,7 +86,7 @@ export function ExportarPdfTurnos({ turnos, empleadosPorId, sucursalNombre }: Pr
       {
         titulo: "Turnos semanales",
         subtitulo: `${sucursalNombre} — ${etiquetaPeriodo}`,
-        fecha: `Generado el ${new Date().toLocaleDateString("es-AR")}`,
+        fecha: `Generado el ${new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}`,
       },
       secciones.length > 0 ? secciones : [{ columnas: ["Fecha", "Día", "Horario"], filas: [] }],
     );

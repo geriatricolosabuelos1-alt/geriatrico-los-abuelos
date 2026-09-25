@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { LibretaSanitaria } from "@/lib/types";
+import { diasHastaFecha } from "@/lib/fechas";
 
 const BUCKET = "empleados-documentos";
 const URL_EXPIRACION_SEGUNDOS = 60 * 10;
@@ -79,8 +80,6 @@ export async function resumenLibretas(
     if (!actual || l.fecha_vencimiento > actual) vencimientoMax.set(l.empleado_id, l.fecha_vencimiento);
   }
 
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
   let vencidas = 0;
   let porVencer = 0;
   let sinLibreta = 0;
@@ -90,7 +89,7 @@ export async function resumenLibretas(
       sinLibreta++;
       continue;
     }
-    const dias = Math.ceil((new Date(venc + "T00:00:00").getTime() - hoy.getTime()) / 86_400_000);
+    const dias = diasHastaFecha(venc);
     if (dias < 0) vencidas++;
     else if (dias <= DIAS_AVISO_LIBRETA) porVencer++;
   }

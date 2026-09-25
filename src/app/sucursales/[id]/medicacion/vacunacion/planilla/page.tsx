@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { BotonExportarPdf } from "@/components/BotonExportarPdf";
 import { calcularEdad } from "@/lib/residentes";
 import type { TipoVacuna, VacunacionResidente } from "@/lib/types";
+import { hoyArgentina } from "@/lib/fechas";
 
 type Params = { id: string };
 
@@ -81,7 +82,7 @@ export default async function PlanillaVacunacionPage({ params }: { params: Promi
             Planilla de vacunación · {sucursal.nombre}
           </p>
           <p className="mt-1 text-xs text-ink-soft print:text-neutral-600">
-            Generada el {new Date().toLocaleDateString("es-AR")} · {(residentes ?? []).length} residentes
+            Generada el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} · {(residentes ?? []).length} residentes
           </p>
         </div>
 
@@ -106,7 +107,7 @@ export default async function PlanillaVacunacionPage({ params }: { params: Promi
               const vacunas = [...r.vacunaciones_residente].sort((a, b) =>
                 a.fecha_aplicacion.localeCompare(b.fecha_aplicacion),
               );
-              const hoy = new Date().toISOString().slice(0, 10);
+              const hoy = hoyArgentina();
               const proximas = vacunas
                 .filter((v) => v.proxima_dosis && v.proxima_dosis >= hoy)
                 .map((v) => v.proxima_dosis!)

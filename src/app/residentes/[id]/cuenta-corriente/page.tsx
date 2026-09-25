@@ -132,7 +132,7 @@ export default async function CuentaCorrientePage({
             Informe de cuenta corriente
           </p>
           <p className="mt-1 text-xs text-neutral-600">
-            Generado el {new Date().toLocaleDateString("es-AR")}
+            Generado el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}
           </p>
         </div>
 

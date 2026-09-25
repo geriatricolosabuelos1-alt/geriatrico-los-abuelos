@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { BotonEliminarEmergencia, FormularioEmergencia } from "@/components/EmergenciasClient";
 import type { Emergencia } from "@/lib/types";
+import { mesAnioArgentina } from "@/lib/fechas";
 
 type EmergenciaConResidente = Emergencia & {
   residentes: { nombre: string; apellido: string } | null;
@@ -30,7 +31,7 @@ export async function EmergenciasSeccion({
 }) {
   const id = sucursalId;
   const supabase = await createClient();
-  const anioActual = new Date().getFullYear();
+  const anioActual = mesAnioArgentina().anio;
 
   const [{ data: residentes }, { data: contratos }, { data: emergencias }] = await Promise.all([
     supabase

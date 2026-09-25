@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { listarDocumentosHabilitacion, listarItemsHabilitacion } from "@/app/sucursales/[id]/legales/habilitacion/actions";
 import { listarContratosSalud, listarRetirosResiduos } from "@/app/sucursales/[id]/legales/sanitario-actions";
 import { listarLibretas } from "@/app/sucursales/[id]/legales/libretas-actions";
+import { mesAnioArgentina } from "@/lib/fechas";
 
 export type ItemCarpeta = {
   categoria: string;
@@ -29,7 +30,7 @@ export type DatosCarpeta = {
 // Datos para armar la carpeta de Legales completa (resumen + documentos de habilitación).
 export async function obtenerDatosCarpeta(sucursalId: string): Promise<DatosCarpeta | null> {
   const supabase = await createClient();
-  const anio = new Date().getFullYear();
+  const anio = mesAnioArgentina().anio;
 
   const [{ data: sucursal }, items, docs, contratos, residuos, libretas, { data: emergencias }] = await Promise.all([
     supabase

@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { TablaFichadas } from "@/components/TablaFichadas";
 import { listarFichadas } from "@/app/empleados/fichadas-actions";
 import type { Perfil, Sucursal } from "@/lib/types";
+import { mesAnioArgentina } from "@/lib/fechas";
 
 type SearchParams = { sucursal?: string; mes?: string; anio?: string };
 type EmpleadoOpcion = { id: string; nombre_completo: string; sucursal_id: string };
@@ -45,9 +46,9 @@ export default async function FichadasPage({
 
   const listaSucursales = sucursales ?? [];
   const sucursalId = sucursalParam || listaSucursales[0]?.id || "";
-  const ahora = new Date();
-  const mes = Number(mesParam) || ahora.getMonth() + 1;
-  const anio = Number(anioParam) || ahora.getFullYear();
+  const ahora = mesAnioArgentina();
+  const mes = Number(mesParam) || ahora.mes;
+  const anio = Number(anioParam) || ahora.anio;
 
   const empleadosDeSede = (empleados ?? []).filter((e) => e.sucursal_id === sucursalId);
   const empleadosPorId = new Map(empleadosDeSede.map((e) => [e.id, e.nombre_completo]));

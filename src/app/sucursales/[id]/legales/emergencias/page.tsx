@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BotonExportarPdf } from "@/components/BotonExportarPdf";
 import { EmergenciasSeccion } from "@/components/EmergenciasSeccion";
+import { mesAnioArgentina } from "@/lib/fechas";
 
 type Params = { id: string };
 
@@ -15,7 +16,7 @@ export default async function InformeEmergenciasPage({
 }) {
   const { id } = await params;
   const { anio: anioParam } = await searchParams;
-  const anio = anioParam && /^\d{4}$/.test(anioParam) ? Number(anioParam) : new Date().getFullYear();
+  const anio = anioParam && /^\d{4}$/.test(anioParam) ? Number(anioParam) : mesAnioArgentina().anio;
 
   const supabase = await createClient();
   const { data: sucursal } = await supabase

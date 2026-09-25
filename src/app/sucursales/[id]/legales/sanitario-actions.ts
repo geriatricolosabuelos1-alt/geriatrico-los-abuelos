@@ -9,6 +9,7 @@ import type {
   RetiroResiduoPatogenico,
   TipoContratoProveedorSalud,
 } from "@/lib/types";
+import { hoyArgentina } from "@/lib/fechas";
 
 type Estado = { error: string | null };
 
@@ -153,7 +154,7 @@ export async function agregarRetiroResiduos(
   const supabase = await createClient();
 
   const empresa = String(formData.get("empresa") ?? "").trim();
-  const fecha = String(formData.get("fecha") ?? "").trim() || new Date().toISOString().slice(0, 10);
+  const fecha = String(formData.get("fecha") ?? "").trim() || hoyArgentina();
   const cantidadRaw = String(formData.get("cantidad_kg") ?? "").trim();
   const cantidad_kg = cantidadRaw ? Number(cantidadRaw) : null;
   const numero_manifiesto = String(formData.get("numero_manifiesto") ?? "").trim() || null;

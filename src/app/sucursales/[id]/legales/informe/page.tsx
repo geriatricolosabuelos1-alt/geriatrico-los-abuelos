@@ -7,6 +7,7 @@ import { listarItemsHabilitacion } from "@/app/sucursales/[id]/legales/habilitac
 import { listarContratosSalud, listarRetirosResiduos } from "@/app/sucursales/[id]/legales/sanitario-actions";
 import { listarLibretas } from "@/app/sucursales/[id]/legales/libretas-actions";
 import type { HabilitacionDocumento } from "@/lib/types";
+import { diasHastaFecha, mesAnioArgentina } from "@/lib/fechas";
 
 type Params = { id: string };
 
@@ -15,9 +16,7 @@ function fecha(valor: string | null | undefined): string {
 }
 
 function diasPara(valor: string): number {
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  return Math.ceil((new Date(valor + "T00:00:00").getTime() - hoy.getTime()) / 86_400_000);
+  return diasHastaFecha(valor);
 }
 
 function estadoVencimiento(valor: string | null): string {
@@ -44,7 +43,7 @@ export default async function InformeLegalesPage({ params }: { params: Promise<P
   const { id } = await params;
   const supabase = await createClient();
 
-  const anio = new Date().getFullYear();
+  const anio = mesAnioArgentina().anio;
 
   const [{ data: sucursal }, items, { data: docs }, contratos, residuos, libretas, { data: emergencias }] =
     await Promise.all([
@@ -114,7 +113,7 @@ export default async function InformeLegalesPage({ params }: { params: Promise<P
           <p className="text-[0.65rem] uppercase tracking-widest text-neutral-600">Documentación legal</p>
           <h1 className="text-xl font-bold">Residencia {sucursal.nombre}</h1>
           {sucursal.direccion && <p>{sucursal.direccion}</p>}
-          <p className="text-neutral-600">Emitido el {new Date().toLocaleDateString("es-AR")}</p>
+          <p className="text-neutral-600">Emitido el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}</p>
         </header>
 
         <Seccion titulo={`1. Habilitación (${presentados} de ${items.length} ítems presentados)`}>

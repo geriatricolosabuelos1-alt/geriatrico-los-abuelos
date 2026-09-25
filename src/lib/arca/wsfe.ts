@@ -1,4 +1,5 @@
 import { soapRequest, extractTag, extractAllTags, decodeXmlEntities } from "./soap";
+import { hoyArgentina } from "@/lib/fechas";
 
 const HOST = "servicios1.afip.gov.ar";
 const PATH = "/wsfev1/service.asmx";
@@ -21,9 +22,9 @@ export type FacturaCResultado = {
   fechaEmision: string;
 };
 
+// Fecha del comprobante en hora argentina (AAAAMMDD).
 function todayArca(): string {
-  const d = new Date();
-  return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
+  return hoyArgentina().replace(/-/g, "");
 }
 
 // ARCA puede devolver <Events> (avisos informativos, ej. código 39) junto con la respuesta:

@@ -1,3 +1,4 @@
+import { hoyArgentina } from "@/lib/fechas";
 import type { RecetaMedicamento } from "@/lib/types";
 
 // Días que puede estar una receta pedida sin recibirse antes de avisar.
@@ -12,9 +13,7 @@ export type AlertasRecetas = {
   total: number;
 };
 
-export function fechaHoyArgentina(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(new Date());
-}
+export const fechaHoyArgentina = hoyArgentina;
 
 function diasEntre(desde: string, hasta: string): number {
   return Math.round(

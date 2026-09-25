@@ -5,6 +5,7 @@ import { CertificacionesClient } from "@/components/CertificacionesClient";
 import { EmergenciasSeccion } from "@/components/EmergenciasSeccion";
 import { listarContratosSalud, listarRetirosResiduos } from "@/app/sucursales/[id]/legales/sanitario-actions";
 import type { Perfil } from "@/lib/types";
+import { mesAnioArgentina } from "@/lib/fechas";
 
 type Params = { id: string };
 
@@ -17,7 +18,7 @@ export default async function CertificacionesPage({
 }) {
   const { id } = await params;
   const { anio: anioParam } = await searchParams;
-  const anio = anioParam && /^\d{4}$/.test(anioParam) ? Number(anioParam) : new Date().getFullYear();
+  const anio = anioParam && /^\d{4}$/.test(anioParam) ? Number(anioParam) : mesAnioArgentina().anio;
   const supabase = await createClient();
 
   const {

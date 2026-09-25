@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { CargoExtraResidente } from "@/lib/types";
+import { hoyArgentina } from "@/lib/fechas";
 
 export async function listarCargosExtra(residenteId: string): Promise<CargoExtraResidente[]> {
   const supabase = await createClient();
@@ -26,7 +27,7 @@ export async function marcarCargoExtraPagado(
   const supabase = await createClient();
   await supabase
     .from("cargos_extra_residente")
-    .update({ pagado, fecha_pago: pagado ? new Date().toISOString().slice(0, 10) : null })
+    .update({ pagado, fecha_pago: pagado ? hoyArgentina() : null })
     .eq("id", cargoId);
   revalidatePath(`/residentes/${residenteId}/cuenta-corriente`);
 }
@@ -48,7 +49,7 @@ export async function registrarPago(
   const supabase = await createClient();
 
   const monto = Number(formData.get("monto") ?? 0);
-  const fecha = String(formData.get("fecha") || new Date().toISOString().slice(0, 10));
+  const fecha = String(formData.get("fecha") || hoyArgentina());
   const metodoPago = String(formData.get("metodo_pago") || "efectivo");
 
   if (!monto || monto <= 0) {

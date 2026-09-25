@@ -4,6 +4,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { ListaAranceles } from "@/components/ListaAranceles";
 import { calcularResumenCuenta, diasDeAtraso, type PagoResumen } from "@/lib/aranceles";
 import type { Perfil } from "@/lib/types";
+import { mesAnioArgentina } from "@/lib/fechas";
 
 const MESES = [
   "enero", "febrero", "marzo", "abril", "mayo", "junio",
@@ -80,9 +81,7 @@ export default async function CuotasSucursalPage({
     ]),
   );
 
-  const ahora = new Date();
-  const mesActual = ahora.getMonth() + 1;
-  const anioActual = ahora.getFullYear();
+  const { mes: mesActual, anio: anioActual } = mesAnioArgentina();
   const mesAnteriorFecha = new Date(anioActual, mesActual - 2, 1);
 
   function promedioCuota(mes: number, anio: number): number {

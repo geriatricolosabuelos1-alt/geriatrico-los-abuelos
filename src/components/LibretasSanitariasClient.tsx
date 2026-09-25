@@ -7,6 +7,7 @@ import {
   leerLibretaConIA,
   type EmpleadoConLibreta,
 } from "@/app/sucursales/[id]/legales/libretas-actions";
+import { diasHastaFecha } from "@/lib/fechas";
 
 type Estado = { error: string | null };
 const INICIAL: Estado = { error: null };
@@ -24,9 +25,7 @@ type Props = {
 };
 
 function diasParaVencer(fecha: string): number {
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  return Math.ceil((new Date(fecha + "T00:00:00").getTime() - hoy.getTime()) / 86_400_000);
+  return diasHastaFecha(fecha);
 }
 
 function formatearFecha(fecha: string | null): string {

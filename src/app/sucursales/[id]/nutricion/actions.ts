@@ -17,6 +17,7 @@ import type {
   TipoLiquido,
   ValoracionDeglucion,
 } from "@/lib/types";
+import { hoyArgentina } from "@/lib/fechas";
 
 type Estado = { error: string | null };
 const OK: Estado = { error: null };
@@ -231,7 +232,7 @@ export async function prescribirDieta(
     data: { user },
   } = await supabase.auth.getUser();
 
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = hoyArgentina();
 
   await supabase
     .from("prescripcion_dietaria")
@@ -349,7 +350,7 @@ export async function registrarValoracionDeglucion(
 
 export async function obtenerIngestaDeHoy(residenteId: string): Promise<RegistroIngesta[]> {
   const supabase = await createClient();
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = hoyArgentina();
   const { data } = await supabase
     .from("registro_ingesta")
     .select("id, residente_id, fecha, comida, porcentaje, vasos_agua, registrado_por, created_at")
@@ -366,7 +367,7 @@ export async function registrarIngesta(
   porcentaje: 0 | 25 | 50 | 75 | 100,
 ): Promise<void> {
   const supabase = await createClient();
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = hoyArgentina();
 
   const {
     data: { user },
@@ -390,7 +391,7 @@ export async function registrarIngesta(
 
 export async function registrarVasosAgua(sucursalId: string, residenteId: string, comida: ComidaIngesta, vasos: number): Promise<void> {
   const supabase = await createClient();
-  const hoy = new Date().toISOString().slice(0, 10);
+  const hoy = hoyArgentina();
 
   const { data: existente } = await supabase
     .from("registro_ingesta")

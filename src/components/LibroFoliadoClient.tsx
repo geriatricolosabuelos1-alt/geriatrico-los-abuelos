@@ -33,7 +33,7 @@ export function LibroFoliadoClient({ sucursalNombre, residentes }: Props) {
       {
         titulo: "Historia clínica foliada",
         subtitulo: `${sucursalNombre} · ${residente.apellido}, ${residente.nombre}`,
-        fecha: `Generado el ${new Date().toLocaleDateString("es-AR")} — ${entradas.length} folios`,
+        fecha: `Generado el ${new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} — ${entradas.length} folios`,
       },
       [
         {

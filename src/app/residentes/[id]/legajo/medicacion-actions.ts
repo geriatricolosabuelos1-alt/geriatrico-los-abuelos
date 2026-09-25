@@ -13,6 +13,7 @@ import type {
   NivelAlertaMedicacion,
   TomaMar,
 } from "@/lib/types";
+import { finDiaArgentina, hoyArgentina, inicioDiaArgentina } from "@/lib/fechas";
 
 const COLUMNAS_MEDICAMENTO =
   "id, residente_id, nombre, dosis, dosis_diaria, frecuencia, horario, via_administracion, tipo_administracion, dosis_maxima_diaria, horarios, instrucciones, cantidad_stock, notas, activo, sin_seguimiento_stock, cambio_reciente_at, updated_at";
@@ -30,7 +31,7 @@ export async function listarMedicamentos(residenteId: string): Promise<Medicamen
 }
 
 function fechaHoyISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return hoyArgentina();
 }
 
 export async function obtenerTomasDeHoy(residenteId: string): Promise<TomaMar[]> {
@@ -54,8 +55,8 @@ export async function obtenerTomasDeHoy(residenteId: string): Promise<TomaMar[]>
     .from("dosis_administradas")
     .select("id, medicamento_id, horario_previsto, estado, motivo")
     .eq("residente_id", residenteId)
-    .gte("fecha", `${hoy}T00:00:00`)
-    .lt("fecha", `${hoy}T23:59:59.999`)
+    .gte("fecha", inicioDiaArgentina(hoy))
+    .lte("fecha", finDiaArgentina(hoy))
     .not("horario_previsto", "is", null)
     .returns<
       { id: string; medicamento_id: string; horario_previsto: string; estado: EstadoDosis; motivo: string | null }[]
@@ -132,8 +133,8 @@ export async function obtenerDosisSosHoy(residenteId: string): Promise<Record<st
     .eq("residente_id", residenteId)
     .eq("estado", "administrado")
     .is("horario_previsto", null)
-    .gte("fecha", `${hoy}T00:00:00`)
-    .lt("fecha", `${hoy}T23:59:59.999`)
+    .gte("fecha", inicioDiaArgentina(hoy))
+    .lte("fecha", finDiaArgentina(hoy))
     .returns<{ medicamento_id: string; cantidad: number }[]>();
 
   const totales: Record<string, number> = {};
