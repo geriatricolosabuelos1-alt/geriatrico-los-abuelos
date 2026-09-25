@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { actualizarEmpleado, eliminarEmpleado } from "@/app/empleados/actions";
 import { MarcacionEmpleado } from "@/components/MarcacionEmpleado";
@@ -252,6 +253,12 @@ export function EmpleadosTable({ empleados, sucursales, puedeBorrar }: Props) {
                     <MarcacionEmpleado empleadoId={e.id} empleadoNombre={e.nombre_completo} />
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
+                    <Link
+                      href={`/empleados/${e.id}/recibo`}
+                      className="mr-3 text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                    >
+                      Recibo
+                    </Link>
                     <button
                       onClick={() => setEditandoId(e.id)}
                       className="mr-3 text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
