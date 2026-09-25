@@ -17,7 +17,7 @@ type Seccion =
   | "accion-medica"
   | "legales";
 
-type SubseccionLegales = "habilitacion" | "libro-foliado" | "certificaciones";
+type SubseccionLegales = "habilitacion" | "libro-foliado" | "certificaciones" | "libretas";
 type SubseccionMedicacion = "recetario" | "vacunacion";
 type SubseccionNutricion = "dietas" | "cocina" | "disfagia" | "ingesta" | "menu-semanal";
 
@@ -475,6 +475,11 @@ export async function Sidebar({ perfil, activo }: Props) {
                     href={`/sucursales/${s.id}/legales/certificaciones`}
                     label="Certificaciones y proveedores"
                     activo={activo.subseccion === "certificaciones"}
+                  />
+                  <SubSubTab
+                    href={`/sucursales/${s.id}/legales/libretas`}
+                    label="Libretas sanitarias"
+                    activo={activo.subseccion === "libretas"}
                   />
                 </GrupoConSub>
               );

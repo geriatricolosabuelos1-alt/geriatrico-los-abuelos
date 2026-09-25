@@ -239,6 +239,19 @@ export interface ContratoProveedorSalud {
   created_at: string;
 }
 
+export interface LibretaSanitaria {
+  id: string;
+  empleado_id: string;
+  sucursal_id: string;
+  numero: string | null;
+  fecha_emision: string | null;
+  fecha_vencimiento: string;
+  emisor: string | null;
+  archivo_path: string | null;
+  nombre_archivo: string | null;
+  created_at: string;
+}
+
 export interface RetiroResiduoPatogenico {
   id: string;
   sucursal_id: string;
