@@ -106,18 +106,22 @@ export default function FichadoPage() {
               {estado.empleado.nombre_completo}
             </p>
             <div className="grid grid-cols-1 gap-3 pt-2">
-              <button
-                onClick={() => handleMarcar("ingreso", estado.empleado)}
-                className="rounded-xl bg-green-700 px-4 py-5 text-base font-bold text-white hover:bg-green-600"
-              >
-                Marcar ingreso
-              </button>
-              <button
-                onClick={() => handleMarcar("egreso", estado.empleado)}
-                className="rounded-xl bg-red-700 px-4 py-5 text-base font-bold text-white hover:bg-red-600"
-              >
-                Marcar egreso
-              </button>
+              {estado.empleado.proximo !== "egreso" && (
+                <button
+                  onClick={() => handleMarcar("ingreso", estado.empleado)}
+                  className="rounded-xl bg-green-700 px-4 py-5 text-base font-bold text-white hover:bg-green-600"
+                >
+                  Marcar ingreso
+                </button>
+              )}
+              {estado.empleado.proximo !== "ingreso" && (
+                <button
+                  onClick={() => handleMarcar("egreso", estado.empleado)}
+                  className="rounded-xl bg-red-700 px-4 py-5 text-base font-bold text-white hover:bg-red-600"
+                >
+                  Marcar salida
+                </button>
+              )}
             </div>
             <button
               onClick={() => {
@@ -137,7 +141,7 @@ export default function FichadoPage() {
           <div className="space-y-2">
             <p className="text-4xl">✓</p>
             <p className="font-display text-lg font-semibold text-ink">
-              {estado.tipo === "ingreso" ? "Ingreso registrado" : "Egreso registrado"}
+              {estado.tipo === "ingreso" ? "Ingreso registrado" : "Salida registrada"}
             </p>
             <p className="text-sm text-ink-soft">
               {estado.empleado.nombre_completo} · {estado.hora} hs

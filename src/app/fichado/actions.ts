@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { TipoFichada } from "@/lib/types";
 
-export type EmpleadoFichado = { id: string; nombre_completo: string };
+export type EmpleadoFichado = { id: string; nombre_completo: string; proximo: TipoFichada | null };
 
 export async function buscarEmpleadoPorDni(dni: string): Promise<EmpleadoFichado | null> {
   const dniLimpio = dni.trim();
@@ -14,9 +14,18 @@ export async function buscarEmpleadoPorDni(dni: string): Promise<EmpleadoFichado
     p_dni: dniLimpio,
   });
 
-  const filas = (data ?? null) as EmpleadoFichado[] | null;
+  const filas = (data ?? null) as { id: string; nombre_completo: string }[] | null;
   if (error || !filas || filas.length === 0) return null;
-  return filas[0];
+
+  // Si la funcion no esta disponible, proximo queda en null y se ofrecen ambas opciones.
+  const { data: proximo } = await supabase.rpc("proximo_tipo_fichada", {
+    p_empleado_id: filas[0].id,
+  });
+
+  return {
+    ...filas[0],
+    proximo: proximo === "egreso" || proximo === "ingreso" ? proximo : null,
+  };
 }
 
 export type RegistrarFichadaResultado =
