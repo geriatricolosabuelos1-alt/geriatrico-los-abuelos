@@ -1,5 +1,5 @@
 import forge from "node-forge";
-import { createClient } from "@/lib/supabase/server";
+import { clienteArca } from "./cliente";
 import { soapRequest, extractTag, decodeXmlEntities } from "./soap";
 
 function pad(n: number): string {
@@ -96,7 +96,7 @@ export async function obtenerCredencialesArca(
   cert: string,
   key: string,
 ): Promise<{ token: string; sign: string }> {
-  const supabase = await createClient();
+  const supabase = await clienteArca();
 
   const { data: cached } = await supabase
     .from("arca_tokens")

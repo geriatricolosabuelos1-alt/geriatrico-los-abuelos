@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { clienteArca } from "@/lib/arca/cliente";
 import { obtenerCredencialesArca } from "@/lib/arca/wsaa";
 import { solicitarCAE } from "@/lib/arca/wsfe";
 
@@ -84,7 +85,9 @@ export async function emitirFactura(
     return { error: "Este pago ya tiene una factura emitida.", ok: false };
   }
 
-  const { data: config } = await supabase
+  // El pago se leyó con la sesión del usuario: si llegó hasta acá, tiene permiso sobre esta sede.
+  const arca = await clienteArca();
+  const { data: config } = await arca
     .from("arca_config")
     .select("cuit, pto_vta, cert, private_key, activo")
     .eq("sucursal_id", pago.sucursal_id)

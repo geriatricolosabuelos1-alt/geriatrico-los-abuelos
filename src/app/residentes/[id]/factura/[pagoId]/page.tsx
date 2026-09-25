@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/server";
 import { BotonImprimir } from "@/components/BotonImprimir";
+import { clienteArca } from "@/lib/arca/cliente";
 
 type Params = { id: string; pagoId: string };
 
@@ -106,11 +107,14 @@ export default async function FacturaPage({
         )
         .eq("pago_id", pagoId)
         .single<Factura>(),
-      supabase
-        .from("arca_config")
-        .select("cuit, razon_social")
-        .eq("sucursal_id", residente.sucursal_id)
-        .single<{ cuit: string; razon_social: string }>(),
+      // Solo datos públicos del emisor (CUIT y razón social), sin certificado ni clave.
+      clienteArca().then((arca) =>
+        arca
+          .from("arca_config")
+          .select("cuit, razon_social")
+          .eq("sucursal_id", residente.sucursal_id)
+          .single<{ cuit: string; razon_social: string }>(),
+      ),
     ]);
 
   if (!pago || !factura || !config) {
