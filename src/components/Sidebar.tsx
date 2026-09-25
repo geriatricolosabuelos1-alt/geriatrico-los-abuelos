@@ -16,6 +16,7 @@ type Seccion =
   | "nutricion"
   | "accion-medica"
   | "emergencias"
+  | "kinesiologia"
   | "legales";
 
 type SubseccionLegales = "habilitacion" | "libro-foliado" | "certificaciones" | "libretas";
@@ -73,6 +74,7 @@ const ROLES_NUTRICION: RolUsuario[] = [
 const ROLES_NUTRICION_CLINICO: RolUsuario[] = ["admin", "gerente_sede", "nutricionista", "medico"];
 const ROLES_ACCION_MEDICA: RolUsuario[] = ["admin", "gerente_sede", "medico"];
 const ROLES_EMERGENCIAS: RolUsuario[] = ["admin", "gerente_sede", "medico", "enfermero"];
+const ROLES_KINESIOLOGIA: RolUsuario[] = ["admin", "gerente_sede", "medico", "kinesiologo"];
 const ROLES_CUOTAS: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
 const ROLES_GASTOS: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
 const ROLES_REPORTES: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
@@ -329,6 +331,18 @@ export async function Sidebar({ perfil, activo }: Props) {
                 activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
                 activo.seccion === "accion-medica"
+              }
+            />
+          )}
+          {ROLES_KINESIOLOGIA.includes(perfil.rol) && areaActual === "medicina" && (
+            <SubTab
+              href={`/sucursales/${s.id}/kinesiologia`}
+              label="Kinesiología"
+              icono="users"
+              activo={
+                activo?.tipo === "sucursal" &&
+                activo.sucursalId === s.id &&
+                activo.seccion === "kinesiologia"
               }
             />
           )}

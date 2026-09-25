@@ -278,6 +278,42 @@ export interface Emergencia {
   created_at: string;
 }
 
+export interface EvaluacionKinesiologia {
+  id: string;
+  residente_id: string;
+  fecha: string;
+  motivo: string | null;
+  diagnostico: string | null;
+  dolor_eva: number | null;
+  dolor_localizacion: string | null;
+  movilidad: string | null;
+  transferencias: string | null;
+  marcha: string | null;
+  equilibrio: string | null;
+  riesgo_caida: string | null;
+  caidas_ultimo_anio: number | null;
+  ayudas_tecnicas: string[];
+  fuerza_muscular: string | null;
+  rango_articular: string | null;
+  objetivos: string | null;
+  plan: string | null;
+  sesiones_semanales: number | null;
+  profesional_id: string | null;
+  created_at: string;
+}
+
+export interface SesionKinesiologia {
+  id: string;
+  residente_id: string;
+  fecha: string;
+  duracion_minutos: number | null;
+  trabajo_realizado: string;
+  tolerancia: string | null;
+  evolucion: string | null;
+  profesional_id: string | null;
+  created_at: string;
+}
+
 export interface RetiroResiduoPatogenico {
   id: string;
   sucursal_id: string;
