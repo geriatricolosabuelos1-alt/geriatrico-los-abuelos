@@ -522,16 +522,6 @@ export async function Sidebar({ perfil, activo }: Props) {
                     label="Libretas sanitarias"
                     activo={activo.subseccion === "libretas"}
                   />
-                  <SubSubTab
-                    href={`/sucursales/${s.id}/legales/informe`}
-                    label="Todo junto (PDF)"
-                    activo={false}
-                  />
-                  <SubSubTab
-                    href={`/sucursales/${s.id}/legales/legajos`}
-                    label="Legajos foliados (PDF)"
-                    activo={false}
-                  />
                 </GrupoConSub>
               );
             })()}

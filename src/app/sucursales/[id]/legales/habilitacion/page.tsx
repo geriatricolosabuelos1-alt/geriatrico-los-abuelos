@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
@@ -46,17 +47,25 @@ export default async function HabilitacionSucursalPage({
       />
 
       <main className="flex-1 space-y-6 px-9 py-8">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-brass">
-            {sucursal!.nombre}
-          </p>
-          <h1 className="font-display text-[32px] font-semibold text-ink">
-            Legales · Habilitación
-          </h1>
-          <p className="mt-1 text-sm text-ink-soft">
-            Listado de requisitos para la habilitación del efector. Marcá cada ítem como
-            actualizado subiendo el archivo o registrando la fecha de presentación.
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-brass">
+              {sucursal!.nombre}
+            </p>
+            <h1 className="font-display text-[32px] font-semibold text-ink">
+              Legales · Habilitación
+            </h1>
+            <p className="mt-1 text-sm text-ink-soft">
+              Listado de requisitos para la habilitación del efector. Marcá cada ítem como
+              actualizado subiendo el archivo o registrando la fecha de presentación.
+            </p>
+          </div>
+          <Link
+            href={`/sucursales/${id}/legales/informe`}
+            className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90"
+          >
+            Sacar todo junto (PDF)
+          </Link>
         </div>
 
         <HabilitacionChecklist sucursalId={id} items={items} documentos={documentos} />
