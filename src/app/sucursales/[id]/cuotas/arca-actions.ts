@@ -11,11 +11,16 @@ export type TipoDocReceptor = "dni" | "cuit" | "consumidor_final";
 
 export type CondicionIva = "responsable_inscripto" | "monotributo" | "exento" | "consumidor_final";
 
+export type CondicionVenta = "contado" | "cuenta_corriente";
+export type MedioPagoFactura = "efectivo" | "transferencia" | "mercado_pago";
+
 export type DatosFactura = {
   importe: number;
   tipoDoc: TipoDocReceptor;
   docNro: string;
   condicionIva: CondicionIva;
+  condicionVenta: CondicionVenta;
+  medioPago: MedioPagoFactura | null;
 };
 
 const DOC_TIPO_AFIP: Record<TipoDocReceptor, number> = {
@@ -136,6 +141,8 @@ export async function emitirFactura(
       doc_tipo: docTipo,
       doc_nro: docNro,
       condicion_iva_receptor_id: condicionIVAReceptorId,
+      condicion_venta: datos.condicionVenta,
+      medio_pago: datos.medioPago,
     });
 
     if (errorInsert) {

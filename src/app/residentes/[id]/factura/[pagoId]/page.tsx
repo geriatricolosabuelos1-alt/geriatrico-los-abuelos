@@ -21,6 +21,19 @@ type Factura = {
   fecha_emision: string;
   doc_tipo: number;
   doc_nro: string;
+  condicion_venta: string | null;
+  medio_pago: string | null;
+};
+
+const ETIQUETA_CONDICION_VENTA: Record<string, string> = {
+  contado: "Contado",
+  cuenta_corriente: "Cuenta corriente",
+};
+
+const ETIQUETA_MEDIO_PAGO: Record<string, string> = {
+  efectivo: "Efectivo",
+  transferencia: "Transferencia",
+  mercado_pago: "Mercado Pago",
 };
 
 const MESES = [
@@ -71,7 +84,7 @@ export default async function FacturaPage({
       supabase
         .from("facturas_arca")
         .select(
-          "tipo_cbte, pto_vta, cbte_nro, cae, cae_vencimiento, importe, fecha_emision, doc_tipo, doc_nro",
+          "tipo_cbte, pto_vta, cbte_nro, cae, cae_vencimiento, importe, fecha_emision, doc_tipo, doc_nro, condicion_venta, medio_pago",
         )
         .eq("pago_id", pagoId)
         .single<Factura>(),
@@ -176,6 +189,12 @@ export default async function FacturaPage({
               <p className="text-xs text-ink-soft print:text-neutral-600">
                 Período {MESES[pago.mes]} de {pago.anio}
               </p>
+              {factura.condicion_venta && (
+                <p className="text-xs text-ink-soft print:text-neutral-600">
+                  Condición de venta: {ETIQUETA_CONDICION_VENTA[factura.condicion_venta] ?? factura.condicion_venta}
+                  {factura.medio_pago && ` – ${ETIQUETA_MEDIO_PAGO[factura.medio_pago] ?? factura.medio_pago}`}
+                </p>
+              )}
             </div>
           </div>
 

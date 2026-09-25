@@ -6,6 +6,8 @@ import Link from "next/link";
 import {
   emitirFactura,
   type CondicionIva,
+  type CondicionVenta,
+  type MedioPagoFactura,
   type TipoDocReceptor,
 } from "@/app/sucursales/[id]/cuotas/arca-actions";
 
@@ -15,6 +17,9 @@ type Props = {
   montoSugerido: number;
   dniResidente: string | null;
   yaFacturado: boolean;
+  // Sugerencias tomadas del cobro registrado
+  cobradoCompleto: boolean;
+  medioSugerido: MedioPagoFactura | null;
 };
 
 const CAMPO =
@@ -26,6 +31,8 @@ export function BotonFacturar({
   montoSugerido,
   dniResidente,
   yaFacturado,
+  cobradoCompleto,
+  medioSugerido,
 }: Props) {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
@@ -38,6 +45,10 @@ export function BotonFacturar({
   );
   const [docNro, setDocNro] = useState(dniResidente ?? "");
   const [condicionIva, setCondicionIva] = useState<CondicionIva>("consumidor_final");
+  const [condicionVenta, setCondicionVenta] = useState<CondicionVenta>(
+    cobradoCompleto ? "contado" : "cuenta_corriente",
+  );
+  const [medioPago, setMedioPago] = useState<MedioPagoFactura | "">(medioSugerido ?? "");
 
   if (yaFacturado) {
     return (
@@ -71,6 +82,8 @@ export function BotonFacturar({
       tipoDoc,
       docNro,
       condicionIva,
+      condicionVenta,
+      medioPago: medioPago || null,
     });
     setEnviando(false);
     if (resultado.error) {
@@ -149,6 +162,37 @@ export function BotonFacturar({
             </select>
           </div>
         )}
+
+        <div className="grid grid-cols-2 gap-2">
+          <div>
+            <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+              Condición de venta
+            </label>
+            <select
+              value={condicionVenta}
+              onChange={(e) => setCondicionVenta(e.target.value as CondicionVenta)}
+              className={CAMPO}
+            >
+              <option value="contado">Contado</option>
+              <option value="cuenta_corriente">Cuenta corriente</option>
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+              Medio de pago
+            </label>
+            <select
+              value={medioPago}
+              onChange={(e) => setMedioPago(e.target.value as MedioPagoFactura | "")}
+              className={CAMPO}
+            >
+              <option value="">—</option>
+              <option value="efectivo">Efectivo</option>
+              <option value="transferencia">Transferencia</option>
+              <option value="mercado_pago">Mercado Pago</option>
+            </select>
+          </div>
+        </div>
 
         {error && <p className="text-xs text-red-700">{error}</p>}
 

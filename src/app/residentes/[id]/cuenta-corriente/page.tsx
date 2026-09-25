@@ -249,6 +249,12 @@ export default async function CuentaCorrientePage({
                             yaFacturado={
                               Array.isArray(p.facturas_arca) ? p.facturas_arca.length > 0 : !!p.facturas_arca
                             }
+                            cobradoCompleto={p.monto_pagado >= p.monto}
+                            medioSugerido={
+                              [...(p.pagos_historial ?? [])]
+                                .filter((h) => h.metodo_pago)
+                                .sort((a, b) => b.fecha.localeCompare(a.fecha))[0]?.metodo_pago ?? null
+                            }
                           />
                         )}
                         <AccionesPago
