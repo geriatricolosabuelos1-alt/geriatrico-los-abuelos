@@ -228,6 +228,7 @@ export interface RecetaMedicamento {
   id: string;
   residente_id: string;
   medicamento_id: string | null;
+  medicamento_texto?: string | null;
   obra_social: string | null;
   estado: EstadoReceta;
   fecha_pedido: string | null;

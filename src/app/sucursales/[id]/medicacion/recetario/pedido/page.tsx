@@ -14,6 +14,7 @@ type RecetaPedido = {
   fecha_pedido: string | null;
   fecha_vencimiento: string | null;
   notas: string | null;
+  medicamento_texto: string | null;
   residentes: {
     id: string;
     nombre: string;
@@ -44,7 +45,7 @@ export default async function PedidoRecetasPage({ params }: { params: Promise<Pa
     supabase
       .from("recetas_medicamento")
       .select(
-        "id, estado, obra_social, fecha_pedido, fecha_vencimiento, notas, residentes!inner(id, nombre, apellido, dni, sucursal_id, ficha_administrativa(obra_social, numero_afiliado)), medicamentos_residente(nombre, dosis, frecuencia)",
+        "id, estado, obra_social, fecha_pedido, fecha_vencimiento, notas, medicamento_texto, residentes!inner(id, nombre, apellido, dni, sucursal_id, ficha_administrativa(obra_social, numero_afiliado)), medicamentos_residente(nombre, dosis, frecuencia)",
       )
       .eq("residentes.sucursal_id", id)
       .or(`estado.eq.pendiente_pedir,and(estado.eq.pedida,fecha_pedido.eq.${hoy})`)
@@ -118,7 +119,7 @@ export default async function PedidoRecetasPage({ params }: { params: Promise<Pa
                     {ficha?.numero_afiliado && <span className="block">N° {ficha.numero_afiliado}</span>}
                   </td>
                   <td className={`${CELDA} text-ink print:text-black`}>
-                    {r.medicamentos_residente?.nombre ?? "General"}
+                    {r.medicamentos_residente?.nombre ?? r.medicamento_texto ?? "General"}
                   </td>
                   <td className={`${CELDA} text-ink-soft print:text-neutral-700`}>
                     {[r.medicamentos_residente?.dosis, r.medicamentos_residente?.frecuencia]

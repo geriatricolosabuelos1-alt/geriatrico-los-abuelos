@@ -62,9 +62,11 @@ function semaforoVencimiento(fechaVencimiento: string | null): { texto: string; 
 function FormularioNuevaReceta({
   sucursalId,
   residentes,
+  nombresPedidos,
 }: {
   sucursalId: string;
   residentes: ResidenteConMeds[];
+  nombresPedidos: string[];
 }) {
   const accionConId = crearReceta.bind(null, sucursalId);
   const [estado, formAction, enviando] = useActionState(accionConId, ESTADO_INICIAL);
@@ -72,6 +74,14 @@ function FormularioNuevaReceta({
 
   const medicamentosDelResidente =
     residentes.find((r) => r.id === residenteId)?.medicamentos_residente.filter((m) => m.activo) ?? [];
+  // Sugerencias: medicamentos del residente + los que ya se pidieron antes en recetas.
+  const sugerencias = [
+    ...new Set(
+      [...medicamentosDelResidente.map((m) => m.nombre), ...nombresPedidos]
+        .map((n) => n.trim())
+        .filter(Boolean),
+    ),
+  ].sort((a, b) => a.localeCompare(b, "es"));
   const obraSocialSugerida = residentes.find((r) => r.id === residenteId)?.ficha_administrativa?.obra_social;
 
   return (
@@ -102,17 +112,18 @@ function FormularioNuevaReceta({
         <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
           Medicamento
         </label>
-        <select
-          name="medicamento_id"
-          className="w-40 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none"
-        >
-          <option value="">General / sin especificar</option>
-          {medicamentosDelResidente.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.nombre}
-            </option>
+        <input
+          name="medicamento"
+          list="medicamentos-receta"
+          autoComplete="off"
+          placeholder="Escribí o elegí..."
+          className="w-48 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none"
+        />
+        <datalist id="medicamentos-receta">
+          {sugerencias.map((nombre) => (
+            <option key={nombre} value={nombre} />
           ))}
-        </select>
+        </datalist>
       </div>
       <div>
         <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
@@ -229,7 +240,11 @@ function FilaReceta({ sucursalId, receta }: { sucursalId: string; receta: Receta
 export function RecetarioClient({ sucursalId, residentes, recetas }: Props) {
   return (
     <div className="space-y-4">
-      <FormularioNuevaReceta sucursalId={sucursalId} residentes={residentes} />
+      <FormularioNuevaReceta
+        sucursalId={sucursalId}
+        residentes={residentes}
+        nombresPedidos={recetas.map((r) => r.medicamento_nombre).filter((n): n is string => !!n)}
+      />
 
       <div className="overflow-x-auto rounded-2xl border border-edge bg-card">
         <table className="w-full text-left">
