@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
+import { areaSegunRol } from "@/lib/roles";
 import { RecetarioClient } from "@/components/RecetarioClient";
 import Link from "next/link";
 import { listarRecetas } from "@/app/sucursales/[id]/medicacion/recetario/actions";
@@ -63,7 +64,7 @@ export default async function RecetarioPage({ params }: { params: Promise<Params
           sucursalId: id,
           seccion: "medicacion",
           subseccion: "recetario",
-          area: "administrativa",
+          area: areaSegunRol(perfil!.rol),
         }}
       />
 

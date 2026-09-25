@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
+import { areaSegunRol } from "@/lib/roles";
 import { VacunacionClient } from "@/components/VacunacionClient";
 import { listarVacunacionesSucursal } from "@/app/sucursales/[id]/medicacion/vacunacion-actions";
 import type { Perfil } from "@/lib/types";
@@ -49,6 +50,7 @@ export default async function VacunacionPage({ params }: { params: Promise<Param
           sucursalId: id,
           seccion: "medicacion",
           subseccion: "vacunacion",
+          area: areaSegunRol(perfil!.rol),
         }}
       />
 

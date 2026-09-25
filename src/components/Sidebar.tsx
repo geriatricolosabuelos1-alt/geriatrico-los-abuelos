@@ -59,9 +59,17 @@ const ROLES_MEDICACION: RolUsuario[] = [
   "cuidador",
 ];
 const ROLES_RECETARIO: RolUsuario[] = ["admin", "gerente_sede", "administrativo", "medico"];
-// Medico ya no ve Nutricion: solo Medicacion, Accion Medica y Evolucion (via Residentes).
-const ROLES_NUTRICION: RolUsuario[] = ["admin", "gerente_sede", "nutricionista", "enfermero", "cuidador"];
-const ROLES_NUTRICION_CLINICO: RolUsuario[] = ["admin", "gerente_sede", "nutricionista"];
+// Medico ve todo lo medico: Medicacion (con recetario y vacunacion), Nutricion,
+// Accion Medica y Evolucion (via Residentes). No ve lo administrativo.
+const ROLES_NUTRICION: RolUsuario[] = [
+  "admin",
+  "gerente_sede",
+  "nutricionista",
+  "medico",
+  "enfermero",
+  "cuidador",
+];
+const ROLES_NUTRICION_CLINICO: RolUsuario[] = ["admin", "gerente_sede", "nutricionista", "medico"];
 const ROLES_ACCION_MEDICA: RolUsuario[] = ["admin", "gerente_sede", "medico"];
 const ROLES_CUOTAS: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
 const ROLES_GASTOS: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
@@ -285,7 +293,12 @@ export async function Sidebar({ perfil, activo }: Props) {
                 />
               );
 
-              if (!medicacionActiva || areaActual !== "administrativa" || !ROLES_RECETARIO.includes(perfil.rol)) {
+              // Recetario y Vacunacion se muestran en Administrativa y tambien en
+              // Medicina para quien no tiene acceso al area administrativa (medico).
+              const muestraSubMedicacion =
+                ROLES_RECETARIO.includes(perfil.rol) &&
+                (areaActual === "administrativa" || !puedeAdministrativa);
+              if (!medicacionActiva || !muestraSubMedicacion) {
                 return filaMedicacion;
               }
 

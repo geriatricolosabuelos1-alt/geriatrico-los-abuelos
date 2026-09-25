@@ -21,3 +21,10 @@ export const ROLES_DISPONIBLES: RolUsuario[] = [
   "cuidador",
   "kinesiologo",
 ];
+
+const ROLES_AREA_ADMINISTRATIVA: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
+
+// Area del menu lateral para las pantallas compartidas entre Administrativa y Medicina.
+export function areaSegunRol(rol: RolUsuario): "administrativa" | "medicina" {
+  return ROLES_AREA_ADMINISTRATIVA.includes(rol) ? "administrativa" : "medicina";
+}
