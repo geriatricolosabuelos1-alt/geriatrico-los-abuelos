@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { eliminarResidente } from "@/app/sucursales/[id]/residentes/actions";
 import type { InsumoMedicoConStock } from "@/app/sucursales/[id]/residentes/insumos-actions";
 import { AgregarInsumoResidente } from "@/components/AgregarInsumoResidente";
+import { calcularEdad } from "@/lib/residentes";
 
 type FilaResidente = {
   id: string;
@@ -34,18 +35,6 @@ type Direccion = "asc" | "desc";
 
 function formatearFecha(fecha: string | null): string {
   return fecha ? new Date(fecha + "T00:00:00").toLocaleDateString("es-AR") : "—";
-}
-
-function calcularEdad(fechaNacimiento: string | null): number | null {
-  if (!fechaNacimiento) return null;
-  const nacimiento = new Date(fechaNacimiento + "T00:00:00");
-  const hoy = new Date();
-  let edad = hoy.getFullYear() - nacimiento.getFullYear();
-  const aunNoCumplio =
-    hoy.getMonth() < nacimiento.getMonth() ||
-    (hoy.getMonth() === nacimiento.getMonth() && hoy.getDate() < nacimiento.getDate());
-  if (aunNoCumplio) edad--;
-  return edad;
 }
 
 function EncabezadoOrdenable({

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
@@ -52,12 +53,20 @@ export default async function VacunacionPage({ params }: { params: Promise<Param
       />
 
       <main className="flex-1 space-y-6 px-9 py-8">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-brass">{sucursal!.nombre}</p>
-          <h1 className="font-display text-[32px] font-semibold text-ink">Esquema de vacunación</h1>
-          <p className="mt-1 text-sm text-ink-soft">
-            Antigripal anual, neumococo, COVID-19 y otras vacunas aplicadas a los residentes.
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-brass">{sucursal!.nombre}</p>
+            <h1 className="font-display text-[32px] font-semibold text-ink">Esquema de vacunación</h1>
+            <p className="mt-1 text-sm text-ink-soft">
+              Antigripal anual, neumococo, COVID-19 y otras vacunas aplicadas a los residentes.
+            </p>
+          </div>
+          <Link
+            href={`/sucursales/${id}/medicacion/vacunacion/planilla`}
+            className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90"
+          >
+            Planilla completa (PDF)
+          </Link>
         </div>
 
         <VacunacionClient sucursalId={id} residentes={residentes ?? []} vacunaciones={vacunaciones} />

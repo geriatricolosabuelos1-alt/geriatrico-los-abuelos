@@ -1,19 +1,23 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { agregarVacunacion, eliminarVacunacion } from "@/app/sucursales/[id]/medicacion/vacunacion-actions";
-import type { TipoVacuna, VacunacionResidente } from "@/lib/types";
+import {
+  agregarVacunacion,
+  eliminarVacunacion,
+  type VacunacionConResidente,
+} from "@/app/sucursales/[id]/medicacion/vacunacion-actions";
+import { calcularEdad } from "@/lib/residentes";
+import type { TipoVacuna } from "@/lib/types";
 
 type Estado = { error: string | null };
 const INICIAL: Estado = { error: null };
 
 type ResidenteBasico = { id: string; nombre: string; apellido: string };
-type VacunacionConNombre = VacunacionResidente & { residente_nombre: string };
 
 type Props = {
   sucursalId: string;
   residentes: ResidenteBasico[];
-  vacunaciones: VacunacionConNombre[];
+  vacunaciones: VacunacionConResidente[];
 };
 
 const ETIQUETA_MIN = "mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft";
@@ -107,6 +111,9 @@ export function VacunacionClient({ sucursalId, residentes, vacunaciones }: Props
           <thead>
             <tr className="text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
               <th className="px-3 py-2">Residente</th>
+              <th className="px-3 py-2">Edad</th>
+              <th className="px-3 py-2">DNI</th>
+              <th className="px-3 py-2">Obra social</th>
               <th className="px-3 py-2">Vacuna</th>
               <th className="px-3 py-2">Fecha</th>
               <th className="px-3 py-2">Dosis</th>
@@ -118,6 +125,14 @@ export function VacunacionClient({ sucursalId, residentes, vacunaciones }: Props
             {vacunaciones.map((v) => (
               <tr key={v.id} className="border-t border-edge">
                 <td className="px-3 py-2 text-ink">{v.residente_nombre}</td>
+                <td className="px-3 py-2 text-ink-soft">{calcularEdad(v.residentes.fecha_nacimiento) ?? "—"}</td>
+                <td className="px-3 py-2 text-ink-soft">{v.residentes.dni ?? "—"}</td>
+                <td className="px-3 py-2 text-ink-soft">
+                  {v.residentes.ficha_administrativa?.obra_social ?? "—"}
+                  {v.residentes.ficha_administrativa?.numero_afiliado && (
+                    <span className="block text-xs">N° {v.residentes.ficha_administrativa.numero_afiliado}</span>
+                  )}
+                </td>
                 <td className="px-3 py-2 text-ink-soft">
                   {v.vacuna === "otra" ? v.vacuna_otra ?? "Otra" : ETIQUETA_VACUNA[v.vacuna]}
                 </td>
@@ -137,7 +152,7 @@ export function VacunacionClient({ sucursalId, residentes, vacunaciones }: Props
             ))}
             {vacunaciones.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-ink-soft">
+                <td colSpan={9} className="px-3 py-6 text-center text-ink-soft">
                   Sin vacunaciones registradas.
                 </td>
               </tr>

@@ -10,20 +10,30 @@ function rutaVacunacion(sucursalId: string): string {
   return `/sucursales/${sucursalId}/medicacion/vacunacion`;
 }
 
-export async function listarVacunacionesSucursal(sucursalId: string): Promise<
-  (VacunacionResidente & { residente_nombre: string })[]
-> {
+export type DatosResidenteVacunacion = {
+  nombre: string;
+  apellido: string;
+  dni: string | null;
+  fecha_nacimiento: string | null;
+  sucursal_id: string;
+  ficha_administrativa: { obra_social: string | null; numero_afiliado: string | null } | null;
+};
+
+export type VacunacionConResidente = VacunacionResidente & {
+  residente_nombre: string;
+  residentes: DatosResidenteVacunacion;
+};
+
+export async function listarVacunacionesSucursal(sucursalId: string): Promise<VacunacionConResidente[]> {
   const supabase = await createClient();
   const { data } = await supabase
     .from("vacunaciones_residente")
     .select(
-      "id, residente_id, vacuna, vacuna_otra, fecha_aplicacion, dosis_numero, proxima_dosis, registrado_por, created_at, residentes!inner(nombre, apellido, sucursal_id)",
+      "id, residente_id, vacuna, vacuna_otra, fecha_aplicacion, dosis_numero, proxima_dosis, registrado_por, created_at, residentes!inner(nombre, apellido, dni, fecha_nacimiento, sucursal_id, ficha_administrativa(obra_social, numero_afiliado))",
     )
     .eq("residentes.sucursal_id", sucursalId)
     .order("fecha_aplicacion", { ascending: false })
-    .returns<
-      (VacunacionResidente & { residentes: { nombre: string; apellido: string; sucursal_id: string } })[]
-    >();
+    .returns<(VacunacionResidente & { residentes: DatosResidenteVacunacion })[]>();
 
   return (data ?? []).map((v) => ({ ...v, residente_nombre: `${v.residentes.apellido}, ${v.residentes.nombre}` }));
 }
