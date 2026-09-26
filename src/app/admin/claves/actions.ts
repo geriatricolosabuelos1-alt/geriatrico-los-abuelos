@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { registrarEvento } from "@/lib/auditoria";
 import type { RolUsuario } from "@/lib/types";
 
 export type CuentaUsuario = {
@@ -83,7 +84,7 @@ export async function crearCuenta(
   _estado: CrearCuentaEstado,
   formData: FormData,
 ): Promise<CrearCuentaEstado> {
-  const { error: errorAuth } = await verificarAdmin();
+  const { error: errorAuth, userId } = await verificarAdmin();
   if (errorAuth) return { error: errorAuth };
 
   const usuario = normalizarUsuario(formData.get("usuario"));
@@ -130,6 +131,14 @@ export async function crearCuenta(
     return { error: errorPerfil.message };
   }
 
+  await registrarEvento({
+    accion: "CUENTA",
+    usuarioId: userId,
+    registroId: nuevoUsuario.user.id,
+    descripcion: `Creó la cuenta "${usuario}" (${nombre_completo}, rol ${rol})`,
+    datos: { usuario, nombre_completo, rol, sucursal_id },
+  });
+
   revalidatePath("/admin/claves");
   return { error: null };
 }
@@ -170,6 +179,12 @@ export async function actualizarCuenta(
     .maybeSingle();
   if (existente) return { error: `El usuario "${usuario}" ya lo tiene otra cuenta.` };
 
+  const { data: anterior } = await admin
+    .from("perfiles")
+    .select("usuario, nombre_completo, rol, sucursal_id, activo")
+    .eq("id", id)
+    .maybeSingle<Record<string, unknown>>();
+
   const { error: errorPerfil } = await admin
     .from("perfiles")
     .update({ usuario, nombre_completo, rol, sucursal_id, activo })
@@ -187,6 +202,20 @@ export async function actualizarCuenta(
     if (errorPass) return { error: errorPass.message };
   }
 
+  const nuevo: Record<string, unknown> = { usuario, nombre_completo, rol, sucursal_id, activo };
+  const cambios = Object.keys(nuevo)
+    .filter((k) => anterior?.[k] !== nuevo[k])
+    .map((k) => `${k}: ${String(anterior?.[k] ?? "—")} → ${String(nuevo[k] ?? "—")}`);
+  if (nuevaPassword) cambios.push("contraseña cambiada");
+  if (cambios.length > 0) {
+    await registrarEvento({
+      accion: "CUENTA",
+      usuarioId: userId,
+      registroId: id,
+      descripcion: `Modificó la cuenta "${usuario}": ${cambios.join("; ")}`,
+    });
+  }
+
   revalidatePath("/admin/claves");
   return { error: null };
 }
@@ -199,8 +228,20 @@ export async function eliminarCuenta(id: string): Promise<EliminarCuentaEstado> 
   if (id === userId) return { error: "No podés eliminar tu propia cuenta." };
 
   const admin = createAdminClient();
+  const { data: eliminada } = await admin
+    .from("perfiles")
+    .select("usuario, nombre_completo, rol")
+    .eq("id", id)
+    .maybeSingle<{ usuario: string | null; nombre_completo: string; rol: string }>();
   await admin.from("perfiles").delete().eq("id", id);
   await admin.auth.admin.deleteUser(id);
+
+  await registrarEvento({
+    accion: "CUENTA",
+    usuarioId: userId,
+    registroId: id,
+    descripcion: `Eliminó la cuenta "${eliminada?.usuario ?? "?"}" (${eliminada?.nombre_completo ?? "?"}, rol ${eliminada?.rol ?? "?"})`,
+  });
 
   revalidatePath("/admin/claves");
   return { error: null };

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { cerrarSesion } from "@/app/actions";
 import { ETIQUETA_ROL } from "@/lib/roles";
+import { puedeVerSeguridad } from "@/lib/auditoria";
 import { SidebarIcon, type SidebarIconName } from "@/components/SidebarIcons";
 import type { CategoriaInsumo, Perfil, RolUsuario, Sucursal } from "@/lib/types";
 
@@ -24,7 +25,7 @@ type SubseccionNutricion = "dietas" | "cocina" | "disfagia" | "ingesta" | "menu-
 
 type Props = {
   perfil: Perfil;
-  activo?: { tipo: "dashboard" } | { tipo: "empleados" } | { tipo: "claves" } | {
+  activo?: { tipo: "dashboard" } | { tipo: "empleados" } | { tipo: "claves" } | { tipo: "seguridad" } | {
     tipo: "sucursal";
     sucursalId: string;
     seccion: Seccion;
@@ -180,11 +181,15 @@ function GrupoConSub({ children }: { children: React.ReactNode }) {
 
 export async function Sidebar({ perfil, activo }: Props) {
   const supabase = await createClient();
-  const { data: todasSucursales } = await supabase
-    .from("sucursales")
-    .select("id, nombre, direccion, capacidad_camas")
-    .order("nombre")
-    .returns<Sucursal[]>();
+  const [{ data: todasSucursales }, { data: cuenta }] = await Promise.all([
+    supabase
+      .from("sucursales")
+      .select("id, nombre, direccion, capacidad_camas")
+      .order("nombre")
+      .returns<Sucursal[]>(),
+    supabase.from("perfiles").select("usuario").eq("id", perfil.id).maybeSingle<{ usuario: string | null }>(),
+  ]);
+  const verSeguridad = puedeVerSeguridad(cuenta?.usuario);
 
   const esAdmin = perfil.rol === "admin";
   const sucursalesVisibles = esAdmin
@@ -532,6 +537,17 @@ export async function Sidebar({ perfil, activo }: Props) {
             label="Claves"
             icono="key"
             activo={activo?.tipo === "claves"}
+          />
+        </div>
+      )}
+
+      {verSeguridad && (
+        <div className={perfil.rol === "admin" ? "" : "mt-3"}>
+          <TabPrincipal
+            href="/admin/seguridad"
+            label="Seguridad"
+            icono="shield"
+            activo={activo?.tipo === "seguridad"}
           />
         </div>
       )}

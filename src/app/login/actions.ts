@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { registrarEvento } from "@/lib/auditoria";
 
 const ERROR_GENERICO = "Usuario o contraseña incorrectos.";
 
@@ -22,8 +23,14 @@ export async function iniciarSesion(usuarioIngresado: string, password: string):
     .eq("usuario", usuario)
     .maybeSingle<{ id: string; activo: boolean }>();
 
-  if (!perfil) return { error: ERROR_GENERICO };
-  if (!perfil.activo) return { error: "Tu cuenta está desactivada. Consultá con administración." };
+  if (!perfil) {
+    await registrarEvento({ accion: "INGRESO_FALLIDO", usuario, descripcion: "Usuario inexistente" });
+    return { error: ERROR_GENERICO };
+  }
+  if (!perfil.activo) {
+    await registrarEvento({ accion: "INGRESO_FALLIDO", usuarioId: perfil.id, usuario, descripcion: "Cuenta desactivada" });
+    return { error: "Tu cuenta está desactivada. Consultá con administración." };
+  }
 
   const { data: cuenta } = await admin.auth.admin.getUserById(perfil.id);
   const email = cuenta?.user?.email;
@@ -31,7 +38,11 @@ export async function iniciarSesion(usuarioIngresado: string, password: string):
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) return { error: ERROR_GENERICO };
+  if (error) {
+    await registrarEvento({ accion: "INGRESO_FALLIDO", usuarioId: perfil.id, usuario, descripcion: "Contraseña incorrecta" });
+    return { error: ERROR_GENERICO };
+  }
 
+  await registrarEvento({ accion: "INGRESO", usuarioId: perfil.id, usuario, descripcion: "Ingresó al sistema" });
   return { error: null };
 }

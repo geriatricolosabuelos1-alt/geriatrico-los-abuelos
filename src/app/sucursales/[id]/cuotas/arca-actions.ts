@@ -42,6 +42,9 @@ export async function emitirFactura(
   datos: DatosFactura,
 ): Promise<EmitirFacturaEstado> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   if (!datos.importe || datos.importe <= 0) {
     return { error: "El importe a facturar debe ser mayor a cero.", ok: false };
@@ -146,6 +149,8 @@ export async function emitirFactura(
       condicion_iva_receptor_id: condicionIVAReceptorId,
       condicion_venta: datos.condicionVenta,
       medio_pago: datos.medioPago,
+      // Quién la emitió (lo usa también el módulo de Seguridad).
+      emitido_por: user?.id ?? null,
     });
 
     if (errorInsert) {
