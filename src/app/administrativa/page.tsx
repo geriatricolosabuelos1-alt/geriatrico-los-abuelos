@@ -14,6 +14,8 @@ import {
   obtenerResumenFinanciero,
 } from "@/lib/finanzas";
 import { GraficoIngresosGastos, GraficoSueldos } from "@/components/GraficoFinanciero";
+import { AvisosSede } from "@/components/AvisosSede";
+import { DetalleAlertasSede } from "@/components/DetalleAlertasSede";
 import type { Perfil, Sucursal } from "@/lib/types";
 
 type ResumenSucursal = {
@@ -104,6 +106,17 @@ export default async function DashboardPage() {
         <h1 className="mb-6 font-display text-[32px] font-semibold text-ink">
           Dashboard general
         </h1>
+
+        {/* Los mismos avisos que el dashboard de cada sede */}
+        <section className="mb-7 space-y-2">
+          {resumenesVisibles.map((r) => (
+            <AvisosSede
+              key={r.sucursal.id}
+              sucursalId={r.sucursal.id}
+              sede={esAdmin ? r.sucursal.nombre : undefined}
+            />
+          ))}
+        </section>
 
         {esAdmin && (
           <section className="mb-7">
@@ -345,6 +358,18 @@ export default async function DashboardPage() {
               );
             })}
           </div>
+        </section>
+
+        {/* Las mismas listas de alertas que el dashboard de cada sede */}
+        <section className="mt-7 space-y-5">
+          {resumenesVisibles.map((r) => (
+            <DetalleAlertasSede
+              key={r.sucursal.id}
+              sucursalId={r.sucursal.id}
+              resumen={r.resumen}
+              sede={esAdmin ? r.sucursal.nombre : undefined}
+            />
+          ))}
         </section>
       </main>
     </div>

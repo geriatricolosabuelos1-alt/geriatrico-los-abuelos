@@ -3,32 +3,13 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { hayAlertaAmarilla, hayAlertaRoja, obtenerResumenSucursal } from "@/lib/dashboard";
-import type { AlertaMedicacionResumen } from "@/lib/dashboard";
 import { formatearMonto, obtenerResumenFinanciero } from "@/lib/finanzas";
 import { GraficoIngresosGastos, GraficoSueldos } from "@/components/GraficoFinanciero";
-import { resumenLibretas } from "@/app/sucursales/[id]/legales/libretas-actions";
-import { alertasRecetasSucursal } from "@/app/sucursales/[id]/medicacion/recetario/actions";
-import { vencimientoCertificadoArca } from "@/lib/arca/certificado";
-import { diasHastaFecha } from "@/lib/fechas";
+import { AvisosSede } from "@/components/AvisosSede";
+import { DetalleAlertasSede } from "@/components/DetalleAlertasSede";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
-
-const ESTILO_NIVEL: Record<string, string> = {
-  aviso_7: "bg-amber-100 text-amber-800 border-amber-300",
-  aviso_5: "bg-red-100 text-red-800 border-red-300",
-  sin_stock: "bg-red-100 text-red-800 border-red-300",
-};
-
-function etiquetaAlerta(a: AlertaMedicacionResumen): string {
-  if (a.sinDosisDiaria) {
-    if (a.nivel === "sin_stock") return "Sin stock (sin dosis diaria cargada)";
-    return `${a.stockActual} unid. — sin dosis diaria cargada`;
-  }
-  if (a.nivel === "sin_stock") return "Sin stock";
-  if (a.diasRestantes === null) return "Stock bajo";
-  return `Quedan ${a.diasRestantes} día${a.diasRestantes === 1 ? "" : "s"}`;
-}
 
 export default async function DashboardSucursalPage({
   params,
@@ -42,7 +23,7 @@ export default async function DashboardSucursalPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: perfil }, { data: sucursal }, resumen, finanzas, libretas, recetas, certificado] = await Promise.all([
+  const [{ data: perfil }, { data: sucursal }, resumen, finanzas] = await Promise.all([
     supabase
       .from("perfiles")
       .select("id, nombre_completo, rol, sucursal_id, activo")
@@ -55,9 +36,6 @@ export default async function DashboardSucursalPage({
       .single<{ id: string; nombre: string }>(),
     obtenerResumenSucursal(supabase, id),
     obtenerResumenFinanciero(supabase, id),
-    resumenLibretas(id),
-    alertasRecetasSucursal(id),
-    vencimientoCertificadoArca(id),
   ]);
 
   if (!sucursal || !perfil) {
@@ -66,17 +44,6 @@ export default async function DashboardSucursalPage({
 
   const medicacionRoja = hayAlertaRoja(resumen.alertasMedicacion);
   const medicacionAmarilla = hayAlertaAmarilla(resumen.alertasMedicacion);
-  const libretasConAlerta = libretas.vencidas + libretas.porVencer + libretas.sinLibreta;
-  const diasCertificado = certificado ? diasHastaFecha(certificado.vence) : null;
-  // Aviso 60 días antes del vencimiento del certificado de facturación.
-  const estiloCertificado =
-    diasCertificado === null
-      ? ""
-      : diasCertificado < 0
-        ? "alerta-pulso border-red-300 bg-red-50 text-red-800"
-        : diasCertificado <= 60
-          ? "border-amber-300 bg-amber-50 text-amber-900"
-          : "border-edge bg-card text-ink-soft";
 
   return (
     <div className="flex min-h-screen w-full">
@@ -93,56 +60,7 @@ export default async function DashboardSucursalPage({
           <h1 className="font-display text-[32px] font-semibold text-ink">Dashboard</h1>
         </div>
 
-        {recetas.total > 0 && (
-          <Link
-            href={`/sucursales/${id}/medicacion/recetario`}
-            className="alerta-pulso flex flex-wrap items-center gap-2 rounded-2xl border border-red-300 bg-red-50 px-5 py-3 text-sm text-red-800 transition-colors hover:border-brass"
-          >
-            <span className="alerta-punto h-2 w-2 flex-shrink-0 rounded-full bg-red-600" />
-            <span className="font-semibold">Recetas:</span>
-            {[
-              recetas.paraPedir > 0 && `${recetas.paraPedir} para pedir`,
-              recetas.pedidasDemoradas > 0 && `${recetas.pedidasDemoradas} pedidas sin recibir`,
-              recetas.porVencer > 0 && `${recetas.porVencer} por vencer`,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-            <span className="text-xs underline decoration-red-400 underline-offset-2">ver</span>
-          </Link>
-        )}
-
-        {certificado && diasCertificado !== null && (
-          <div className={`flex flex-wrap items-center gap-2 rounded-2xl border px-5 py-3 text-sm ${estiloCertificado}`}>
-            <span className="font-semibold">Certificado de facturación ARCA:</span>
-            <span>
-              {diasCertificado < 0
-                ? `VENCIDO el ${new Date(certificado.vence + "T00:00:00").toLocaleDateString("es-AR")} — no se puede facturar hasta renovarlo`
-                : `vence el ${new Date(certificado.vence + "T00:00:00").toLocaleDateString("es-AR")} (faltan ${diasCertificado} días)`}
-            </span>
-            {diasCertificado >= 0 && diasCertificado <= 60 && <span className="font-semibold">— hay que renovarlo</span>}
-            <span className="text-xs opacity-70">
-              {certificado.razonSocial} · CUIT {certificado.cuit}
-            </span>
-          </div>
-        )}
-
-        {libretasConAlerta > 0 && (
-          <Link
-            href={`/sucursales/${id}/legales/libretas`}
-            className="alerta-pulso flex flex-wrap items-center gap-2 rounded-2xl border border-red-300 bg-red-50 px-5 py-3 text-sm text-red-800 transition-colors hover:border-brass"
-          >
-            <span className="alerta-punto h-2 w-2 flex-shrink-0 rounded-full bg-red-600" />
-            <span className="font-semibold">Libretas sanitarias:</span>
-            {[
-              libretas.vencidas > 0 && `${libretas.vencidas} vencida${libretas.vencidas === 1 ? "" : "s"}`,
-              libretas.porVencer > 0 && `${libretas.porVencer} por vencer`,
-              libretas.sinLibreta > 0 && `${libretas.sinLibreta} sin cargar`,
-            ]
-              .filter(Boolean)
-              .join(" · ")}
-            <span className="text-xs underline decoration-red-400 underline-offset-2">ver</span>
-          </Link>
-        )}
+        <AvisosSede sucursalId={id} />
 
         <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
           <Link
@@ -227,100 +145,7 @@ export default async function DashboardSucursalPage({
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-          <section className="rounded-2xl border border-edge bg-card p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-display text-sm font-semibold text-ink">
-                Stock de medicación bajo
-              </h2>
-              <div className="flex items-center gap-3">
-                <Link
-                  href={`/sucursales/${id}/medicacion/informe`}
-                  className="text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
-                >
-                  Ver informe
-                </Link>
-                <Link
-                  href={`/sucursales/${id}/medicacion`}
-                  className="text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
-                >
-                  Ver módulo
-                </Link>
-              </div>
-            </div>
-            {resumen.alertasMedicacion.length === 0 ? (
-              <p className="text-xs text-ink-soft">Sin alertas activas.</p>
-            ) : (
-              <ul className="space-y-2">
-                {resumen.alertasMedicacion
-                  .slice()
-                  .sort(
-                    (a, b) =>
-                      (a.diasRestantes ?? a.stockActual ?? 99) -
-                      (b.diasRestantes ?? b.stockActual ?? 99),
-                  )
-                  .map((a) => (
-                    <li key={a.id} className="flex items-center justify-between gap-2 text-sm">
-                      <div>
-                        <p className="font-medium text-ink">{a.medicamentoNombre}</p>
-                        <p className="text-xs text-ink-soft">{a.residenteNombre}</p>
-                      </div>
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold ${ESTILO_NIVEL[a.nivel]} ${
-                          a.nivel === "sin_stock" ? "alerta-pulso" : ""
-                        }`}
-                      >
-                        {a.nivel === "sin_stock" && (
-                          <span className="alerta-punto h-1.5 w-1.5 flex-shrink-0 rounded-full bg-red-700" />
-                        )}
-                        {etiquetaAlerta(a)}
-                      </span>
-                    </li>
-                  ))}
-              </ul>
-            )}
-          </section>
-
-          <section className="rounded-2xl border border-edge bg-card p-5">
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="font-display text-sm font-semibold text-ink">
-                Insumos con stock bajo
-              </h2>
-              <Link
-                href={`/sucursales/${id}/inventario`}
-                className="text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
-              >
-                Ver inventario
-              </Link>
-            </div>
-            {resumen.alertasInsumos.length === 0 ? (
-              <p className="text-xs text-ink-soft">Sin alertas activas.</p>
-            ) : (
-              <ul className="space-y-2">
-                {resumen.alertasInsumos.map((i) => (
-                  <li key={i.id} className="flex items-center justify-between gap-2 text-sm">
-                    <div>
-                      <p className="font-medium text-ink">{i.nombre}</p>
-                      <p className="text-xs text-ink-soft">
-                        {i.categoria === "medicos" ? "Insumo médico" : "Insumo varios"}
-                      </p>
-                    </div>
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-full border border-red-300 bg-red-100 px-2 py-0.5 text-[0.65rem] font-semibold text-red-800 ${
-                        i.stockActual <= 0 ? "alerta-pulso" : ""
-                      }`}
-                    >
-                      {i.stockActual <= 0 && (
-                        <span className="alerta-punto h-1.5 w-1.5 flex-shrink-0 rounded-full bg-red-700" />
-                      )}
-                      {i.stockActual} / mín. {i.stockMinimo}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </div>
+        <DetalleAlertasSede sucursalId={id} resumen={resumen} />
 
         <div className="mt-6 space-y-6">
           <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
