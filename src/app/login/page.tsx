@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { iniciarSesion } from "@/app/login/actions";
 import { buscarEmpleadoPorDni, registrarFichada } from "@/app/fichado/actions";
 import type { EmpleadoFichado } from "@/app/fichado/actions";
 import type { TipoFichada } from "@/lib/types";
@@ -23,7 +23,6 @@ function esDni(valor: string): boolean {
 
 export default function LoginPage() {
   const router = useRouter();
-  const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -60,11 +59,11 @@ export default function LoginPage() {
     }
 
     setCargando(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await iniciarSesion(email, password);
     setCargando(false);
 
     if (error) {
-      setError("Email o contraseña incorrectos.");
+      setError(error);
       return;
     }
 
@@ -108,11 +107,16 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-4 text-left">
               <div>
                 <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
-                  Email o DNI
+                  Usuario o DNI
                 </label>
                 <input
                   type="text"
                   required
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  autoComplete="username"
+                  placeholder="Ej: gcaballero"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none"

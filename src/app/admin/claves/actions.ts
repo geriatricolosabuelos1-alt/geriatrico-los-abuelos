@@ -7,12 +7,23 @@ import type { RolUsuario } from "@/lib/types";
 
 export type CuentaUsuario = {
   id: string;
-  email: string;
+  usuario: string | null;
   nombre_completo: string;
   rol: RolUsuario;
   sucursal_id: string | null;
   activo: boolean;
 };
+
+const DOMINIO_INTERNO = "geriatrico-los-abuelos.internal";
+
+// Usuario de ingreso: minúsculas, números, punto, guion y guion bajo (3 a 30).
+function normalizarUsuario(valor: FormDataEntryValue | null): string {
+  return String(valor ?? "").trim().toLowerCase();
+}
+
+function usuarioValido(usuario: string): boolean {
+  return /^[a-z0-9._-]{3,30}$/.test(usuario);
+}
 
 async function verificarAdmin(): Promise<{ error: string | null; userId: string | null }> {
   const supabase = await createClient();
@@ -38,24 +49,27 @@ export async function listarCuentas(): Promise<CuentaUsuario[]> {
   if (error) return [];
 
   const supabase = await createClient();
-  const admin = createAdminClient();
 
   const { data: perfiles } = await supabase
     .from("perfiles")
-    .select("id, nombre_completo, rol, sucursal_id, activo")
+    .select("id, usuario, nombre_completo, rol, sucursal_id, activo")
     .order("nombre_completo")
     .returns<
-      { id: string; nombre_completo: string; rol: RolUsuario; sucursal_id: string | null; activo: boolean }[]
+      {
+        id: string;
+        usuario: string | null;
+        nombre_completo: string;
+        rol: RolUsuario;
+        sucursal_id: string | null;
+        activo: boolean;
+      }[]
     >();
 
   if (!perfiles || perfiles.length === 0) return [];
 
-  const { data: usuariosAuth } = await admin.auth.admin.listUsers({ perPage: 1000 });
-  const emailPorId = new Map((usuariosAuth?.users ?? []).map((u) => [u.id, u.email ?? "—"]));
-
   return perfiles.map((p) => ({
     id: p.id,
-    email: emailPorId.get(p.id) ?? "—",
+    usuario: p.usuario,
     nombre_completo: p.nombre_completo,
     rol: p.rol,
     sucursal_id: p.sucursal_id,
@@ -72,14 +86,17 @@ export async function crearCuenta(
   const { error: errorAuth } = await verificarAdmin();
   if (errorAuth) return { error: errorAuth };
 
-  const email = String(formData.get("email") ?? "").trim();
+  const usuario = normalizarUsuario(formData.get("usuario"));
   const password = String(formData.get("password") ?? "");
   const nombre_completo = String(formData.get("nombre_completo") ?? "").trim();
   const rol = String(formData.get("rol") ?? "") as RolUsuario;
   const sucursal_id = String(formData.get("sucursal_id") ?? "") || null;
 
-  if (!email || !password || !nombre_completo || !rol) {
-    return { error: "Completá email, contraseña, nombre y rol." };
+  if (!usuario || !password || !nombre_completo || !rol) {
+    return { error: "Completá usuario, contraseña, nombre y rol." };
+  }
+  if (!usuarioValido(usuario)) {
+    return { error: "El usuario debe tener de 3 a 30 caracteres: letras minúsculas, números, punto o guion." };
   }
   if (password.length < 6) {
     return { error: "La contraseña debe tener al menos 6 caracteres." };
@@ -87,8 +104,12 @@ export async function crearCuenta(
 
   const admin = createAdminClient();
 
+  const { data: existente } = await admin.from("perfiles").select("id").eq("usuario", usuario).maybeSingle();
+  if (existente) return { error: `El usuario "${usuario}" ya existe.` };
+
+  // Supabase exige un mail por cuenta: se usa uno interno armado con el usuario.
   const { data: nuevoUsuario, error: errorCrear } = await admin.auth.admin.createUser({
-    email,
+    email: `${usuario}@${DOMINIO_INTERNO}`,
     password,
     email_confirm: true,
   });
@@ -101,7 +122,7 @@ export async function crearCuenta(
   // usuario en auth.users (con valores por defecto) — acá la completamos.
   const { error: errorPerfil } = await admin
     .from("perfiles")
-    .update({ nombre_completo, rol, sucursal_id, activo: true })
+    .update({ usuario, nombre_completo, rol, sucursal_id, activo: true })
     .eq("id", nuevoUsuario.user.id);
 
   if (errorPerfil) {
@@ -122,14 +143,18 @@ export async function actualizarCuenta(
   const { error: errorAuth, userId } = await verificarAdmin();
   if (errorAuth) return { error: errorAuth };
 
+  const usuario = normalizarUsuario(formData.get("usuario"));
   const nombre_completo = String(formData.get("nombre_completo") ?? "").trim();
   const rol = String(formData.get("rol") ?? "") as RolUsuario;
   const sucursal_id = String(formData.get("sucursal_id") ?? "") || null;
   const activo = formData.get("activo") === "on";
   const nuevaPassword = String(formData.get("password") ?? "").trim();
 
-  if (!nombre_completo || !rol) {
-    return { error: "Completá nombre y rol." };
+  if (!usuario || !nombre_completo || !rol) {
+    return { error: "Completá usuario, nombre y rol." };
+  }
+  if (!usuarioValido(usuario)) {
+    return { error: "El usuario debe tener de 3 a 30 caracteres: letras minúsculas, números, punto o guion." };
   }
   if (id === userId && (rol !== "admin" || !activo)) {
     return { error: "No podés quitarte a vos mismo el rol de administrador ni desactivarte." };
@@ -137,9 +162,17 @@ export async function actualizarCuenta(
 
   const admin = createAdminClient();
 
+  const { data: existente } = await admin
+    .from("perfiles")
+    .select("id")
+    .eq("usuario", usuario)
+    .neq("id", id)
+    .maybeSingle();
+  if (existente) return { error: `El usuario "${usuario}" ya lo tiene otra cuenta.` };
+
   const { error: errorPerfil } = await admin
     .from("perfiles")
-    .update({ nombre_completo, rol, sucursal_id, activo })
+    .update({ usuario, nombre_completo, rol, sucursal_id, activo })
     .eq("id", id);
 
   if (errorPerfil) return { error: errorPerfil.message };

@@ -51,7 +51,16 @@ function FilaEdicion({
   return (
     <tr className="border-b border-edge bg-panel-deep last:border-0">
       <td colSpan={6} className="p-3">
-        <form onSubmit={manejarSubmit} className="grid grid-cols-2 gap-2 sm:grid-cols-6">
+        <form onSubmit={manejarSubmit} className="grid grid-cols-2 gap-2 sm:grid-cols-7">
+          <input
+            name="usuario"
+            defaultValue={cuenta.usuario ?? ""}
+            required
+            pattern="[a-zA-Z0-9._-]{3,30}"
+            autoCapitalize="none"
+            className={CAMPO}
+            placeholder="Usuario"
+          />
           <input
             name="nombre_completo"
             defaultValue={cuenta.nombre_completo}
@@ -128,7 +137,7 @@ export function TablaCuentas({ cuentas, sucursales, propioId }: Props) {
         <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
           <tr>
             <th className="px-4 py-3">Nombre</th>
-            <th className="px-4 py-3">Email</th>
+            <th className="px-4 py-3">Usuario</th>
             <th className="px-4 py-3">Rol</th>
             <th className="px-4 py-3">Sede</th>
             <th className="px-4 py-3">Estado</th>
@@ -155,7 +164,7 @@ export function TablaCuentas({ cuentas, sucursales, propioId }: Props) {
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-3 text-ink-soft whitespace-nowrap">{c.email}</td>
+                <td className="px-4 py-3 text-ink-soft whitespace-nowrap">{c.usuario ?? "— (sin usuario, no puede ingresar)"}</td>
                 <td className="px-4 py-3 text-ink-soft whitespace-nowrap">
                   {ETIQUETA_ROL[c.rol] ?? c.rol}
                 </td>
