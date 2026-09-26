@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import type { CategoriaInsumo } from "@/lib/types";
 import { hoyArgentina, mesAnioArgentina } from "@/lib/fechas";
+import { validarSalidas } from "@/lib/stock";
 
 export type RegistrarMovimientoEstado = { error: string | null };
 
@@ -90,6 +91,14 @@ export async function registrarMovimiento(
       return { error: `No se pudo crear el insumo "${insumoNombre}": ${errorInsumo?.message ?? "error desconocido"}` };
     }
     insumo = insumoCreado;
+  }
+
+  // Nunca se puede sacar más de lo que hay en stock.
+  if (tipo === "salida") {
+    const errorStock = await validarSalidas(supabase, sucursalId, [
+      { insumoId: insumo.id, nombre: insumo.nombre, unidad: insumo.unidad, cantidad },
+    ]);
+    if (errorStock) return { error: errorStock };
   }
 
   const { data: movimiento, error } = await supabase

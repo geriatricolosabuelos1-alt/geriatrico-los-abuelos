@@ -141,11 +141,16 @@ export function AgregarInsumoResidente({
                   <input
                     type="checkbox"
                     checked={marcado}
+                    disabled={!marcado && insumo.stock <= 0}
                     onChange={(e) => alternarInsumo(insumo, e.target.checked)}
                   />
                   {insumo.nombre}
                   <span className="text-xs text-ink-soft">
-                    (stock: {insumo.stock} {insumo.unidad})
+                    {insumo.stock > 0 ? (
+                      `(stock: ${insumo.stock} ${insumo.unidad})`
+                    ) : (
+                      <span className="text-red-700">(sin stock)</span>
+                    )}
                   </span>
                 </label>
                 {marcado && (
@@ -153,6 +158,7 @@ export function AgregarInsumoResidente({
                     <input
                       type="number"
                       min="0.01"
+                      max={Math.max(0, insumo.stock)}
                       step="0.01"
                       value={seleccion[insumo.id].cantidad}
                       onChange={(e) => actualizarCampo(insumo.id, "cantidad", e.target.value)}

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { validarSalidas } from "@/lib/stock";
 
 export type InsumoMedicoConStock = {
   id: string;
@@ -79,6 +80,19 @@ export async function agregarInsumosResidente(
     .returns<{ id: string; nombre: string; unidad: string }[]>();
 
   const insumoPorId = new Map((insumos ?? []).map((i) => [i.id, i]));
+
+  // Nunca se puede sacar más de lo que hay en stock (se controla todo antes de registrar nada).
+  const errorStock = await validarSalidas(
+    supabase,
+    sucursalId,
+    validos.map((item) => ({
+      insumoId: item.insumo_id,
+      nombre: insumoPorId.get(item.insumo_id)?.nombre ?? "Insumo",
+      unidad: insumoPorId.get(item.insumo_id)?.unidad ?? "unidades",
+      cantidad: item.cantidad,
+    })),
+  );
+  if (errorStock) return { error: errorStock };
 
   for (const item of validos) {
     const insumo = insumoPorId.get(item.insumo_id);
