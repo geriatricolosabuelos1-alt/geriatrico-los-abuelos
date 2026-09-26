@@ -8,6 +8,8 @@ import { formatearMonto, obtenerResumenFinanciero } from "@/lib/finanzas";
 import { GraficoIngresosGastos, GraficoSueldos } from "@/components/GraficoFinanciero";
 import { resumenLibretas } from "@/app/sucursales/[id]/legales/libretas-actions";
 import { alertasRecetasSucursal } from "@/app/sucursales/[id]/medicacion/recetario/actions";
+import { vencimientoCertificadoArca } from "@/lib/arca/certificado";
+import { diasHastaFecha } from "@/lib/fechas";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
@@ -40,7 +42,7 @@ export default async function DashboardSucursalPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: perfil }, { data: sucursal }, resumen, finanzas, libretas, recetas] = await Promise.all([
+  const [{ data: perfil }, { data: sucursal }, resumen, finanzas, libretas, recetas, certificado] = await Promise.all([
     supabase
       .from("perfiles")
       .select("id, nombre_completo, rol, sucursal_id, activo")
@@ -55,6 +57,7 @@ export default async function DashboardSucursalPage({
     obtenerResumenFinanciero(supabase, id),
     resumenLibretas(id),
     alertasRecetasSucursal(id),
+    vencimientoCertificadoArca(id),
   ]);
 
   if (!sucursal || !perfil) {
@@ -64,6 +67,16 @@ export default async function DashboardSucursalPage({
   const medicacionRoja = hayAlertaRoja(resumen.alertasMedicacion);
   const medicacionAmarilla = hayAlertaAmarilla(resumen.alertasMedicacion);
   const libretasConAlerta = libretas.vencidas + libretas.porVencer + libretas.sinLibreta;
+  const diasCertificado = certificado ? diasHastaFecha(certificado.vence) : null;
+  // Aviso 60 días antes del vencimiento del certificado de facturación.
+  const estiloCertificado =
+    diasCertificado === null
+      ? ""
+      : diasCertificado < 0
+        ? "alerta-pulso border-red-300 bg-red-50 text-red-800"
+        : diasCertificado <= 60
+          ? "border-amber-300 bg-amber-50 text-amber-900"
+          : "border-edge bg-card text-ink-soft";
 
   return (
     <div className="flex min-h-screen w-full">
@@ -96,6 +109,21 @@ export default async function DashboardSucursalPage({
               .join(" · ")}
             <span className="text-xs underline decoration-red-400 underline-offset-2">ver</span>
           </Link>
+        )}
+
+        {certificado && diasCertificado !== null && (
+          <div className={`flex flex-wrap items-center gap-2 rounded-2xl border px-5 py-3 text-sm ${estiloCertificado}`}>
+            <span className="font-semibold">Certificado de facturación ARCA:</span>
+            <span>
+              {diasCertificado < 0
+                ? `VENCIDO el ${new Date(certificado.vence + "T00:00:00").toLocaleDateString("es-AR")} — no se puede facturar hasta renovarlo`
+                : `vence el ${new Date(certificado.vence + "T00:00:00").toLocaleDateString("es-AR")} (faltan ${diasCertificado} días)`}
+            </span>
+            {diasCertificado >= 0 && diasCertificado <= 60 && <span className="font-semibold">— hay que renovarlo</span>}
+            <span className="text-xs opacity-70">
+              {certificado.razonSocial} · CUIT {certificado.cuit}
+            </span>
+          </div>
         )}
 
         {libretasConAlerta > 0 && (
