@@ -15,6 +15,8 @@ type Props = {
   residenteId: string;
   pagoId: string;
   montoSugerido: number;
+  mes: number;
+  anio: number;
   dniResidente: string | null;
   yaFacturado: boolean;
   // Sugerencias tomadas del cobro registrado
@@ -22,13 +24,39 @@ type Props = {
   medioSugerido: MedioPagoFactura | null;
 };
 
+type LineaForm = { descripcion: string; importe: string };
+
+const MESES = [
+  "", "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
 const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none";
+
+function pad(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+function primerDiaDelMes(mes: number, anio: number): string {
+  return `${anio}-${pad(mes)}-01`;
+}
+
+function ultimoDiaDelMes(mes: number, anio: number): string {
+  const dia = new Date(anio, mes, 0).getDate();
+  return `${anio}-${pad(mes)}-${pad(dia)}`;
+}
+
+function formatearTotal(total: number): string {
+  return `$${total.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`;
+}
 
 export function BotonFacturar({
   residenteId,
   pagoId,
   montoSugerido,
+  mes,
+  anio,
   dniResidente,
   yaFacturado,
   cobradoCompleto,
@@ -39,7 +67,14 @@ export function BotonFacturar({
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [importe, setImporte] = useState(String(montoSugerido));
+  const [lineas, setLineas] = useState<LineaForm[]>([
+    {
+      descripcion: `Servicios de cuidado geriátrico — ${MESES[mes]} ${anio}`,
+      importe: String(montoSugerido),
+    },
+  ]);
+  const [periodoDesde, setPeriodoDesde] = useState(primerDiaDelMes(mes, anio));
+  const [periodoHasta, setPeriodoHasta] = useState(ultimoDiaDelMes(mes, anio));
   const [tipoDoc, setTipoDoc] = useState<TipoDocReceptor>(
     dniResidente ? "dni" : "consumidor_final",
   );
@@ -74,11 +109,30 @@ export function BotonFacturar({
     );
   }
 
+  const total = lineas.reduce((acc, l) => acc + (Number(l.importe) || 0), 0);
+
+  function actualizarLinea(indice: number, cambios: Partial<LineaForm>) {
+    setLineas((prev) => prev.map((l, i) => (i === indice ? { ...l, ...cambios } : l)));
+  }
+
+  function agregarLinea() {
+    setLineas((prev) => [...prev, { descripcion: "", importe: "" }]);
+  }
+
+  function quitarLinea(indice: number) {
+    setLineas((prev) => prev.filter((_, i) => i !== indice));
+  }
+
   async function confirmar() {
     setEnviando(true);
     setError(null);
     const resultado = await emitirFactura(pagoId, {
-      importe: Number(importe),
+      detalle: lineas.map((l) => ({
+        descripcion: l.descripcion,
+        importe: Number(l.importe),
+      })),
+      periodoDesde,
+      periodoHasta,
       tipoDoc,
       docNro,
       condicionIva,
@@ -96,21 +150,88 @@ export function BotonFacturar({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-sm space-y-3 rounded-2xl border border-edge bg-card p-5 shadow-2xl">
+      <div className="max-h-[92vh] w-full max-w-lg space-y-3 overflow-y-auto rounded-2xl border border-edge bg-card p-5 shadow-2xl">
         <h3 className="font-display text-sm font-semibold text-ink">
           Emitir Factura C ante ARCA
         </h3>
 
         <div>
           <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
-            Importe a facturar
+            Período facturado
           </label>
-          <input
-            type="number"
-            value={importe}
-            onChange={(e) => setImporte(e.target.value)}
-            className={CAMPO}
-          />
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-[0.65rem] text-ink-soft">
+              Desde
+              <input
+                type="date"
+                value={periodoDesde}
+                onChange={(e) => setPeriodoDesde(e.target.value)}
+                className={CAMPO}
+              />
+            </label>
+            <label className="text-[0.65rem] text-ink-soft">
+              Hasta
+              <input
+                type="date"
+                value={periodoHasta}
+                onChange={(e) => setPeriodoHasta(e.target.value)}
+                className={CAMPO}
+              />
+            </label>
+          </div>
+        </div>
+
+        <div>
+          <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+            Detalle
+          </label>
+          <div className="space-y-2">
+            {lineas.map((linea, indice) => (
+              <div key={indice} className="flex items-center gap-2">
+                <input
+                  value={linea.descripcion}
+                  onChange={(e) => actualizarLinea(indice, { descripcion: e.target.value })}
+                  placeholder="Descripción"
+                  aria-label={`Descripción de la línea ${indice + 1}`}
+                  className={`${CAMPO} flex-1`}
+                />
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={linea.importe}
+                  onChange={(e) => actualizarLinea(indice, { importe: e.target.value })}
+                  placeholder="Importe"
+                  aria-label={`Importe de la línea ${indice + 1}`}
+                  className={`${CAMPO} w-28`}
+                />
+                <button
+                  type="button"
+                  onClick={() => quitarLinea(indice)}
+                  disabled={lineas.length === 1}
+                  aria-label={`Quitar la línea ${indice + 1}`}
+                  className="px-1 text-sm text-ink-soft hover:text-red-700 disabled:opacity-30"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={agregarLinea}
+            className="mt-2 text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+          >
+            + Agregar línea
+          </button>
+          <div className="mt-2 flex items-center justify-between rounded-lg bg-brass-soft px-3 py-2">
+            <span className="text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+              Total a facturar
+            </span>
+            <span className="font-display text-base font-semibold text-brass">
+              {formatearTotal(total)}
+            </span>
+          </div>
         </div>
 
         <div>

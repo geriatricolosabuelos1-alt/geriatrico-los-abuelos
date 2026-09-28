@@ -13,6 +13,8 @@ export type FacturaCInput = {
   docNro: string;
   condicionIVAReceptorId: number;
   concepto?: number;
+  servDesde?: string;
+  servHasta?: string;
 };
 
 export type FacturaCResultado = {
@@ -88,6 +90,8 @@ export async function solicitarCAE(
   const fecha = todayArca();
   const concepto = input.concepto ?? 2; // 2 = Servicios
   const importeRedondeado = Math.round(input.importe * 100) / 100;
+  const servDesde = input.servDesde ?? fecha;
+  const servHasta = input.servHasta ?? fecha;
 
   const soapBody = `<?xml version="1.0" encoding="UTF-8"?>
 <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ar="${NS}">
@@ -113,7 +117,7 @@ export async function solicitarCAE(
             <ar:CbteDesde>${nuevoNro}</ar:CbteDesde>
             <ar:CbteHasta>${nuevoNro}</ar:CbteHasta>
             <ar:CbteFch>${fecha}</ar:CbteFch>
-            ${concepto !== 1 ? `<ar:FchServDesde>${fecha}</ar:FchServDesde><ar:FchServHasta>${fecha}</ar:FchServHasta><ar:FchVtoPago>${fecha}</ar:FchVtoPago>` : ""}
+            ${concepto !== 1 ? `<ar:FchServDesde>${servDesde}</ar:FchServDesde><ar:FchServHasta>${servHasta}</ar:FchServHasta><ar:FchVtoPago>${fecha}</ar:FchVtoPago>` : ""}
             <ar:ImpTotal>${importeRedondeado}</ar:ImpTotal>
             <ar:ImpTotConc>0</ar:ImpTotConc>
             <ar:ImpNeto>${importeRedondeado}</ar:ImpNeto>

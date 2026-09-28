@@ -245,6 +245,8 @@ export default async function CuentaCorrientePage({
                             residenteId={id}
                             pagoId={p.id}
                             montoSugerido={p.monto_pagado}
+                            mes={p.mes}
+                            anio={p.anio}
                             dniResidente={residente.dni}
                             yaFacturado={
                               Array.isArray(p.facturas_arca) ? p.facturas_arca.length > 0 : !!p.facturas_arca

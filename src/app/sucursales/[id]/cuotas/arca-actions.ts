@@ -15,14 +15,20 @@ export type CondicionIva = "responsable_inscripto" | "monotributo" | "exento" | 
 export type CondicionVenta = "contado" | "cuenta_corriente";
 export type MedioPagoFactura = "efectivo" | "transferencia" | "mercado_pago";
 
+export type LineaDetalle = { descripcion: string; importe: number };
+
 export type DatosFactura = {
-  importe: number;
+  detalle: LineaDetalle[];
+  periodoDesde: string;
+  periodoHasta: string;
   tipoDoc: TipoDocReceptor;
   docNro: string;
   condicionIva: CondicionIva;
   condicionVenta: CondicionVenta;
   medioPago: MedioPagoFactura | null;
 };
+
+const FECHA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 
 const DOC_TIPO_AFIP: Record<TipoDocReceptor, number> = {
   dni: 96,
@@ -46,8 +52,26 @@ export async function emitirFactura(
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!datos.importe || datos.importe <= 0) {
-    return { error: "El importe a facturar debe ser mayor a cero.", ok: false };
+  const detalle = (datos.detalle ?? []).map((l) => ({
+    descripcion: String(l.descripcion ?? "").trim(),
+    importe: Math.round(Number(l.importe) * 100) / 100,
+  }));
+
+  if (detalle.length === 0) {
+    return { error: "Agregá al menos una línea al detalle.", ok: false };
+  }
+  if (detalle.some((l) => !l.descripcion)) {
+    return { error: "Todas las líneas del detalle necesitan descripción.", ok: false };
+  }
+  if (detalle.some((l) => !Number.isFinite(l.importe) || l.importe <= 0)) {
+    return { error: "Todas las líneas del detalle necesitan un importe mayor a cero.", ok: false };
+  }
+
+  if (!FECHA_ISO.test(datos.periodoDesde) || !FECHA_ISO.test(datos.periodoHasta)) {
+    return { error: "Elegí el período facturado (desde y hasta).", ok: false };
+  }
+  if (datos.periodoDesde > datos.periodoHasta) {
+    return { error: "El período 'desde' no puede ser posterior al 'hasta'.", ok: false };
   }
 
   if (datos.tipoDoc !== "consumidor_final") {
@@ -109,7 +133,7 @@ export async function emitirFactura(
     };
   }
 
-  const importe = datos.importe;
+  const importe = Math.round(detalle.reduce((acc, l) => acc + l.importe, 0) * 100) / 100;
   const docTipo = DOC_TIPO_AFIP[datos.tipoDoc];
   const docNro = datos.tipoDoc === "consumidor_final" ? "0" : datos.docNro.replace(/\D/g, "");
   const condicionIVAReceptorId = CONDICION_IVA_AFIP[datos.condicionIva];
@@ -130,6 +154,8 @@ export async function emitirFactura(
         docTipo,
         docNro,
         condicionIVAReceptorId,
+        servDesde: datos.periodoDesde.replaceAll("-", ""),
+        servHasta: datos.periodoHasta.replaceAll("-", ""),
       },
     );
 
@@ -151,6 +177,9 @@ export async function emitirFactura(
       medio_pago: datos.medioPago,
       // Quién la emitió (lo usa también el módulo de Seguridad).
       emitido_por: user?.id ?? null,
+      detalle,
+      periodo_desde: datos.periodoDesde,
+      periodo_hasta: datos.periodoHasta,
     });
 
     if (errorInsert) {

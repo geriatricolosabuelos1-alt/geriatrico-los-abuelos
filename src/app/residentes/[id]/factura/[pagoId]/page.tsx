@@ -25,6 +25,9 @@ type Factura = {
   condicion_venta: string | null;
   medio_pago: string | null;
   condicion_iva_receptor_id: number | null;
+  detalle: { descripcion: string; importe: number }[] | null;
+  periodo_desde: string | null;
+  periodo_hasta: string | null;
 };
 
 // Códigos de ARCA para la condición frente al IVA del receptor.
@@ -103,7 +106,7 @@ export default async function FacturaPage({
       supabase
         .from("facturas_arca")
         .select(
-          "tipo_cbte, pto_vta, cbte_nro, cae, cae_vencimiento, importe, fecha_emision, doc_tipo, doc_nro, condicion_venta, medio_pago, condicion_iva_receptor_id",
+          "tipo_cbte, pto_vta, cbte_nro, cae, cae_vencimiento, importe, fecha_emision, doc_tipo, doc_nro, condicion_venta, medio_pago, condicion_iva_receptor_id, detalle, periodo_desde, periodo_hasta",
         )
         .eq("pago_id", pagoId)
         .single<Factura>(),
@@ -140,6 +143,21 @@ export default async function FacturaPage({
     "https://www.afip.gob.ar/fe/qr/?p=" +
     Buffer.from(JSON.stringify(qrPayload)).toString("base64");
   const qrDataUri = await QRCode.toDataURL(qrUrl, { margin: 1, width: 160 });
+
+  const nombreMes = MESES[pago.mes].charAt(0).toUpperCase() + MESES[pago.mes].slice(1);
+  const lineasDetalle =
+    factura.detalle && factura.detalle.length > 0
+      ? factura.detalle
+      : [
+          {
+            descripcion: `Servicios de cuidado geriátrico — ${nombreMes} ${pago.anio}`,
+            importe: factura.importe,
+          },
+        ];
+  const textoPeriodo =
+    factura.periodo_desde && factura.periodo_hasta
+      ? `Período del ${formatearFecha(factura.periodo_desde)} al ${formatearFecha(factura.periodo_hasta)}`
+      : `Período ${MESES[pago.mes]} de ${pago.anio}`;
 
   const numeroFactura = `C ${String(factura.pto_vta).padStart(5, "0")}-${String(factura.cbte_nro).padStart(8, "0")}`;
 
@@ -208,7 +226,7 @@ export default async function FacturaPage({
                 Servicios de residencia geriátrica
               </p>
               <p className="text-xs text-ink-soft print:text-neutral-600">
-                Período {MESES[pago.mes]} de {pago.anio}
+                {textoPeriodo}
               </p>
               {factura.condicion_venta && (
                 <p className="text-xs text-ink-soft print:text-neutral-600">
@@ -227,16 +245,14 @@ export default async function FacturaPage({
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td className="py-3 text-ink print:text-black">
-                  Servicios de cuidado geriátrico —{" "}
-                  {MESES[pago.mes].charAt(0).toUpperCase() + MESES[pago.mes].slice(1)}{" "}
-                  {pago.anio}
-                </td>
-                <td className="py-3 text-right font-medium text-ink print:text-black">
-                  {formatearImporte(factura.importe)}
-                </td>
-              </tr>
+              {lineasDetalle.map((linea, indice) => (
+                <tr key={indice}>
+                  <td className="py-3 text-ink print:text-black">{linea.descripcion}</td>
+                  <td className="py-3 text-right font-medium text-ink print:text-black">
+                    {formatearImporte(linea.importe)}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
 
