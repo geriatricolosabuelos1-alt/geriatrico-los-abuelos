@@ -34,6 +34,8 @@ const MESES = [
 const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none";
 
+const CAMPO_LINEA = CAMPO.replace("w-full ", "");
+
 function pad(n: number): string {
   return String(n).padStart(2, "0");
 }
@@ -193,7 +195,7 @@ export function BotonFacturar({
                   onChange={(e) => actualizarLinea(indice, { descripcion: e.target.value })}
                   placeholder="Descripción"
                   aria-label={`Descripción de la línea ${indice + 1}`}
-                  className={`${CAMPO} flex-1`}
+                  className={`${CAMPO_LINEA} min-w-0 flex-1`}
                 />
                 <input
                   type="number"
@@ -203,7 +205,7 @@ export function BotonFacturar({
                   onChange={(e) => actualizarLinea(indice, { importe: e.target.value })}
                   placeholder="Importe"
                   aria-label={`Importe de la línea ${indice + 1}`}
-                  className={`${CAMPO} w-28`}
+                  className={`${CAMPO_LINEA} w-28 shrink-0`}
                 />
                 <button
                   type="button"
