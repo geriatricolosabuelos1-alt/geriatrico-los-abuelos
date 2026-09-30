@@ -8,6 +8,7 @@ import {
   FormularioEvaluacionKinesio,
   FormularioSesionKinesio,
 } from "@/components/KinesiologiaClient";
+import { SubirPdfUnico } from "@/components/SubirPdfUnico";
 import { calcularEdad } from "@/lib/residentes";
 import type { EvaluacionKinesiologia, Perfil, SesionKinesiologia } from "@/lib/types";
 
@@ -143,6 +144,11 @@ export default async function KinesiologiaResidentePage({
             <h2 className="font-display text-lg font-semibold text-ink print:text-black">Evaluaciones</h2>
           </div>
           <FormularioEvaluacionKinesio residenteId={id} abrirInicial={foco === "evaluacion"} />
+          <SubirPdfUnico
+            residenteId={id}
+            tipo="evaluacion_kinesiologia"
+            etiquetaBoton="+ Subir PDF de evaluación"
+          />
 
           {(evaluaciones ?? []).map((e, i) => (
             <article
@@ -195,6 +201,11 @@ export default async function KinesiologiaResidentePage({
             Sesiones ({(sesiones ?? []).length})
           </h2>
           <FormularioSesionKinesio residenteId={id} />
+          <SubirPdfUnico
+            residenteId={id}
+            tipo="evolucion_kinesiologia"
+            etiquetaBoton="+ Subir PDF de evolución"
+          />
           <div className="overflow-x-auto rounded-2xl border border-edge bg-card print:border-neutral-300">
             <table className="w-full text-left text-sm">
               <thead>

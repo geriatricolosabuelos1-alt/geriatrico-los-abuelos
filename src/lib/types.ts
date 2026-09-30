@@ -85,7 +85,9 @@ export type TipoDocumentoResidente =
   | "orden_internacion"
   | "cud"
   | "nota_derivacion"
-  | "contrato";
+  | "contrato"
+  | "evaluacion_kinesiologia"
+  | "evolucion_kinesiologia";
 
 export interface DocumentoResidente {
   id: string;

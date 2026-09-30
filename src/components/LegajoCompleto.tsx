@@ -23,6 +23,15 @@ const ETIQUETA_VACUNA: Record<string, string> = {
   otra: "Otra",
 };
 
+const ETIQUETA_TIPO_DOCUMENTO: Record<string, string> = {
+  orden_internacion: "Orden de internación",
+  cud: "CUD",
+  nota_derivacion: "Nota de derivación",
+  contrato: "Contrato",
+  evaluacion_kinesiologia: "Evaluación kinesiológica (PDF)",
+  evolucion_kinesiologia: "Evolución kinesiológica (PDF)",
+};
+
 function fecha(valor: string | null | undefined): string {
   if (!valor) return "—";
   return new Date(valor.length === 10 ? valor + "T00:00:00" : valor).toLocaleDateString("es-AR");
@@ -343,7 +352,11 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
       <Seccion titulo="11. Documentación archivada">
         <Tabla
           columnas={["Tipo", "Archivo", "Cargado"]}
-          filas={(documentos ?? []).map((d) => [d.tipo, d.nombre_archivo, fecha(d.created_at)])}
+          filas={(documentos ?? []).map((d) => [
+            ETIQUETA_TIPO_DOCUMENTO[d.tipo] ?? d.tipo,
+            d.nombre_archivo,
+            fecha(d.created_at),
+          ])}
         />
       </Seccion>
     </article>
