@@ -29,6 +29,7 @@ type Props = {
   residentes: FilaResidente[];
   puedeBorrar: boolean;
   esAdministrativo: boolean;
+  puedeVerLegajo: boolean;
   puedeCargarInsumos: boolean;
   insumosMedicos: InsumoMedicoConStock[];
   vistaBajas: boolean;
@@ -72,6 +73,7 @@ export function ResidentesTable({
   residentes,
   puedeBorrar,
   esAdministrativo,
+  puedeVerLegajo,
   puedeCargarInsumos,
   insumosMedicos,
   vistaBajas,
@@ -259,7 +261,7 @@ export function ResidentesTable({
                   <td className="px-4 py-3 align-middle font-medium whitespace-nowrap">
                     <Link
                       href={
-                        esAdministrativo
+                        puedeVerLegajo
                           ? `/residentes/${r.id}/legajo`
                           : `/residentes/${r.id}/evolucion`
                       }

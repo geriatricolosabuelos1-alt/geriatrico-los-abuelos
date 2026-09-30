@@ -127,6 +127,7 @@ export default async function ResidentesSucursalPage({
           residentes={residentes ?? []}
           puedeBorrar={perfil.rol === "admin"}
           esAdministrativo={["admin", "administrativo"].includes(perfil.rol)}
+          puedeVerLegajo={["admin", "administrativo", "gerente_sede"].includes(perfil.rol)}
           puedeCargarInsumos={puedeCargarInsumos}
           insumosMedicos={insumosMedicos}
           vistaBajas={vistaBajas}
