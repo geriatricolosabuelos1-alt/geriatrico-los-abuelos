@@ -82,6 +82,17 @@ export function ResidentesTable({
     columna: "nombre",
     direccion: "asc",
   });
+  const [seleccionando, setSeleccionando] = useState(false);
+  const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
+
+  function alternarSeleccion(id: string) {
+    setSeleccionados((prev) => {
+      const siguiente = new Set(prev);
+      if (siguiente.has(id)) siguiente.delete(id);
+      else siguiente.add(id);
+      return siguiente;
+    });
+  }
 
   function manejarOrdenar(columna: Columna) {
     setOrden((prev) =>
@@ -119,6 +130,68 @@ export function ResidentesTable({
 
   return (
     <div>
+      <div className="mb-4 rounded-2xl border border-edge bg-card p-5">
+        {!seleccionando ? (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-sm font-semibold text-ink">
+                Emitir legajo completo
+              </h2>
+              <p className="text-xs text-ink-soft">
+                Médica, kinesiología, nutrición y vacunación en un solo documento para imprimir.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setSeleccionando(true)}
+                className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
+              >
+                Elegir residentes...
+              </button>
+              <Link
+                href={`/sucursales/${sucursalId}/legales/legajos`}
+                target="_blank"
+                className="rounded-lg bg-brass px-3 py-2 text-xs font-semibold text-btn-ink hover:bg-brass/90"
+              >
+                Emitir de todos
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="font-display text-sm font-semibold text-ink">
+                {seleccionados.size} residente{seleccionados.size === 1 ? "" : "s"} seleccionado
+                {seleccionados.size === 1 ? "" : "s"}
+              </h2>
+              <p className="text-xs text-ink-soft">Tildá en la tabla a quiénes les querés emitir el legajo.</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setSeleccionando(false);
+                  setSeleccionados(new Set());
+                }}
+                className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:text-ink"
+              >
+                Cancelar
+              </button>
+              {seleccionados.size > 0 && (
+                <Link
+                  href={`/sucursales/${sucursalId}/legales/legajos?ids=${Array.from(seleccionados).join(",")}`}
+                  target="_blank"
+                  className="rounded-lg bg-brass px-3 py-2 text-xs font-semibold text-btn-ink hover:bg-brass/90"
+                >
+                  Emitir legajo completo
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
       <div className="mb-3 flex flex-wrap gap-3">
         <input
           type="text"
@@ -133,6 +206,18 @@ export function ResidentesTable({
         <table className="w-full text-left text-sm">
           <thead className="border-b border-edge bg-panel-deep text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
             <tr>
+              {seleccionando && (
+                <th className="px-4 py-3">
+                  <input
+                    type="checkbox"
+                    checked={filtrados.length > 0 && filtrados.every((r) => seleccionados.has(r.id))}
+                    onChange={(e) =>
+                      setSeleccionados(e.target.checked ? new Set(filtrados.map((r) => r.id)) : new Set())
+                    }
+                    className="h-4 w-4"
+                  />
+                </th>
+              )}
               <EncabezadoOrdenable
                 label="Nombre"
                 columna="nombre"
@@ -161,6 +246,16 @@ export function ResidentesTable({
           <tbody>
             {filtrados.map((r) => (
                 <tr key={r.id} className="border-b border-edge last:border-0">
+                  {seleccionando && (
+                    <td className="px-4 py-3 align-middle">
+                      <input
+                        type="checkbox"
+                        checked={seleccionados.has(r.id)}
+                        onChange={() => alternarSeleccion(r.id)}
+                        className="h-4 w-4"
+                      />
+                    </td>
+                  )}
                   <td className="px-4 py-3 align-middle font-medium whitespace-nowrap">
                     <Link
                       href={
@@ -286,7 +381,7 @@ export function ResidentesTable({
             {filtrados.length === 0 && (
               <tr>
                 <td
-                  colSpan={esAdministrativo ? 8 : 7}
+                  colSpan={(esAdministrativo ? 8 : 7) + (seleccionando ? 1 : 0)}
                   className="px-4 py-6 text-center text-ink-soft"
                 >
                   {vistaBajas ? "No hay residentes dados de baja." : "Ningún residente coincide con el filtro."}

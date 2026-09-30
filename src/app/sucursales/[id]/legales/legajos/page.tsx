@@ -6,18 +6,28 @@ import { EstiloFoliado } from "@/components/EstiloFoliado";
 import { LegajoCompleto } from "@/components/LegajoCompleto";
 
 type Params = { id: string };
+type SearchParams = { ids?: string };
 
-export default async function LegajosFoliadosPage({ params }: { params: Promise<Params> }) {
+export default async function LegajosFoliadosPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<Params>;
+  searchParams: Promise<SearchParams>;
+}) {
   const { id } = await params;
+  const { ids } = await searchParams;
+  const idsSeleccionados = ids ? ids.split(",").filter(Boolean) : null;
   const supabase = await createClient();
+
+  const consultaBase = supabase.from("residentes").select("id, nombre, apellido").eq("sucursal_id", id);
+  const consultaResidentes = idsSeleccionados
+    ? consultaBase.in("id", idsSeleccionados)
+    : consultaBase.eq("activo", true);
 
   const [{ data: sucursal }, { data: residentes }] = await Promise.all([
     supabase.from("sucursales").select("id, nombre").eq("id", id).single<{ id: string; nombre: string }>(),
-    supabase
-      .from("residentes")
-      .select("id, nombre, apellido")
-      .eq("sucursal_id", id)
-      .eq("activo", true)
+    consultaResidentes
       .order("apellido")
       .returns<{ id: string; nombre: string; apellido: string }[]>(),
   ]);
@@ -42,8 +52,9 @@ export default async function LegajosFoliadosPage({ params }: { params: Promise<
         <section className="text-black">
           <h1 className="text-xl font-bold">Legajos de residentes — {sucursal.nombre}</h1>
           <p className="text-xs text-neutral-600">
-            Emitido el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} · {lista.length} residentes activos · hojas foliadas
-            en forma correlativa
+            Emitido el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} ·{" "}
+            {lista.length} residente{lista.length === 1 ? "" : "s"}
+            {idsSeleccionados ? " seleccionado(s)" : " activo(s)"} · hojas foliadas en forma correlativa
           </p>
           <ol className="mt-4 list-decimal pl-5 text-sm">
             {lista.map((r) => (
