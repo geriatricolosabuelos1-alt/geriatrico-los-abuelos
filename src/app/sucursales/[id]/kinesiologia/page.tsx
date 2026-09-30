@@ -77,14 +77,14 @@ export default async function KinesiologiaSedePage({ params }: { params: Promise
             titulo="Evaluación"
             subtitulo="Evaluación kinésica inicial o reevaluación de un residente."
             residentes={residentes ?? []}
-            destino={(residenteId) => `/residentes/${residenteId}/kinesiologia?foco=evaluacion#evaluaciones`}
+            tipo="evaluacion"
             color="azul"
           />
           <TarjetaAccesoKinesio
             titulo="Evolución"
             subtitulo="Registrar la sesión de hoy: trabajo realizado y tolerancia."
             residentes={residentes ?? []}
-            destino={(residenteId) => `/residentes/${residenteId}/kinesiologia#sesiones`}
+            tipo="evolucion"
             color="ambar"
           />
         </div>

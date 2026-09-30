@@ -9,7 +9,7 @@ type Props = {
   titulo: string;
   subtitulo: string;
   residentes: ResidenteOpcion[];
-  destino: (residenteId: string) => string;
+  tipo: "evaluacion" | "evolucion";
   color: "azul" | "ambar";
 };
 
@@ -26,14 +26,18 @@ const ESTILOS = {
   },
 } as const;
 
-export function TarjetaAccesoKinesio({ titulo, subtitulo, residentes, destino, color }: Props) {
+export function TarjetaAccesoKinesio({ titulo, subtitulo, residentes, tipo, color }: Props) {
   const router = useRouter();
   const [seleccionado, setSeleccionado] = useState("");
   const estilo = ESTILOS[color];
 
   function ir() {
     if (!seleccionado) return;
-    router.push(destino(seleccionado));
+    const destino =
+      tipo === "evaluacion"
+        ? `/residentes/${seleccionado}/kinesiologia?foco=evaluacion#evaluaciones`
+        : `/residentes/${seleccionado}/kinesiologia#sesiones`;
+    router.push(destino);
   }
 
   return (
