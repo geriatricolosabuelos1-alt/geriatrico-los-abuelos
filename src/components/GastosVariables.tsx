@@ -129,7 +129,15 @@ export function GastosVariables({ sucursalId, gastos }: Props) {
     <div className="space-y-4">
       <div>
         <h2 className="font-display text-sm font-semibold text-ink">Gastos variables</h2>
-        <p className="text-xs text-ink-soft">Total del mes: ${total.toLocaleString("es-AR")}</p>
+      </div>
+
+      <div className="rounded-2xl border border-edge bg-card p-5">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+          Total gastos variables
+        </p>
+        <p className="font-display text-3xl font-semibold tabular-nums lining-nums text-ink">
+          ${total.toLocaleString("es-AR")}
+        </p>
       </div>
 
       <form

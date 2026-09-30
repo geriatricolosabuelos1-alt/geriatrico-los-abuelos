@@ -176,10 +176,7 @@ export function GastosFijos({ sucursalId, mes, anio, catalogo, gastosDelMes }: P
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="font-display text-sm font-semibold text-ink">Gastos fijos</h2>
-          <p className="text-xs text-ink-soft">Total del mes: ${total.toLocaleString("es-AR")}</p>
-        </div>
+        <h2 className="font-display text-sm font-semibold text-ink">Gastos fijos</h2>
         <div className="flex gap-2">
           <button
             onClick={() => setMostrarNuevo((v) => !v)}
@@ -195,6 +192,15 @@ export function GastosFijos({ sucursalId, mes, anio, catalogo, gastosDelMes }: P
             {generando ? "Generando..." : "Generar mes"}
           </button>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-edge bg-card p-5">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+          Total gastos fijos
+        </p>
+        <p className="font-display text-3xl font-semibold tabular-nums lining-nums text-ink">
+          ${total.toLocaleString("es-AR")}
+        </p>
       </div>
 
       {mensaje && <p className="text-xs text-ink-soft">{mensaje}</p>}
