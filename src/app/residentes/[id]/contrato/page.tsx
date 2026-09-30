@@ -366,7 +366,7 @@ export default async function ContratoResidentePage({
         </div>
 
         <p className="pt-6 text-center text-[0.65rem] text-ink-soft print:text-neutral-500">
-          Documento generado automáticamente el {ahora.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} a partir de
+          Documento generado automáticamente el {ahora.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })} a partir de
           los datos cargados en el legajo del residente. Sujeto a revisión y completamiento del
           ANEXO I (evaluación médica) antes de su firma.
         </p>

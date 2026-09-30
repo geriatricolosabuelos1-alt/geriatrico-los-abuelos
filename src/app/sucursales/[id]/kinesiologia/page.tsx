@@ -52,7 +52,7 @@ export default async function KinesiologiaSedePage({ params }: { params: Promise
 
   if (!sucursal || !perfil) notFound();
 
-  const mesActual = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" })
+  const mesActual = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Mendoza" })
     .format(new Date())
     .slice(0, 7);
 

@@ -11,7 +11,7 @@ set search_path = public
 as $$
   select case
     when f.tipo = 'ingreso'
-      and (f.fecha + f.hora) > (now() at time zone 'America/Argentina/Buenos_Aires') - interval '20 hours'
+      and (f.fecha + f.hora) > (now() at time zone 'America/Argentina/Mendoza') - interval '20 hours'
     then 'egreso'
     else 'ingreso'
   end

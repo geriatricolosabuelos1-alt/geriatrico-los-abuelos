@@ -2,7 +2,7 @@
 // toISOString() para "hoy" da el día siguiente a partir de las 21 hs. Argentina no tiene
 // horario de verano, así que el desfase es siempre -03:00.
 
-export const ZONA_ARGENTINA = "America/Argentina/Buenos_Aires";
+export const ZONA_ARGENTINA = "America/Argentina/Mendoza";
 const DESFASE = "-03:00";
 
 // Fecha de hoy en Argentina, formato AAAA-MM-DD.

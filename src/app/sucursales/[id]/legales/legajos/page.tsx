@@ -52,7 +52,7 @@ export default async function LegajosFoliadosPage({
         <section className="text-black">
           <h1 className="text-xl font-bold">Legajos de residentes — {sucursal.nombre}</h1>
           <p className="text-xs text-neutral-600">
-            Emitido el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} ·{" "}
+            Emitido el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })} ·{" "}
             {lista.length} residente{lista.length === 1 ? "" : "s"}
             {idsSeleccionados ? " seleccionado(s)" : " activo(s)"} · hojas foliadas en forma correlativa
           </p>

@@ -12,9 +12,9 @@ alter table public.interconsultas
 
 -- Las interconsultas viejas toman como fecha de pedido la de creacion
 update public.interconsultas
-set fecha_pedido = (created_at at time zone 'America/Argentina/Buenos_Aires')::date
+set fecha_pedido = (created_at at time zone 'America/Argentina/Mendoza')::date
 where fecha_pedido is null;
 
 -- Las nuevas toman la fecha de hoy si no se indica
 alter table public.interconsultas
-  alter column fecha_pedido set default ((now() at time zone 'America/Argentina/Buenos_Aires')::date);
+  alter column fecha_pedido set default ((now() at time zone 'America/Argentina/Mendoza')::date);

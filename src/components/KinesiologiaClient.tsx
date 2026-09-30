@@ -25,7 +25,7 @@ const OPCIONES_KINESIO = {
 };
 
 function hoy(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(new Date());
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Mendoza" }).format(new Date());
 }
 
 function Selector({ nombre, etiqueta, opciones }: { nombre: string; etiqueta: string; opciones: string[] }) {

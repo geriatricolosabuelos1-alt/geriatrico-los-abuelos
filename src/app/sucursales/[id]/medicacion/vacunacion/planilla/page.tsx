@@ -82,7 +82,7 @@ export default async function PlanillaVacunacionPage({ params }: { params: Promi
             Planilla de vacunación · {sucursal.nombre}
           </p>
           <p className="mt-1 text-xs text-ink-soft print:text-neutral-600">
-            Generada el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} · {(residentes ?? []).length} residentes
+            Generada el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })} · {(residentes ?? []).length} residentes
           </p>
         </div>
 

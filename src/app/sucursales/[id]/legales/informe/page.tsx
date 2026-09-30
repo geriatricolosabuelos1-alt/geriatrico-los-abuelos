@@ -113,7 +113,7 @@ export default async function InformeLegalesPage({ params }: { params: Promise<P
           <p className="text-[0.65rem] uppercase tracking-widest text-neutral-600">Documentación legal</p>
           <h1 className="text-xl font-bold">Residencia {sucursal.nombre}</h1>
           {sucursal.direccion && <p>{sucursal.direccion}</p>}
-          <p className="text-neutral-600">Emitido el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}</p>
+          <p className="text-neutral-600">Emitido el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}</p>
         </header>
 
         <Seccion titulo={`1. Habilitación (${presentados} de ${items.length} ítems presentados)`}>

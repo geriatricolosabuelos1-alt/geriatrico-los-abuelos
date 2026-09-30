@@ -27,7 +27,7 @@ const APORTES_DEPENDENCIA: { concepto: string; porcentaje: number }[] = [
 ];
 
 function periodoActual(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" })
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Mendoza" })
     .format(new Date())
     .slice(0, 7);
 }
@@ -88,7 +88,7 @@ export default async function ReciboSueldoPage({
     .eq("id", empleado.sucursal_id)
     .single<{ nombre: string; direccion: string | null }>();
 
-  const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(new Date());
+  const hoy = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Mendoza" }).format(new Date());
 
   return (
     <div className="flex min-h-screen w-full print:block">

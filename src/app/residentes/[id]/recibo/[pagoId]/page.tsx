@@ -99,7 +99,7 @@ export default async function ReciboPage({
             </p>
             <p className="mt-1 text-xs text-ink-soft print:text-neutral-600">Nº {numeroRecibo}</p>
             <p className="text-xs text-ink-soft print:text-neutral-600">
-              {ahora.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} · {ahora.toLocaleTimeString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}
+              {ahora.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })} · {ahora.toLocaleTimeString("es-AR", { timeZone: "America/Argentina/Mendoza" })}
             </p>
           </div>
         </div>

@@ -7,7 +7,7 @@ import type { EstadoDosis, MedicamentoResidente } from "@/lib/types";
 type Params = { id: string };
 type Busqueda = { tipo?: string; desde?: string; hasta?: string; residente?: string };
 
-const ZONA = "America/Argentina/Buenos_Aires";
+const ZONA = "America/Argentina/Mendoza";
 
 const ETIQUETA_ESTADO: Record<EstadoDosis, string> = {
   administrado: "Administrada",

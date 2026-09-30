@@ -12,7 +12,7 @@ const CAMPO =
 
 function ahoraArgentina(): { fecha: string; hora: string } {
   const partes = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Argentina/Buenos_Aires",
+    timeZone: "America/Argentina/Mendoza",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",

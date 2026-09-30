@@ -73,7 +73,7 @@ set search_path = public
 as $$
   select case
     when f.tipo = 'ingreso'
-      and (f.fecha + f.hora) > (now() at time zone 'America/Argentina/Buenos_Aires') - interval '20 hours'
+      and (f.fecha + f.hora) > (now() at time zone 'America/Argentina/Mendoza') - interval '20 hours'
     then 'egreso'
     else 'ingreso'
   end
@@ -104,12 +104,12 @@ alter table public.interconsultas
 
 -- Las interconsultas viejas toman como fecha de pedido la de creacion
 update public.interconsultas
-set fecha_pedido = (created_at at time zone 'America/Argentina/Buenos_Aires')::date
+set fecha_pedido = (created_at at time zone 'America/Argentina/Mendoza')::date
 where fecha_pedido is null;
 
 -- Las nuevas toman la fecha de hoy si no se indica
 alter table public.interconsultas
-  alter column fecha_pedido set default ((now() at time zone 'America/Argentina/Buenos_Aires')::date);
+  alter column fecha_pedido set default ((now() at time zone 'America/Argentina/Mendoza')::date);
 
 -- ===== emergencias.sql =====
 -- Registro de llamadas a emergencias (Area Protegida / prestador)

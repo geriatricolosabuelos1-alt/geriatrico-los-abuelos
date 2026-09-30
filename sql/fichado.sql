@@ -70,8 +70,8 @@ begin
   values (
     p_empleado_id,
     p_tipo,
-    (now() at time zone 'America/Argentina/Buenos_Aires')::date,
-    (now() at time zone 'America/Argentina/Buenos_Aires')::time
+    (now() at time zone 'America/Argentina/Mendoza')::date,
+    (now() at time zone 'America/Argentina/Mendoza')::time
   )
   returning fichadas.id, fichadas.tipo, fichadas.fecha, fichadas.hora
   into v_id, v_tipo, v_fecha, v_hora;

@@ -87,7 +87,7 @@ function crearResumen(datos: DatosCarpeta, conArchivo: Set<ItemCarpeta>): ArrayB
     {
       titulo: `Documentación legal · Residencia ${datos.sede}`,
       subtitulo: datos.direccion ?? undefined,
-      fecha: `Emitido el ${new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })}`,
+      fecha: `Emitido el ${new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}`,
     },
     secciones,
   );
