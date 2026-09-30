@@ -44,8 +44,14 @@ function Selector({ nombre, etiqueta, opciones }: { nombre: string; etiqueta: st
   );
 }
 
-export function FormularioEvaluacionKinesio({ residenteId }: { residenteId: string }) {
-  const [abierto, setAbierto] = useState(false);
+export function FormularioEvaluacionKinesio({
+  residenteId,
+  abrirInicial = false,
+}: {
+  residenteId: string;
+  abrirInicial?: boolean;
+}) {
+  const [abierto, setAbierto] = useState(abrirInicial);
   const accion = guardarEvaluacionKinesio.bind(null, residenteId);
   const [estado, formAction, enviando] = useActionState(async (prev: Estado, fd: FormData) => {
     const r = await accion(prev, fd);

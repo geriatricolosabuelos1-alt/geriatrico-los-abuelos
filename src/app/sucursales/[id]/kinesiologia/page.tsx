@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
+import { TarjetaAccesoKinesio } from "@/components/TarjetaAccesoKinesio";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
@@ -69,6 +70,23 @@ export default async function KinesiologiaSedePage({ params }: { params: Promise
           <p className="mt-1 text-sm text-ink-soft">
             Evaluación inicial y sesiones de cada residente. Elegí un residente para cargar.
           </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <TarjetaAccesoKinesio
+            titulo="Evaluación"
+            subtitulo="Evaluación kinésica inicial o reevaluación de un residente."
+            residentes={residentes ?? []}
+            destino={(residenteId) => `/residentes/${residenteId}/kinesiologia?foco=evaluacion#evaluaciones`}
+            color="azul"
+          />
+          <TarjetaAccesoKinesio
+            titulo="Evolución"
+            subtitulo="Registrar la sesión de hoy: trabajo realizado y tolerancia."
+            residentes={residentes ?? []}
+            destino={(residenteId) => `/residentes/${residenteId}/kinesiologia#sesiones`}
+            color="ambar"
+          />
         </div>
 
         <div className="overflow-x-auto rounded-2xl border border-edge bg-card">

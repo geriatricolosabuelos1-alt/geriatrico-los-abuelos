@@ -12,6 +12,7 @@ import { calcularEdad } from "@/lib/residentes";
 import type { EvaluacionKinesiologia, Perfil, SesionKinesiologia } from "@/lib/types";
 
 type Params = { id: string };
+type SearchParams = { foco?: string };
 
 function formatearFecha(fecha: string | null): string {
   return fecha ? new Date(fecha + "T00:00:00").toLocaleDateString("es-AR") : "—";
@@ -29,8 +30,15 @@ function Dato({ etiqueta, valor }: { etiqueta: string; valor: string | number | 
   );
 }
 
-export default async function KinesiologiaResidentePage({ params }: { params: Promise<Params> }) {
+export default async function KinesiologiaResidentePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<Params>;
+  searchParams: Promise<SearchParams>;
+}) {
   const { id } = await params;
+  const { foco } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -130,11 +138,11 @@ export default async function KinesiologiaResidentePage({ params }: { params: Pr
           </div>
         </div>
 
-        <section className="space-y-3">
+        <section id="evaluaciones" className="scroll-mt-6 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold text-ink print:text-black">Evaluaciones</h2>
           </div>
-          <FormularioEvaluacionKinesio residenteId={id} />
+          <FormularioEvaluacionKinesio residenteId={id} abrirInicial={foco === "evaluacion"} />
 
           {(evaluaciones ?? []).map((e, i) => (
             <article
@@ -182,7 +190,7 @@ export default async function KinesiologiaResidentePage({ params }: { params: Pr
           )}
         </section>
 
-        <section className="space-y-3">
+        <section id="sesiones" className="scroll-mt-6 space-y-3">
           <h2 className="font-display text-lg font-semibold text-ink print:text-black">
             Sesiones ({(sesiones ?? []).length})
           </h2>
