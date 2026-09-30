@@ -277,7 +277,7 @@ async function guardarEnCatalogo(
     .upsert({ nombre, dosis }, { onConflict: "nombre,dosis", ignoreDuplicates: true });
 }
 
-export type MedicamentoEstado = { error: string | null };
+export type MedicamentoEstado = { error: string | null; guardado?: boolean };
 
 function parsearHorarios(valor: FormDataEntryValue | null): string[] | null {
   const texto = String(valor ?? "").trim();
@@ -367,7 +367,7 @@ export async function actualizarPrescripcion(
     return { error: "Falta el nombre del medicamento." };
   }
 
-  const { error } = await supabase
+  const { data: actualizados, error } = await supabase
     .from("medicamentos_residente")
     .update({
       nombre,
@@ -383,16 +383,21 @@ export async function actualizarPrescripcion(
       sin_seguimiento_stock,
       updated_at: new Date().toISOString(),
     })
-    .eq("id", medicamentoId);
+    .eq("id", medicamentoId)
+    .select("id");
 
   if (error) {
     return { error: error.message };
   }
+  if (!actualizados || actualizados.length === 0) {
+    return { error: "No tenés permiso para modificar esta medicación." };
+  }
 
   await guardarEnCatalogo(supabase, nombre, dosis);
 
-  revalidatePath(`/residentes/${residenteId}/legajo`);
-  return { error: null };
+  // El nombre se muestra en el legajo, la medicación de la sede, el MAR y acción médica.
+  revalidatePath("/", "layout");
+  return { error: null, guardado: true };
 }
 
 export type AjustarStockEstado = { error: string | null };

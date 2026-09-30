@@ -476,12 +476,14 @@ function FormularioPrescripcion({
   const idNombre = `nombre-${medicamento.id}`;
   const idDosis = `dosis-${medicamento.id}`;
 
+  // Se cierra solo si guardó bien; si hubo error queda abierto mostrándolo.
+  useEffect(() => {
+    if (estado.guardado) onCerrar();
+  }, [estado, onCerrar]);
+
   return (
     <form
-      action={async (formData) => {
-        await formAction(formData);
-        onCerrar();
-      }}
+      action={formAction}
       className="mt-2 flex flex-wrap items-end gap-2 rounded-lg border border-edge bg-panel-deep p-3"
     >
       <input type="hidden" name="medicamento_id" value={medicamento.id} />
@@ -493,7 +495,7 @@ function FormularioPrescripcion({
           required
           value={nombre}
           onChange={(e) => setNombre(e.target.value)}
-          className="w-32 rounded-lg border border-edge bg-panel px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
+          className="w-48 rounded-lg border border-edge bg-panel px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
         />
         <datalist id={idNombre}>
           {nombresConocidos.map((n) => (
@@ -618,7 +620,7 @@ function FormularioPrescripcion({
         disabled={enviando}
         className="rounded-lg bg-brass px-3 py-1.5 text-xs font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
       >
-        {enviando ? "Guardando..." : "Guardar prescripción"}
+        {enviando ? "Guardando..." : "Guardar cambios"}
       </button>
       <button type="button" onClick={onCerrar} className="text-xs text-ink-soft hover:text-ink">
         Cancelar
@@ -695,7 +697,7 @@ function FilaMedicamento({
               onClick={() => alternar("prescripcion")}
               className="text-xs text-brass hover:text-ink"
             >
-              Prescripción
+              Editar
             </button>
             <button
               type="button"
