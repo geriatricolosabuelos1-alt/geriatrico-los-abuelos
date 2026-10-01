@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { avisarOmitidos, limpiarSeccionesPdf } from "@/lib/impresion";
 import type { PlanillaResidente } from "@/app/sucursales/[id]/enfermeria/actions";
 
 function fechaCorta(fecha: string): string {
@@ -25,8 +26,45 @@ export function generarSignosVitalesPdf(planillas: PlanillaResidente[], desde: s
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const dias = diasDelPeriodo(desde, hasta);
   const periodo = desde === hasta ? fechaCorta(desde) : `del ${fechaCorta(desde)} al ${fechaCorta(hasta)}`;
+  const columnas = ["FECHA", "TA", "FC", "FR", "SO2", "T°", "OBSERVACIONES"];
 
-  planillas.forEach((p, indice) => {
+  // Regla de Medicina: no salen los días sin control, las columnas vacías ni los residentes sin datos.
+  const omitidos: string[] = [];
+  let diasSinControl = 0;
+  const conDatos = planillas
+    .map((p) => {
+      const porFecha = new Map(p.registros.map((r) => [r.fecha, r]));
+      const filas = dias.map((d) => {
+        const r = porFecha.get(d);
+        return [
+          fechaCorta(d),
+          r?.tension_arterial ?? "",
+          r?.frecuencia_cardiaca ?? "",
+          r?.frecuencia_respiratoria ?? "",
+          r?.saturacion_o2 != null ? `${r.saturacion_o2}%` : "",
+          r?.temperatura != null ? `${r.temperatura}°` : "",
+          r?.observaciones ?? "",
+        ];
+      });
+      const limpio = limpiarSeccionesPdf([{ columnas, filas }]);
+      const tabla = limpio.secciones[0];
+      diasSinControl += filas.length - (tabla?.filas.length ?? 0);
+      if (!tabla) omitidos.push(`${p.nombre}: sin controles en el período`);
+      else omitidos.push(...limpio.omitidos.filter((o) => columnas.includes(o)).map((o) => `Columna "${o}" (${p.nombre})`));
+      return { p, tabla };
+    })
+    .filter((x) => x.tabla);
+
+  if (diasSinControl > 0) omitidos.unshift(`${diasSinControl} día${diasSinControl === 1 ? "" : "s"} sin control`);
+  avisarOmitidos(omitidos, "PDF");
+
+  if (conDatos.length === 0) {
+    doc.setFontSize(12);
+    doc.text(`Sin controles de signos vitales ${periodo}.`, 40, 60);
+    return doc.output("blob");
+  }
+
+  conDatos.forEach(({ p, tabla }, indice) => {
     if (indice > 0) doc.addPage();
     const ancho = doc.internal.pageSize.getWidth();
 
@@ -37,31 +75,22 @@ export function generarSignosVitalesPdf(planillas: PlanillaResidente[], desde: s
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.text(`NOMBRE Y APELLIDO: ${p.nombre}`, 40, 80);
-    doc.text(`EDAD: ${p.edad ?? "—"}`, ancho - 140, 80);
-    doc.text(`OBRA SOCIAL: ${p.obraSocial ?? "—"}`, 40, 98);
+    if (p.edad !== null) doc.text(`EDAD: ${p.edad}`, ancho - 140, 80);
+    if (p.obraSocial) doc.text(`OBRA SOCIAL: ${p.obraSocial}`, 40, 98);
     doc.text(`${p.sede} · ${periodo}`, ancho - 40, 98, { align: "right" });
 
-    const porFecha = new Map(p.registros.map((r) => [r.fecha, r]));
-    const filas = dias.map((d) => {
-      const r = porFecha.get(d);
-      return [
-        fechaCorta(d),
-        r?.tension_arterial ?? "",
-        r?.frecuencia_cardiaca ?? "",
-        r?.frecuencia_respiratoria ?? "",
-        r?.saturacion_o2 != null ? `${r.saturacion_o2}%` : "",
-        r?.temperatura != null ? `${r.temperatura}°` : "",
-      ];
-    });
-
+    const conObservaciones = tabla!.columnas.includes("OBSERVACIONES");
     autoTable(doc, {
       startY: 112,
-      head: [["FECHA", "TA", "FC", "FR", "SO2", "T°"]],
-      body: filas,
+      head: [tabla!.columnas],
+      body: tabla!.filas,
       theme: "grid",
       styles: { fontSize: 9, cellPadding: 3.5, halign: "center", lineColor: [0, 0, 0], lineWidth: 0.5, textColor: 0 },
       headStyles: { fillColor: [255, 255, 255], textColor: 0, fontStyle: "bold" },
-      columnStyles: { 0: { cellWidth: 72 } },
+      columnStyles: {
+        0: { cellWidth: 64 },
+        ...(conObservaciones ? { [tabla!.columnas.length - 1]: { halign: "left", cellWidth: 150 } } : {}),
+      },
       margin: { left: 40, right: 40 },
     });
   });

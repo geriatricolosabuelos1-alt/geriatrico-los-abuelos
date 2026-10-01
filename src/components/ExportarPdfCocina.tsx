@@ -38,6 +38,7 @@ export function ExportarPdfCocina({ sucursalNombre, filas }: Props) {
           ]),
         },
       ],
+      { omitirVacios: true },
     );
   }
 

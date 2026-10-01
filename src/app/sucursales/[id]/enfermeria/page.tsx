@@ -51,7 +51,7 @@ export default async function EnfermeriaSedePage({
   const { data: registros } = lista.length
     ? await supabase
         .from("signos_vitales")
-        .select("residente_id, fecha, tension_arterial, frecuencia_cardiaca, frecuencia_respiratoria, saturacion_o2, temperatura")
+        .select("residente_id, fecha, tension_arterial, frecuencia_cardiaca, frecuencia_respiratoria, saturacion_o2, temperatura, observaciones")
         .eq("fecha", fecha)
         .in(
           "residente_id",

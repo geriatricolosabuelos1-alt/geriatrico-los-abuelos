@@ -41,7 +41,7 @@ function fecha(valor: string | null | undefined): string {
 
 function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <section className="mt-5">
+    <section className="mt-5" data-seccion={titulo}>
       <h3 className="mb-2 border-b border-black pb-0.5 text-[0.8rem] font-bold uppercase tracking-wide">{titulo}</h3>
       {children}
     </section>
@@ -50,9 +50,9 @@ function Seccion({ titulo, children }: { titulo: string; children: React.ReactNo
 
 function Campo({ etiqueta, valor }: { etiqueta: string; valor: string | number | null | undefined }) {
   return (
-    <p>
+    <p data-campo={etiqueta}>
       <span className="font-semibold">{etiqueta}:</span>{" "}
-      {valor === null || valor === undefined || valor === "" ? "—" : valor}
+      <span data-valor>{valor === null || valor === undefined || valor === "" ? "—" : valor}</span>
     </p>
   );
 }
@@ -342,7 +342,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
 
       <Seccion titulo="9. Enfermería · Control de signos vitales">
         <Tabla
-          columnas={["Fecha", "TA", "FC", "FR", "SO2", "T°"]}
+          columnas={["Fecha", "TA", "FC", "FR", "SO2", "T°", "Observaciones"]}
           filas={(signosVitales ?? []).map((s) => [
             fecha(s.fecha),
             s.tension_arterial,
@@ -350,6 +350,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
             s.frecuencia_respiratoria,
             s.saturacion_o2 === null ? null : `${s.saturacion_o2}%`,
             s.temperatura === null ? null : `${s.temperatura}°`,
+            s.observaciones,
           ])}
         />
       </Seccion>

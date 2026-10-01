@@ -73,7 +73,7 @@ export default async function PlanillaVacunacionPage({ params }: { params: Promi
           >
             ← Volver a vacunación
           </Link>
-          <BotonExportarPdf />
+          <BotonExportarPdf omitirVacios />
         </div>
 
         <div className="mb-5">
