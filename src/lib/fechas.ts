@@ -33,3 +33,14 @@ export function diasHastaFecha(fecha: string): number {
   };
   return Math.round((utc(fecha) - utc(hoyArgentina())) / 86_400_000);
 }
+
+const NOMBRES_MES = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
+// "2026-10" -> "octubre 2026"
+export function nombreMes(mes: string): string {
+  const [anio, m] = mes.split("-").map(Number);
+  return `${NOMBRES_MES[m - 1]} ${anio}`;
+}
