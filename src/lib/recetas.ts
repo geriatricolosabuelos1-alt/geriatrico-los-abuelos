@@ -62,14 +62,18 @@ export function telefonoWhatsapp(telefono: string | null): string | null {
   return d.length === 10 ? `549${d}` : null;
 }
 
+// "EDITH 1" -> "Edith 1"
+function nombreSede(sede: string): string {
+  return sede.toLowerCase().replace(/(^|\s)\p{L}/gu, (l) => l.toUpperCase());
+}
+
 export function mensajePedidoReceta(datos: {
   contacto: string | null;
+  sede: string;
   residente: string;
   medicamento: string | null;
-  obraSocial: string | null;
 }): string {
-  const saludo = datos.contacto ? `Hola ${datos.contacto.split(/\s+/)[0]}` : "Hola";
-  const que = datos.medicamento ? `la receta de *${datos.medicamento}*` : "una receta";
-  const os = datos.obraSocial ? ` (${datos.obraSocial})` : "";
-  return `${saludo}, te escribimos de la residencia Los Abuelos. Necesitamos que nos hagas llegar ${que} para ${datos.residente}${os}. ¡Muchas gracias!`;
+  const saludo = datos.contacto ? `Hola ${datos.contacto.trim()}` : "Hola";
+  const que = datos.medicamento ? `la receta de ${datos.medicamento}` : "una receta";
+  return `${saludo}, te escribimos de la residencia ${nombreSede(datos.sede)}. Necesitamos que nos hagas llegar ${que} para ${datos.residente}. Muchas gracias`;
 }
