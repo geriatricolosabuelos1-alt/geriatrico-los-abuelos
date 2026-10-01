@@ -7,6 +7,7 @@ import {
   type ActualizarHabilitacionEstado,
   type DocumentoConUrl,
 } from "@/app/sucursales/[id]/legales/habilitacion/actions";
+import { BotonMailDocumentos } from "@/components/BotonMailDocumentos";
 import type { ItemHabilitacion } from "@/lib/types";
 
 type Props = {
@@ -128,6 +129,13 @@ function FilaItem({
           >
             {actualizado ? "Actualizado" : "Sin documentación"}
           </span>
+          {documento?.archivo_url && (
+            <BotonMailDocumentos
+              sucursalId={sucursalId}
+              documentoId={documento.id}
+              etiqueta="Enviar por mail"
+            />
+          )}
           <button
             type="button"
             onClick={() => setEditando((v) => !v)}
