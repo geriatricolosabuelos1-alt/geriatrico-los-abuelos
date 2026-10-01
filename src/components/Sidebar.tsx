@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { cerrarSesion } from "@/app/actions";
-import { ETIQUETA_ROL } from "@/lib/roles";
+import { ETIQUETA_ROL, inicioMedicina, veTodasLasSedes } from "@/lib/roles";
 import { puedeVerSeguridad } from "@/lib/auditoria";
 import { SidebarIcon, type SidebarIconName } from "@/components/SidebarIcons";
 import type { CategoriaInsumo, Perfil, RolUsuario, Sucursal } from "@/lib/types";
@@ -42,7 +42,7 @@ const ETIQUETA_CATEGORIA_INVENTARIO: Record<CategoriaInsumo, string> = {
 
 const ORDEN_CATEGORIAS_INVENTARIO: CategoriaInsumo[] = ["medicos", "varios"];
 
-// Nutricionista solo ve Nutricion: no entra a la lista general de Residentes.
+// Nutricionista y kinesiologo solo ven su especialidad: no entran a la lista general de Residentes.
 const ROLES_RESIDENTES: RolUsuario[] = [
   "admin",
   "gerente_sede",
@@ -50,7 +50,6 @@ const ROLES_RESIDENTES: RolUsuario[] = [
   "enfermero",
   "cuidador",
   "medico",
-  "kinesiologo",
 ];
 const ROLES_MEDICACION: RolUsuario[] = [
   "admin",
@@ -191,8 +190,7 @@ export async function Sidebar({ perfil, activo }: Props) {
   ]);
   const verSeguridad = puedeVerSeguridad(cuenta?.usuario);
 
-  const esAdmin = perfil.rol === "admin";
-  const sucursalesVisibles = esAdmin
+  const sucursalesVisibles = veTodasLasSedes(perfil.rol)
     ? (todasSucursales ?? [])
     : (todasSucursales ?? []).filter((s) => s.id === perfil.sucursal_id);
 
@@ -234,7 +232,7 @@ export async function Sidebar({ perfil, activo }: Props) {
             Administrativa
           </Link>
           <Link
-            href={sucursalMedicina ? `/sucursales/${sucursalMedicina}/residentes?vista=medicina` : "#"}
+            href={sucursalMedicina ? inicioMedicina(perfil.rol, sucursalMedicina) : "#"}
             className={`flex-1 rounded-md py-1.5 text-center ${
               areaActual === "medicina"
                 ? "bg-tab text-ink"
