@@ -160,18 +160,23 @@ export default function LoginPage() {
               {vista.empleado.nombre_completo}
             </p>
             <div className="grid grid-cols-1 gap-3 pt-2">
-              <button
-                onClick={() => handleMarcar("ingreso", vista.empleado)}
-                className="rounded-xl bg-green-700 px-4 py-5 text-base font-bold text-white hover:bg-green-600"
-              >
-                Marcar ingreso
-              </button>
-              <button
-                onClick={() => handleMarcar("egreso", vista.empleado)}
-                className="rounded-xl bg-red-700 px-4 py-5 text-base font-bold text-white hover:bg-red-600"
-              >
-                Marcar egreso
-              </button>
+              {/* Después de un ingreso solo se ofrece la salida (y viceversa), igual que en /fichado. */}
+              {vista.empleado.proximo !== "egreso" && (
+                <button
+                  onClick={() => handleMarcar("ingreso", vista.empleado)}
+                  className="rounded-xl bg-green-700 px-4 py-5 text-base font-bold text-white hover:bg-green-600"
+                >
+                  Marcar ingreso
+                </button>
+              )}
+              {vista.empleado.proximo !== "ingreso" && (
+                <button
+                  onClick={() => handleMarcar("egreso", vista.empleado)}
+                  className="rounded-xl bg-red-700 px-4 py-5 text-base font-bold text-white hover:bg-red-600"
+                >
+                  Marcar salida
+                </button>
+              )}
             </div>
             <button
               onClick={() => {
