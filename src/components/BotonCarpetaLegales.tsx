@@ -23,8 +23,12 @@ export function BotonCarpetaLegales({ sucursalId }: { sucursalId: string }) {
       enlace.download = nombreArchivo;
       enlace.click();
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
-    } catch {
-      setError("No se pudo armar el PDF. Probá de nuevo.");
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message === "sin archivos"
+          ? "No hay archivos cargados para descargar."
+          : "No se pudo armar el PDF. Probá de nuevo.",
+      );
     } finally {
       setProgreso(null);
     }
@@ -40,7 +44,7 @@ export function BotonCarpetaLegales({ sucursalId }: { sucursalId: string }) {
       >
         {progreso ?? "Sacar todo junto (PDF)"}
       </button>
-      <p className="text-[0.65rem] text-ink-soft">Resumen + todos los documentos cargados, foliado</p>
+      <p className="text-[0.65rem] text-ink-soft">Todos los archivos cargados en un solo PDF, foliado</p>
       {error && <p className="text-xs text-red-700">{error}</p>}
     </div>
   );
