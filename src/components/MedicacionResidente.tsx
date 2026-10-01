@@ -120,6 +120,7 @@ function EditorStock({
         type="number"
         name="cantidad_stock"
         min={0}
+        step="0.25"
         value={valor}
         onChange={(e) => setValor(Number(e.target.value))}
         className="w-16 rounded-lg border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none"
@@ -174,7 +175,8 @@ function FormularioIngreso({
         <input
           type="number"
           name="cantidad"
-          min={1}
+          min={0.25}
+          step="0.25"
           required
           defaultValue={ingreso?.cantidad ?? undefined}
           className="w-24 rounded-lg border border-edge bg-panel px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
@@ -250,7 +252,8 @@ function FormularioDosis({
         <input
           type="number"
           name="cantidad"
-          min={1}
+          min={0.25}
+          step="0.25"
           required
           defaultValue={dosis.cantidad}
           className="w-20 rounded-lg border border-edge bg-panel px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
@@ -936,6 +939,8 @@ export function MedicacionResidente({
           <input
             type="number"
             name="cantidad_stock"
+            min={0}
+            step="0.25"
             defaultValue={0}
             className="w-24 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none"
           />
