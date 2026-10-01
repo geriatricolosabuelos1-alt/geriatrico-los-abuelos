@@ -13,11 +13,31 @@ import {
   tienePinConfigurado,
 } from "@/app/residentes/[id]/accion-medica/actions";
 import { listarInterconsultasCompletas } from "@/app/residentes/[id]/accion-medica/interconsultas-actions";
+import {
+  listarEvaluacionesMedicas,
+  listarIndicacionesMedicas,
+} from "@/app/residentes/[id]/accion-medica/evaluacion-actions";
 import { InterconsultasResidente } from "@/components/InterconsultasResidente";
+import { EvaluacionMedicaForm } from "@/components/EvaluacionMedicaForm";
+import { IndicacionesMedicasForm } from "@/components/IndicacionesMedicasForm";
+import { HistorialEvaluacionesMedicas } from "@/components/HistorialEvaluacionesMedicas";
+import { HistorialIndicacionesMedicas } from "@/components/HistorialIndicacionesMedicas";
+import { ExportarPdfEvaluacionMedica } from "@/components/ExportarPdfEvaluacionMedica";
+import { calcularEdad } from "@/lib/residentes";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
-type ResidenteBasico = { id: string; nombre: string; apellido: string; sucursal_id: string; habitacion: string | null };
+type ResidenteBasico = {
+  id: string;
+  nombre: string;
+  apellido: string;
+  sucursal_id: string;
+  habitacion: string | null;
+  dni: string | null;
+  fecha_nacimiento: string | null;
+  sucursales: { nombre: string } | null;
+  ficha_administrativa: { obra_social: string | null; numero_afiliado: string | null } | null;
+};
 
 export default async function AccionMedicaResidentePage({ params }: { params: Promise<Params> }) {
   const { id } = await params;
@@ -35,7 +55,9 @@ export default async function AccionMedicaResidentePage({ params }: { params: Pr
 
   const { data: residente } = await supabase
     .from("residentes")
-    .select("id, nombre, apellido, sucursal_id, habitacion")
+    .select(
+      "id, nombre, apellido, sucursal_id, habitacion, dni, fecha_nacimiento, sucursales(nombre), ficha_administrativa(obra_social, numero_afiliado)",
+    )
     .eq("id", id)
     .single<ResidenteBasico>();
 
@@ -53,8 +75,17 @@ export default async function AccionMedicaResidentePage({ params }: { params: Pr
   const indiceActual = orden.indexOf(id);
   const siguienteId = indiceActual >= 0 && indiceActual < orden.length - 1 ? orden[indiceActual + 1] : null;
 
-  const [evoluciones, kardex, catalogo, interconsultas, cambios, pinConfigurado, interconsultasCompletas] =
-    await Promise.all([
+  const [
+    evoluciones,
+    kardex,
+    catalogo,
+    interconsultas,
+    cambios,
+    pinConfigurado,
+    interconsultasCompletas,
+    evaluacionesMedicas,
+    indicacionesMedicas,
+  ] = await Promise.all([
     listarEvolucionesMedicas(id),
     listarKardexResidente(id),
     listarCatalogo(),
@@ -62,7 +93,11 @@ export default async function AccionMedicaResidentePage({ params }: { params: Pr
     listarCambiosRecientes(id),
     tienePinConfigurado(),
     listarInterconsultasCompletas(id),
+    listarEvaluacionesMedicas(id),
+    listarIndicacionesMedicas(id),
   ]);
+
+  const edad = calcularEdad(residente.fecha_nacimiento);
 
   return (
     <div className="flex min-h-screen w-full">
@@ -100,6 +135,34 @@ export default async function AccionMedicaResidentePage({ params }: { params: Pr
             interconsultas={interconsultasCompletas}
             puedeEliminar={perfil!.rol !== "medico"}
           />
+
+          <div className="rounded-2xl border border-edge bg-panel p-5">
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <h2 className="font-display text-lg font-semibold text-ink">Evaluación médica</h2>
+              <ExportarPdfEvaluacionMedica
+                residenteNombre={`${residente.apellido}, ${residente.nombre}`}
+                sede={residente.sucursales?.nombre ?? ""}
+                dni={residente.dni}
+                edad={edad}
+                fechaNacimiento={residente.fecha_nacimiento}
+                obraSocial={residente.ficha_administrativa?.obra_social ?? null}
+                afiliado={residente.ficha_administrativa?.numero_afiliado ?? null}
+                evaluacion={evaluacionesMedicas[0] ?? null}
+                indicacion={indicacionesMedicas[0] ?? null}
+              />
+            </div>
+
+            <div className="space-y-4">
+              <EvaluacionMedicaForm residenteId={id} pinConfigurado={pinConfigurado} />
+              <IndicacionesMedicasForm
+                residenteId={id}
+                pinConfigurado={pinConfigurado}
+                ultimaIndicacion={indicacionesMedicas[0] ?? null}
+              />
+              <HistorialEvaluacionesMedicas evaluaciones={evaluacionesMedicas} />
+              <HistorialIndicacionesMedicas indicaciones={indicacionesMedicas} />
+            </div>
+          </div>
         </div>
       </main>
     </div>

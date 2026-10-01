@@ -130,6 +130,62 @@ export interface EvolucionMedica {
   created_at: string;
 }
 
+export type EstadoConciencia = "Vigil" | "Somnoliento" | "Obnubilado" | "Estuporoso";
+export type ViaAlimentacionMedica = "Vía oral" | "Nasogástrica" | "Gastrostoma";
+export type ConsistenciaAlimento = "Normal" | "Modificada" | "Blanda" | "Triturada" | "Líq. espesa";
+export type MarchaMovilidad =
+  | "Deambula independiente"
+  | "Utiliza bastón"
+  | "Utiliza andador"
+  | "Utiliza silla de ruedas"
+  | "No deambula";
+export type ControlUrinario = "Continente urinario" | "Incontinencia urinaria" | "Usa pañal";
+export type ControlFecal = "Continente fecal" | "Incontinencia fecal";
+
+export interface EvaluacionMedica {
+  id: string;
+  residente_id: string;
+  fecha: string;
+  antecedentes: string | null;
+  estado_conciencia: EstadoConciencia | null;
+  orientacion: string[];
+  obs_orientacion: string | null;
+  alimentacion: ViaAlimentacionMedica | null;
+  consistencia: ConsistenciaAlimento | null;
+  obs_alimentacion: string | null;
+  marcha_movilidad: MarchaMovilidad | null;
+  control_urinario: ControlUrinario | null;
+  control_fecal: ControlFecal | null;
+  obs_esfinteres: string | null;
+  conducta: string | null;
+  firmado_por: string | null;
+  matricula: string | null;
+  firmado_at: string;
+  created_at: string;
+}
+
+export interface ItemIndicacionMedica {
+  medicacion: string;
+  mg: string;
+  cantidad: string;
+  h8: boolean;
+  h12: boolean;
+  h20: boolean;
+}
+
+export interface IndicacionMedica {
+  id: string;
+  residente_id: string;
+  periodo_desde: string;
+  periodo_hasta: string;
+  items: ItemIndicacionMedica[];
+  observaciones: string | null;
+  firmado_por: string | null;
+  matricula: string | null;
+  firmado_at: string;
+  created_at: string;
+}
+
 export interface EvolucionMedicaAddenda {
   id: string;
   evolucion_id: string;

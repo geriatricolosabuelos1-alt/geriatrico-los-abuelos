@@ -62,7 +62,7 @@ export async function tienePinConfigurado(): Promise<boolean> {
   return !!data?.pin_seguridad_hash;
 }
 
-async function validarOConfigurarPin(pin: string): Promise<Estado> {
+export async function validarOConfigurarPin(pin: string): Promise<Estado> {
   const supabase = await createClient();
   const {
     data: { user },
