@@ -20,9 +20,15 @@ const ETIQUETA_CATEGORIA: Record<CategoriaInsumo, string> = {
 
 const ORDEN_CATEGORIAS: CategoriaInsumo[] = ["medicos", "varios"];
 
+type InsumoNuevo = { clave: number; nombre: string; categoria: CategoriaInsumo; unidad: string; cantidad: string };
+
+const CAMPO_CHICO =
+  "rounded-md border border-edge bg-panel-deep px-2 py-1 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
+
 export function CargaInicialForm({ sucursalId, insumos }: Props) {
   const router = useRouter();
   const [cantidades, setCantidades] = useState<Record<string, string>>({});
+  const [nuevos, setNuevos] = useState<InsumoNuevo[]>([]);
   const [busqueda, setBusqueda] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [estado, setEstado] = useState<CargaInicialEstado>({ error: null, guardado: false });
@@ -33,7 +39,20 @@ export function CargaInicialForm({ sucursalId, insumos }: Props) {
     return insumos.filter((i) => i.nombre.toLowerCase().includes(texto));
   }, [insumos, busqueda]);
 
-  const cantidadCargadas = Object.values(cantidades).filter((v) => Number(v) > 0).length;
+  const nuevosValidos = nuevos.filter((n) => n.nombre.trim() && Number(n.cantidad) > 0);
+  const cantidadCargadas =
+    Object.values(cantidades).filter((v) => Number(v) > 0).length + nuevosValidos.length;
+
+  function agregarNuevo() {
+    setNuevos((prev) => [
+      ...prev,
+      { clave: Date.now(), nombre: "", categoria: "medicos", unidad: "unidades", cantidad: "" },
+    ]);
+  }
+
+  function cambiarNuevo(clave: number, cambios: Partial<InsumoNuevo>) {
+    setNuevos((prev) => prev.map((n) => (n.clave === clave ? { ...n, ...cambios } : n)));
+  }
 
   async function manejarSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -46,6 +65,17 @@ export function CargaInicialForm({ sucursalId, insumos }: Props) {
 
     const formData = new FormData();
     formData.set("items", JSON.stringify(items));
+    formData.set(
+      "nuevos",
+      JSON.stringify(
+        nuevosValidos.map((n) => ({
+          nombre: n.nombre.trim(),
+          categoria: n.categoria,
+          unidad: n.unidad,
+          cantidad: Number(n.cantidad),
+        })),
+      ),
+    );
 
     const resultado = await cargarStockInicial(sucursalId, { error: null, guardado: false }, formData);
     setEnviando(false);
@@ -129,6 +159,71 @@ export function CargaInicialForm({ sucursalId, insumos }: Props) {
       {filtrados.length === 0 && (
         <p className="text-sm text-ink-soft">Ningún insumo coincide con la búsqueda.</p>
       )}
+
+      <div className="rounded-2xl border border-edge bg-card p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft">
+              Insumos que no están en la lista
+            </p>
+            <p className="text-xs text-ink-soft">Se agregan al catálogo con la cantidad que cargues.</p>
+          </div>
+          <button
+            type="button"
+            onClick={agregarNuevo}
+            className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink hover:border-brass"
+          >
+            + Agregar insumo nuevo
+          </button>
+        </div>
+        {nuevos.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {nuevos.map((n) => (
+              <div key={n.clave} className="flex flex-wrap items-center gap-2">
+                <input
+                  value={n.nombre}
+                  onChange={(e) => cambiarNuevo(n.clave, { nombre: e.target.value })}
+                  placeholder="Nombre (ej: Gasas estériles)"
+                  className={`${CAMPO_CHICO} min-w-[200px] flex-1`}
+                />
+                <select
+                  value={n.categoria}
+                  onChange={(e) => cambiarNuevo(n.clave, { categoria: e.target.value as CategoriaInsumo })}
+                  className={CAMPO_CHICO}
+                >
+                  {ORDEN_CATEGORIAS.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {ETIQUETA_CATEGORIA[cat]}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  value={n.unidad}
+                  onChange={(e) => cambiarNuevo(n.clave, { unidad: e.target.value })}
+                  placeholder="Unidad"
+                  className={`${CAMPO_CHICO} w-28`}
+                />
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={n.cantidad}
+                  onChange={(e) => cambiarNuevo(n.clave, { cantidad: e.target.value })}
+                  placeholder="Cantidad"
+                  className={`${CAMPO_CHICO} w-28`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setNuevos((prev) => prev.filter((x) => x.clave !== n.clave))}
+                  className="text-xs text-red-700 hover:text-red-500"
+                >
+                  Quitar
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className="flex justify-end">
         <button
