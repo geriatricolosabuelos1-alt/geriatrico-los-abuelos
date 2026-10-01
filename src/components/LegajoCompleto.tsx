@@ -99,6 +99,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
     { data: evalKinesio },
     { data: sesionesKinesio },
     { data: signosVitales },
+    { data: movimientosInsumos },
     { data: dieta },
     { data: restricciones },
     { data: documentos },
@@ -145,6 +146,14 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
       .eq("residente_id", residenteId)
       .order("fecha")
       .returns<SignosVitales[]>(),
+    supabase
+      .from("movimientos_inventario")
+      .select("fecha, tipo, cantidad, insumos(nombre, unidad)")
+      .eq("residente_id", residenteId)
+      .order("fecha")
+      .returns<
+        { fecha: string; tipo: string; cantidad: number; insumos: { nombre: string; unidad: string } | null }[]
+      >(),
     supabase
       .from("prescripcion_dietaria")
       .select("*")
@@ -344,7 +353,19 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
         />
       </Seccion>
 
-      <Seccion titulo="10. Emergencias">
+      <Seccion titulo="10. Insumos (aportados por la familia y consumidos)">
+        <Tabla
+          columnas={["Fecha", "Movimiento", "Insumo", "Cantidad"]}
+          filas={(movimientosInsumos ?? []).map((m) => [
+            fecha(m.fecha),
+            m.tipo === "entrada" ? "Aportado" : "Consumido",
+            m.insumos?.nombre ?? null,
+            `${m.cantidad} ${m.insumos?.unidad ?? ""}`.trim(),
+          ])}
+        />
+      </Seccion>
+
+      <Seccion titulo="11. Emergencias">
         <Tabla
           columnas={["Fecha", "Hora", "Prestador", "Motivo", "Traslado", "Satisfactoria"]}
           filas={(emergencias ?? []).map((e) => [
@@ -358,7 +379,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
         />
       </Seccion>
 
-      <Seccion titulo="11. Historia clínica (evoluciones y notas)">
+      <Seccion titulo="12. Historia clínica (evoluciones y notas)">
         <Tabla
           columnas={["N°", "Fecha", "Tipo", "Autor", "Contenido"]}
           filas={entradasClinicas.map((e) => [
@@ -371,7 +392,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
         />
       </Seccion>
 
-      <Seccion titulo="12. Documentación archivada">
+      <Seccion titulo="13. Documentación archivada">
         <Tabla
           columnas={["Tipo", "Archivo", "Cargado"]}
           filas={(documentos ?? []).map((d) => [
