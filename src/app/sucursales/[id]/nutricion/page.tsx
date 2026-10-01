@@ -3,7 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { FichaNutricionResidente } from "@/components/FichaNutricionResidente";
 import { listarFichasNutricion } from "@/app/sucursales/[id]/nutricion/actions";
-import type { FichaNutricion } from "@/lib/nutricion";
+import { nombrePeriodo, sumarMeses, type FichaNutricion } from "@/lib/nutricion";
+import { hoyArgentina } from "@/lib/fechas";
 import type { Perfil, RolUsuario } from "@/lib/types";
 
 type Params = { id: string };
@@ -13,8 +14,17 @@ type ResidenteBasico = { id: string; nombre: string; apellido: string };
 // Cargan la ficha: nutricionista y médica (y admin / gerente de la sede).
 const ROLES_CARGAN: RolUsuario[] = ["admin", "gerente_sede", "medico", "nutricionista"];
 
-export default async function NutricionPage({ params }: { params: Promise<Params> }) {
+export default async function NutricionPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<Params>;
+  searchParams: Promise<{ mes?: string }>;
+}) {
   const { id } = await params;
+  const { mes } = await searchParams;
+  const mesActual = hoyArgentina().slice(0, 7);
+  const periodo = mes && /^\d{4}-\d{2}$/.test(mes) ? mes : mesActual;
   const supabase = await createClient();
 
   const {
@@ -50,6 +60,11 @@ export default async function NutricionPage({ params }: { params: Promise<Params
     fichasPorResidente.set(f.residente_id, [...(fichasPorResidente.get(f.residente_id) ?? []), f]);
   }
   const puedeEditar = ROLES_CARGAN.includes(perfil!.rol);
+  const cargadas = listaResidentes.filter((r) =>
+    (fichasPorResidente.get(r.id) ?? []).some((f) => f.periodo === periodo),
+  ).length;
+  const BOTON_MES =
+    "rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink";
 
   return (
     <div className="flex min-h-screen w-full">
@@ -64,17 +79,45 @@ export default async function NutricionPage({ params }: { params: Promise<Params
             <p className="text-xs font-semibold uppercase tracking-widest text-brass">{sucursal!.nombre}</p>
             <h1 className="font-display text-[32px] font-semibold text-ink">Nutrición</h1>
             <p className="mt-1 text-sm text-ink-soft">
-              Ficha nutricional de cada residente. Cada vez que se actualiza queda guardada la anterior.
+              Ficha nutricional mensual: todos los meses se hace la evaluación de cada residente.
             </p>
           </div>
           {listaResidentes.length > 0 && (
             <a
-              href={`/sucursales/${id}/nutricion/imprimir`}
+              href={`/sucursales/${id}/nutricion/imprimir?mes=${periodo}`}
               className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
             >
-              Imprimir todas las fichas
+              Imprimir todas las fichas de {nombrePeriodo(periodo)}
             </a>
           )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-edge bg-card px-5 py-3">
+          <a href={`/sucursales/${id}/nutricion?mes=${sumarMeses(periodo, -1)}`} className={BOTON_MES}>
+            ← {nombrePeriodo(sumarMeses(periodo, -1))}
+          </a>
+          <form className="flex items-center gap-2">
+            <input
+              type="month"
+              name="mes"
+              defaultValue={periodo}
+              className="rounded-lg border border-edge bg-panel-deep px-2 py-1.5 text-sm text-ink"
+            />
+            <button type="submit" className={BOTON_MES}>
+              Ver
+            </button>
+          </form>
+          {periodo < mesActual && (
+            <a href={`/sucursales/${id}/nutricion?mes=${sumarMeses(periodo, 1)}`} className={BOTON_MES}>
+              {nombrePeriodo(sumarMeses(periodo, 1))} →
+            </a>
+          )}
+          <p className="ml-auto text-sm text-ink">
+            <span className="font-semibold">{nombrePeriodo(periodo)}:</span>{" "}
+            <span className={cargadas === listaResidentes.length ? "text-emerald-700" : "text-amber-700"}>
+              {cargadas} de {listaResidentes.length} fichas cargadas
+            </span>
+          </p>
         </div>
 
         <div className="space-y-4">
@@ -87,6 +130,7 @@ export default async function NutricionPage({ params }: { params: Promise<Params
               sucursalId={id}
               residenteId={r.id}
               residenteNombre={`${r.apellido}, ${r.nombre}`}
+              periodo={periodo}
               fichas={fichasPorResidente.get(r.id) ?? []}
               puedeEditar={puedeEditar}
             />

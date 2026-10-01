@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { eliminarFichaNutricion, guardarFichaNutricion } from "@/app/sucursales/[id]/nutricion/actions";
-import { OPCIONES_NUTRICION, type FichaNutricion } from "@/lib/nutricion";
+import { OPCIONES_NUTRICION, nombrePeriodo, type FichaNutricion } from "@/lib/nutricion";
 
 const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none";
@@ -77,12 +77,14 @@ function SiNo({ nombre, etiqueta, valor }: { nombre: string; etiqueta: string; v
 function FormularioFicha({
   sucursalId,
   residenteId,
+  periodo,
   base,
   corrigiendo,
   onCerrar,
 }: {
   sucursalId: string;
   residenteId: string;
+  periodo: string;
   base: FichaNutricion | null;
   corrigiendo: boolean;
   onCerrar: () => void;
@@ -106,13 +108,27 @@ function FormularioFicha({
   return (
     <form action={formAction} className="grid grid-cols-1 gap-4 rounded-xl border border-edge bg-panel-deep/40 p-4 sm:grid-cols-2">
       <input type="hidden" name="residente_id" value={residenteId} />
-      {corrigiendo && base && <input type="hidden" name="ficha_id" value={base.id} />}
+      <input type="hidden" name="periodo" value={periodo} />
 
       <div>
-        <label className={ETIQUETA}>Fecha</label>
-        <input type="date" name="fecha" required defaultValue={corrigiendo && base ? base.fecha : hoy()} className={CAMPO} />
+        <label className={ETIQUETA}>Mes evaluado</label>
+        <p className="py-2 text-sm font-semibold text-ink">{nombrePeriodo(periodo)}</p>
       </div>
-      <div className="hidden sm:block" />
+      <div>
+        <label className={ETIQUETA}>Fecha de la evaluación</label>
+        <input
+          type="date"
+          name="fecha"
+          required
+          defaultValue={corrigiendo && base ? base.fecha : hoy().startsWith(periodo) ? hoy() : `${periodo}-01`}
+          className={CAMPO}
+        />
+      </div>
+      {!corrigiendo && base && (
+        <p className="text-xs text-ink-soft sm:col-span-2">
+          Viene completada con la ficha de {nombrePeriodo(base.periodo)}: actualizá lo que cambió este mes (sobre todo el peso).
+        </p>
+      )}
       <div className="sm:col-span-2">
         <label className={ETIQUETA}>Diagnóstico principal</label>
         <textarea name="diagnostico_principal" rows={2} defaultValue={base?.diagnostico_principal ?? ""} className={CAMPO} />
@@ -253,7 +269,7 @@ function FormularioFicha({
           disabled={enviando}
           className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
         >
-          {enviando ? "Guardando..." : corrigiendo ? "Guardar corrección" : "Guardar ficha"}
+          {enviando ? "Guardando..." : `Guardar ficha de ${nombrePeriodo(periodo)}`}
         </button>
         <button type="button" onClick={onCerrar} className="text-sm text-ink-soft hover:text-ink">
           Cancelar
@@ -264,104 +280,107 @@ function FormularioFicha({
   );
 }
 
-// Tarjeta de un residente en Nutrición: resumen de la última ficha, historial y formulario.
+// Tarjeta de un residente en Nutrición para el mes elegido: la ficha es mensual.
 export function FichaNutricionResidente({
   sucursalId,
   residenteId,
   residenteNombre,
+  periodo,
   fichas,
   puedeEditar,
 }: {
   sucursalId: string;
   residenteId: string;
   residenteNombre: string;
+  periodo: string;
   fichas: FichaNutricion[];
   puedeEditar: boolean;
 }) {
-  const [modo, setModo] = useState<"cerrado" | "nueva" | "corregir">("cerrado");
+  const [abierto, setAbierto] = useState(false);
   const [abiertoEn, setAbiertoEn] = useState(0);
-  const ultima = fichas[0] ?? null;
+  const delMes = fichas.find((f) => f.periodo === periodo) ?? null;
+  // Para cargar un mes nuevo se parte de la última ficha anterior a ese mes.
+  const anterior = fichas.find((f) => f.periodo < periodo) ?? null;
+  const otras = fichas.filter((f) => f.periodo !== periodo);
   const imprimir = `/sucursales/${sucursalId}/nutricion/imprimir?residente=${residenteId}`;
-
-  function abrir(m: "nueva" | "corregir") {
-    setAbiertoEn((n) => n + 1);
-    setModo(m);
-  }
 
   return (
     <section className="space-y-3 rounded-2xl border border-edge bg-card p-5">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <h2 className="font-display text-base font-semibold text-ink">{residenteNombre}</h2>
-          {ultima ? (
-            <p className="text-xs text-ink-soft">
-              Última ficha: {fechaCorta(ultima.fecha)}
-              {ultima.evaluacion_nutricional && ` · ${ultima.evaluacion_nutricional}`}
-              {ultima.consistencia.length > 0 && ` · ${ultima.consistencia.join(", ")}`}
-              {ultima.imc !== null && ` · IMC ${ultima.imc}`}
+          {delMes ? (
+            <p className="text-xs text-emerald-700">
+              ✓ Ficha de {nombrePeriodo(periodo)} cargada ({fechaCorta(delMes.fecha)})
+              {delMes.evaluacion_nutricional && ` · ${delMes.evaluacion_nutricional}`}
+              {delMes.peso_actual !== null && ` · ${delMes.peso_actual} kg`}
+              {delMes.imc !== null && ` · IMC ${delMes.imc}`}
             </p>
           ) : (
-            <p className="text-xs text-amber-700">Sin ficha nutricional cargada.</p>
+            <p className="text-xs font-semibold text-amber-700">Pendiente la ficha de {nombrePeriodo(periodo)}.</p>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <a
-            href={imprimir}
+            href={`${imprimir}&mes=${periodo}`}
             className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
           >
-            Imprimir ficha
+            Imprimir {delMes ? "ficha" : "en blanco"}
           </a>
-          {puedeEditar && ultima && (
-            <button
-              type="button"
-              onClick={() => abrir("corregir")}
-              className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
-            >
-              Corregir última
-            </button>
-          )}
           {puedeEditar && (
             <button
               type="button"
-              onClick={() => abrir("nueva")}
-              className="rounded-lg bg-brass px-3 py-1.5 text-xs font-semibold text-btn-ink hover:bg-brass/90"
+              onClick={() => {
+                setAbiertoEn((n) => n + 1);
+                setAbierto(true);
+              }}
+              className={
+                delMes
+                  ? "rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
+                  : "rounded-lg bg-brass px-3 py-1.5 text-xs font-semibold text-btn-ink hover:bg-brass/90"
+              }
             >
-              {ultima ? "+ Nueva ficha (actualizar)" : "+ Cargar ficha"}
+              {delMes ? "Editar" : `+ Cargar ficha de ${nombrePeriodo(periodo)}`}
             </button>
           )}
         </div>
       </div>
 
-      {modo !== "cerrado" && (
+      {abierto && (
         <FormularioFicha
           key={abiertoEn}
           sucursalId={sucursalId}
           residenteId={residenteId}
-          base={ultima}
-          corrigiendo={modo === "corregir"}
-          onCerrar={() => setModo("cerrado")}
+          periodo={periodo}
+          base={delMes ?? anterior}
+          corrigiendo={!!delMes}
+          onCerrar={() => setAbierto(false)}
         />
       )}
 
-      {fichas.length > 1 && (
+      {otras.length > 0 && (
         <details className="text-xs text-ink-soft">
-          <summary className="cursor-pointer hover:text-ink">Fichas anteriores ({fichas.length - 1})</summary>
+          <summary className="cursor-pointer hover:text-ink">Otros meses ({otras.length})</summary>
           <ul className="mt-2 space-y-1">
-            {fichas.slice(1).map((f) => (
+            {otras.map((f) => (
               <li key={f.id} className="flex flex-wrap items-center gap-3">
                 <span>
-                  {fechaCorta(f.fecha)}
+                  <span className="font-semibold text-ink">{nombrePeriodo(f.periodo)}</span>
                   {f.evaluacion_nutricional && ` · ${f.evaluacion_nutricional}`}
                   {f.peso_actual !== null && ` · ${f.peso_actual} kg`}
+                  {f.imc !== null && ` · IMC ${f.imc}`}
                 </span>
-                <a href={`${imprimir}&ficha=${f.id}`} className="text-brass hover:text-ink">
+                <a href={`${imprimir}&mes=${f.periodo}`} className="text-brass hover:text-ink">
                   Imprimir
+                </a>
+                <a href={`/sucursales/${sucursalId}/nutricion?mes=${f.periodo}`} className="text-brass hover:text-ink">
+                  Ver ese mes
                 </a>
                 {puedeEditar && (
                   <button
                     type="button"
                     onClick={async () => {
-                      if (!window.confirm("¿Eliminar esta ficha anterior?")) return;
+                      if (!window.confirm(`¿Eliminar la ficha de ${nombrePeriodo(f.periodo)}?`)) return;
                       await eliminarFichaNutricion(sucursalId, f.id);
                     }}
                     className="text-red-700 hover:text-red-500"

@@ -1,5 +1,5 @@
 import { calcularEdad } from "@/lib/residentes";
-import { ENCABEZADO_NUTRICIONISTA, OPCIONES_NUTRICION, type FichaNutricion } from "@/lib/nutricion";
+import { ENCABEZADO_NUTRICIONISTA, OPCIONES_NUTRICION, nombrePeriodo, type FichaNutricion } from "@/lib/nutricion";
 
 export type DatosPacienteNutricion = {
   nombre: string;
@@ -42,7 +42,15 @@ function Titulo({ children }: { children: React.ReactNode }) {
 }
 
 // Formulario de Nutrición tal cual el papel, con las casillas marcadas.
-export function HojaFichaNutricion({ paciente, ficha }: { paciente: DatosPacienteNutricion; ficha: FichaNutricion | null }) {
+export function HojaFichaNutricion({
+  paciente,
+  periodo,
+  ficha,
+}: {
+  paciente: DatosPacienteNutricion;
+  periodo: string;
+  ficha: FichaNutricion | null;
+}) {
   const f = ficha;
   const edad = calcularEdad(paciente.fecha_nacimiento);
   const uno = (v: string | null | undefined) => (v ? [v] : []);
@@ -64,7 +72,10 @@ export function HojaFichaNutricion({ paciente, ficha }: { paciente: DatosPacient
 
       <div className="flex items-baseline justify-between">
         <h2 className="text-base font-bold uppercase">Nutrición</h2>
-        <p>Fecha: {f ? fecha(f.fecha) : "____/____/________"}</p>
+        <p>
+          Mes: <span className="font-semibold">{nombrePeriodo(periodo)}</span> · Fecha:{" "}
+          {f ? fecha(f.fecha) : "____/____/________"}
+        </p>
       </div>
 
       <div className="mt-2 space-y-2">

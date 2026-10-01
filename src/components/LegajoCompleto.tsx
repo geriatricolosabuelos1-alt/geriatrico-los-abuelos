@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { COLUMNAS_FICHA_NUTRICION, type FichaNutricion } from "@/lib/nutricion";
+import { COLUMNAS_FICHA_NUTRICION, nombrePeriodo, type FichaNutricion } from "@/lib/nutricion";
 import { generarLibroFoliado } from "@/app/sucursales/[id]/legales/sanitario-actions";
 import { calcularEdad } from "@/lib/residentes";
 import { ETIQUETA_TIPO_INTERCONSULTA } from "@/lib/interconsultas";
@@ -158,7 +158,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
       .from("fichas_nutricion")
       .select(COLUMNAS_FICHA_NUTRICION)
       .eq("residente_id", residenteId)
-      .order("fecha", { ascending: false })
+      .order("periodo", { ascending: false })
       .order("created_at", { ascending: false })
       .returns<FichaNutricion[]>(),
     supabase
@@ -312,14 +312,14 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
         />
       </Seccion>
 
-      <Seccion titulo="5. Nutrición · ficha nutricional">
+      <Seccion titulo="5. Nutrición · ficha nutricional mensual">
         {(() => {
           const n = fichasNutricion?.[0];
           if (!n) return null;
           const lista = (v: string[]) => v.join(", ");
           return (
             <>
-              <Campo etiqueta="Fecha de la ficha" valor={fecha(n.fecha)} />
+              <Campo etiqueta="Último mes evaluado" valor={`${nombrePeriodo(n.periodo)} (${fecha(n.fecha)})`} />
               <Campo etiqueta="Diagnóstico principal" valor={n.diagnostico_principal} />
               <Campo etiqueta="Patologías asociadas" valor={n.patologias_asociadas} />
               <Campo etiqueta="Consistencia" valor={lista(n.consistencia)} />
@@ -355,9 +355,9 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
           );
         })()}
         <Tabla
-          columnas={["Fichas anteriores", "Evaluación", "Peso", "IMC"]}
+          columnas={["Meses anteriores", "Evaluación", "Peso", "IMC"]}
           filas={(fichasNutricion ?? []).slice(1).map((n) => [
-            fecha(n.fecha),
+            nombrePeriodo(n.periodo),
             n.evaluacion_nutricional,
             n.peso_actual === null ? null : `${n.peso_actual} kg`,
             n.imc,

@@ -5,11 +5,12 @@ import { BotonImprimir } from "@/components/BotonImprimir";
 import { HojaFichaNutricion, type DatosPacienteNutricion } from "@/components/HojaFichaNutricion";
 import { listarFichasNutricion } from "@/app/sucursales/[id]/nutricion/actions";
 import type { FichaNutricion } from "@/lib/nutricion";
+import { hoyArgentina } from "@/lib/fechas";
 
 type Params = { id: string };
-type Busqueda = { residente?: string; ficha?: string };
+type Busqueda = { residente?: string; mes?: string };
 
-// Formulario de Nutrición para imprimir: un residente (su última ficha o la elegida) o todos.
+// Formulario de Nutrición del mes para imprimir: un residente o todos (sin ficha del mes, sale en blanco).
 export default async function ImprimirNutricionPage({
   params,
   searchParams,
@@ -18,7 +19,8 @@ export default async function ImprimirNutricionPage({
   searchParams: Promise<Busqueda>;
 }) {
   const { id } = await params;
-  const { residente, ficha } = await searchParams;
+  const { residente, mes } = await searchParams;
+  const periodo = mes && /^\d{4}-\d{2}$/.test(mes) ? mes : hoyArgentina().slice(0, 7);
   const supabase = await createClient();
 
   let consulta = supabase
@@ -48,7 +50,7 @@ export default async function ImprimirNutricionPage({
 
   const fichaDe = (residenteId: string): FichaNutricion | null => {
     const propias = fichas.filter((f) => f.residente_id === residenteId);
-    return (ficha && propias.find((f) => f.id === ficha)) || propias[0] || null;
+    return propias.find((f) => f.periodo === periodo) ?? null;
   };
 
   return (
@@ -56,7 +58,7 @@ export default async function ImprimirNutricionPage({
       <style>{`@page { size: A4; margin: 12mm; } .hoja-nutricion:last-child { break-after: auto; }`}</style>
       <div className="w-full max-w-[860px] rounded-2xl border border-edge bg-white p-8 shadow-2xl print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
         <div className="mb-6 flex items-center justify-between gap-3 print:hidden">
-          <Link href={`/sucursales/${id}/nutricion`} className="text-sm text-brass underline underline-offset-2 hover:text-ink">
+          <Link href={`/sucursales/${id}/nutricion?mes=${periodo}`} className="text-sm text-brass underline underline-offset-2 hover:text-ink">
             ← Volver a Nutrición
           </Link>
           <BotonImprimir />
@@ -73,7 +75,7 @@ export default async function ImprimirNutricionPage({
                 fecha_nacimiento: r.fecha_nacimiento,
                 obra_social: obraSocial.get(r.id) ?? null,
               };
-              return <HojaFichaNutricion key={r.id} paciente={paciente} ficha={fichaDe(r.id)} />;
+              return <HojaFichaNutricion key={r.id} paciente={paciente} periodo={periodo} ficha={fichaDe(r.id)} />;
             })}
           </div>
         )}
