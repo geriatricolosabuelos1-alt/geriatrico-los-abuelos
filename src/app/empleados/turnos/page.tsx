@@ -5,6 +5,8 @@ import { FormularioTurnoPrograma } from "@/components/FormularioTurnoPrograma";
 import { TablaTurnosSemanal } from "@/components/TablaTurnosSemanal";
 import { ExportarPdfTurnos } from "@/components/ExportarPdfTurnos";
 import { CambiosTurno } from "@/components/CambiosTurno";
+import { TurnosRotativos } from "@/components/TurnosRotativos";
+import { esRotativo } from "@/lib/turnos";
 import { listarCambiosTurno, listarTurnosProgramados } from "@/app/empleados/turnos-actions";
 import type { Perfil, Sucursal } from "@/lib/types";
 
@@ -74,8 +76,8 @@ export default async function TurnosPage({
               Turnos semanales
             </h1>
             <p className="mt-1 text-sm text-ink-soft">
-              Turno programado por día de la semana. Se repite automáticamente todas las semanas
-              hasta la fecha de vigencia (por defecto, fin de año).
+              Turnos rotativos (2×2: dos días de trabajo y dos de franco) o por día fijo de la semana.
+              Se repiten solos hasta la fecha de vigencia (por defecto, fin de año).
             </p>
           </div>
           <Link
@@ -141,7 +143,9 @@ export default async function TurnosPage({
           empleadoInicial={empleadoFiltro}
         />
 
-        <TablaTurnosSemanal turnos={turnos} empleadosPorId={empleadosPorId} />
+        <TurnosRotativos turnos={turnos.filter(esRotativo)} empleadosPorId={empleadosPorId} />
+
+        <TablaTurnosSemanal turnos={turnos.filter((t) => !esRotativo(t))} empleadosPorId={empleadosPorId} />
 
         <CambiosTurno sucursalId={sucursalId} empleados={empleadosDeSede} cambios={cambios} />
       </main>

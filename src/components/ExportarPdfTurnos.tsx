@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { descargarPdf } from "@/lib/pdf";
-import { turnosEfectivos } from "@/lib/turnos";
+import { sumarDia, turnosEfectivos } from "@/lib/turnos";
 import type { CambioTurno, TurnoProgramado } from "@/lib/types";
 
 type Props = {
@@ -53,36 +53,58 @@ export function ExportarPdfTurnos({ turnos, cambios, empleadosPorId, sucursalNom
     const desde = periodo === "mes" ? new Date(anio, mes - 1, 1) : new Date(anio, 0, 1);
     const hasta = periodo === "mes" ? new Date(anio, mes, 0) : new Date(anio, 11, 31);
 
-    const porEmpleado = new Map<string, { fecha: string; dia: string; horario: string; nota: string }[]>();
+    const inicio = formatearFecha(desde);
+    const fin = formatearFecha(hasta);
 
     // Turnos de cada día con los cambios de turno y guardias ya aplicados.
-    for (const t of turnosEfectivos(turnos, cambios, formatearFecha(desde), formatearFecha(hasta))) {
-      if (empleado && t.empleadoId !== empleado) continue;
-      const [a, m, d] = t.fecha.split("-");
-      const filas = porEmpleado.get(t.empleadoId) ?? [];
-      filas.push({
-        fecha: `${d}/${m}/${a}`,
-        dia: DIAS_NOMBRE[diaSemanaIso(new Date(Number(a), Number(m) - 1, Number(d)))],
-        horario: `${t.horaInicio.slice(0, 5)}–${t.horaFin.slice(0, 5)}`,
-        nota:
-          t.origen === "cambio"
-            ? `Cambio: cubre a ${empleadosPorId.get(t.reemplazaA ?? "") ?? "otra empleada"}`
-            : t.origen === "guardia"
-              ? `Guardia${t.reemplazaA ? ` (por ${empleadosPorId.get(t.reemplazaA) ?? "otra empleada"})` : ""}`
-              : "",
-      });
-      porEmpleado.set(t.empleadoId, filas);
+    const delDia = new Map<string, ReturnType<typeof turnosEfectivos>>();
+    for (const t of turnosEfectivos(turnos, cambios, inicio, fin)) {
+      const clave = `${t.empleadoId}|${t.fecha}`;
+      delDia.set(clave, [...(delDia.get(clave) ?? []), t]);
     }
 
-    const empleadoIds = Array.from(porEmpleado.keys()).sort((a, b) =>
-      (empleadosPorId.get(a) ?? "").localeCompare(empleadosPorId.get(b) ?? ""),
-    );
+    // Empleadas con turno en el período: salen todos los días, y los que no trabaja como "Franco".
+    const empleadoIds = Array.from(
+      new Set([...turnos.map((t) => t.empleado_id), ...[...delDia.keys()].map((k) => k.split("|")[0])]),
+    )
+      .filter((id) => !empleado || id === empleado)
+      .filter((id) => empleadosPorId.has(id))
+      .sort((a, b) => (empleadosPorId.get(a) ?? "").localeCompare(empleadosPorId.get(b) ?? ""));
 
-    const secciones = empleadoIds.map((id) => ({
-      titulo: empleadosPorId.get(id) ?? "—",
-      columnas: ["Fecha", "Día", "Horario", "Observación"],
-      filas: (porEmpleado.get(id) ?? []).map((f) => [f.fecha, f.dia, f.horario, f.nota]),
-    }));
+    const dias: string[] = [];
+    for (let f = inicio; f <= fin; f = sumarDia(f)) dias.push(f);
+
+    const secciones = empleadoIds.map((id) => {
+      const filas: string[][] = [];
+      for (const fecha of dias) {
+        const [a, m, d] = fecha.split("-");
+        const dia = DIAS_NOMBRE[diaSemanaIso(new Date(Number(a), Number(m) - 1, Number(d)))];
+        const turnosDia = delDia.get(`${id}|${fecha}`) ?? [];
+        const cedido = cambios.find((c) => c.fecha === fecha && c.tipo === "cambio" && c.empleado_original_id === id);
+        if (turnosDia.length === 0) {
+          filas.push([
+            `${d}/${m}/${a}`,
+            dia,
+            "FRANCO",
+            cedido ? `Cambio: la cubre ${empleadosPorId.get(cedido.empleado_reemplazo_id) ?? "otra empleada"}` : "",
+          ]);
+          continue;
+        }
+        for (const t of turnosDia) {
+          filas.push([
+            `${d}/${m}/${a}`,
+            dia,
+            `${t.horaInicio.slice(0, 5)}–${t.horaFin.slice(0, 5)}`,
+            t.origen === "cambio"
+              ? `Cambio: cubre a ${empleadosPorId.get(t.reemplazaA ?? "") ?? "otra empleada"}`
+              : t.origen === "guardia"
+                ? `Guardia${t.reemplazaA ? ` (por ${empleadosPorId.get(t.reemplazaA) ?? "otra empleada"})` : ""}`
+                : "",
+          ]);
+        }
+      }
+      return { titulo: empleadosPorId.get(id) ?? "—", columnas: ["Fecha", "Día", "Horario", "Observación"], filas };
+    });
 
     const etiquetaPeriodo = periodo === "mes" ? `${MESES[mes]} ${anio}` : `Año ${anio}`;
 
@@ -90,7 +112,7 @@ export function ExportarPdfTurnos({ turnos, cambios, empleadosPorId, sucursalNom
     descargarPdf(
       `turnos-${quien.toLowerCase().replace(/[,\s]+/g, "-")}-${periodo === "mes" ? `${anio}-${mes}` : anio}.pdf`,
       {
-        titulo: "Turnos semanales",
+        titulo: "Turnos y francos",
         subtitulo: `${sucursalNombre}${empleado ? ` · ${empleadosPorId.get(empleado) ?? ""}` : ""} — ${etiquetaPeriodo}`,
         fecha: `Generado el ${new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}`,
       },

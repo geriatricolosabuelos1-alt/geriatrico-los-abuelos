@@ -15,7 +15,26 @@ export function diaSemanaIso(fecha: string): number {
   return dia === 0 ? 7 : dia;
 }
 
-function sumarDia(fecha: string): string {
+function diasEntre(desde: string, hasta: string): number {
+  return Math.round((Date.parse(hasta + "T12:00:00Z") - Date.parse(desde + "T12:00:00Z")) / 86_400_000);
+}
+
+export function esRotativo(t: TurnoProgramado): boolean {
+  return !!t.dias_trabajo && !!t.dias_franco;
+}
+
+// ¿Le toca trabajar ese día? Semanal: por día de la semana. Rotativo (2×2, etc.): según el ciclo
+// que arranca en vigente_desde (primer día de trabajo).
+export function trabajaEseDia(t: TurnoProgramado, fecha: string): boolean {
+  if (fecha < t.vigente_desde || fecha > t.vigente_hasta) return false;
+  if (esRotativo(t)) {
+    const ciclo = t.dias_trabajo! + t.dias_franco!;
+    return diasEntre(t.vigente_desde, fecha) % ciclo < t.dias_trabajo!;
+  }
+  return t.dia_semana === diaSemanaIso(fecha);
+}
+
+export function sumarDia(fecha: string): string {
   const d = new Date(fecha + "T12:00:00Z");
   d.setUTCDate(d.getUTCDate() + 1);
   return d.toISOString().slice(0, 10);
@@ -31,14 +50,13 @@ export function turnosEfectivos(
 ): TurnoDelDia[] {
   const resultado: TurnoDelDia[] = [];
   for (let fecha = desde; fecha <= hasta; fecha = sumarDia(fecha)) {
-    const dia = diaSemanaIso(fecha);
     const delDia = cambios.filter((c) => c.fecha === fecha);
     const cedidos = new Set(
       delDia.filter((c) => c.tipo === "cambio" && c.empleado_original_id).map((c) => c.empleado_original_id!),
     );
 
     for (const t of turnos) {
-      if (t.dia_semana !== dia || fecha < t.vigente_desde || fecha > t.vigente_hasta) continue;
+      if (!trabajaEseDia(t, fecha)) continue;
       if (cedidos.has(t.empleado_id)) continue;
       resultado.push({
         fecha,

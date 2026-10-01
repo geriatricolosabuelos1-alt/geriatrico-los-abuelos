@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { diaSemanaIso } from "@/lib/turnos";
+import { diaSemanaIso, trabajaEseDia } from "@/lib/turnos";
 import type { CambioTurno, DiaSemana, TurnoProgramado } from "@/lib/types";
 
 export async function listarTurnosProgramados(sucursalId: string): Promise<TurnoProgramado[]> {
@@ -11,7 +11,7 @@ export async function listarTurnosProgramados(sucursalId: string): Promise<Turno
   const { data } = await supabase
     .from("turnos_programados")
     .select(
-      "id, empleado_id, sucursal_id, dia_semana, hora_inicio, hora_fin, vigente_desde, vigente_hasta, activo, created_at",
+      "id, empleado_id, sucursal_id, dia_semana, hora_inicio, hora_fin, vigente_desde, vigente_hasta, activo, created_at, dias_trabajo, dias_franco",
     )
     .eq("sucursal_id", sucursalId)
     .eq("activo", true)
@@ -40,6 +40,29 @@ export async function crearTurnoPrograma(
 
   if (!empleado_id || !sucursal_id || !hora_inicio || !hora_fin || !vigente_desde || !vigente_hasta) {
     return { error: "Completá empleado, horario y vigencia." };
+  }
+
+  // Rotativo (2×2, etc.): una sola fila; el ciclo arranca el primer día de trabajo (vigente_desde).
+  if (formData.get("modo") === "rotativo") {
+    const dias_trabajo = Number(formData.get("dias_trabajo") ?? 0);
+    const dias_franco = Number(formData.get("dias_franco") ?? 0);
+    if (!(dias_trabajo >= 1 && dias_trabajo <= 14 && dias_franco >= 1 && dias_franco <= 14)) {
+      return { error: "Indicá cuántos días trabaja y cuántos de franco." };
+    }
+    const { error } = await supabase.from("turnos_programados").insert({
+      empleado_id,
+      sucursal_id,
+      dia_semana: diaSemanaIso(vigente_desde),
+      hora_inicio,
+      hora_fin,
+      vigente_desde,
+      vigente_hasta,
+      dias_trabajo,
+      dias_franco,
+    });
+    if (error) return { error: error.message };
+    revalidatePath("/empleados/turnos");
+    return { error: null };
   }
   if (dias.length === 0) {
     return { error: "Elegí al menos un día de la semana." };
@@ -125,7 +148,7 @@ export async function listarCambiosTurno(sucursalId: string): Promise<CambioTurn
   return data ?? [];
 }
 
-// Horario semanal que tiene la empleada ese día (para saber qué turno cede).
+// Horario que tiene la empleada ese día (para saber qué turno cede).
 async function turnoDelDia(
   supabase: Awaited<ReturnType<typeof createClient>>,
   empleadoId: string,
@@ -133,16 +156,16 @@ async function turnoDelDia(
 ): Promise<{ hora_inicio: string; hora_fin: string } | null> {
   const { data } = await supabase
     .from("turnos_programados")
-    .select("hora_inicio, hora_fin")
+    .select("id, empleado_id, sucursal_id, dia_semana, hora_inicio, hora_fin, vigente_desde, vigente_hasta, activo, created_at, dias_trabajo, dias_franco")
     .eq("empleado_id", empleadoId)
-    .eq("dia_semana", diaSemanaIso(fecha))
     .eq("activo", true)
     .lte("vigente_desde", fecha)
     .gte("vigente_hasta", fecha)
     .order("hora_inicio")
-    .limit(1)
-    .returns<{ hora_inicio: string; hora_fin: string }[]>();
-  return data?.[0] ?? null;
+    .returns<TurnoProgramado[]>();
+  // Semanal por día de la semana o rotativo (2×2) según su ciclo.
+  const turno = (data ?? []).find((t) => trabajaEseDia(t, fecha));
+  return turno ? { hora_inicio: turno.hora_inicio, hora_fin: turno.hora_fin } : null;
 }
 
 export type RegistrarCambioEstado = { error: string | null; guardado?: boolean };
