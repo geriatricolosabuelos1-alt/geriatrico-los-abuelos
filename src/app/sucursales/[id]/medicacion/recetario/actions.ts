@@ -11,13 +11,17 @@ export async function listarRecetas(sucursalId: string): Promise<
     medicamento_nombre: string | null;
     contacto_familiar: string | null;
     telefono_familiar: string | null;
+    residente_dni: string | null;
+    numero_afiliado: string | null;
+    obra_social_ficha: string | null;
+    medicamento_detalle: string | null;
   })[]
 > {
   const supabase = await createClient();
   const { data } = await supabase
     .from("recetas_medicamento")
     .select(
-      "id, residente_id, medicamento_id, medicamento_texto, obra_social, estado, fecha_pedido, fecha_recibido, fecha_vencimiento, notas, creado_por, created_at, residentes!inner(nombre, apellido, sucursal_id, contacto_familiar, telefono_familiar), medicamentos_residente(nombre)",
+      "id, residente_id, medicamento_id, medicamento_texto, obra_social, estado, fecha_pedido, fecha_recibido, fecha_vencimiento, notas, creado_por, created_at, residentes!inner(nombre, apellido, dni, sucursal_id, contacto_familiar, telefono_familiar, ficha_administrativa(obra_social, numero_afiliado)), medicamentos_residente(nombre, dosis, frecuencia, horario, via_administracion)",
     )
     .eq("residentes.sucursal_id", sucursalId)
     .order("created_at", { ascending: false })
@@ -27,10 +31,18 @@ export async function listarRecetas(sucursalId: string): Promise<
           nombre: string;
           apellido: string;
           sucursal_id: string;
+          dni: string | null;
           contacto_familiar: string | null;
           telefono_familiar: string | null;
+          ficha_administrativa: { obra_social: string | null; numero_afiliado: string | null } | null;
         };
-        medicamentos_residente: { nombre: string } | null;
+        medicamentos_residente: {
+          nombre: string;
+          dosis: string | null;
+          frecuencia: string | null;
+          horario: string | null;
+          via_administracion: string | null;
+        } | null;
       })[]
     >();
 
@@ -40,6 +52,19 @@ export async function listarRecetas(sucursalId: string): Promise<
     medicamento_nombre: r.medicamentos_residente?.nombre ?? r.medicamento_texto ?? null,
     contacto_familiar: r.residentes.contacto_familiar,
     telefono_familiar: r.residentes.telefono_familiar,
+    residente_dni: r.residentes.dni,
+    numero_afiliado: r.residentes.ficha_administrativa?.numero_afiliado ?? null,
+    obra_social_ficha: r.residentes.ficha_administrativa?.obra_social ?? null,
+    // Lo que figura en la medicación del residente: dosis, frecuencia/horario y vía.
+    medicamento_detalle: r.medicamentos_residente
+      ? [
+          r.medicamentos_residente.dosis,
+          r.medicamentos_residente.frecuencia ?? r.medicamentos_residente.horario,
+          r.medicamentos_residente.via_administracion,
+        ]
+          .filter(Boolean)
+          .join(" · ") || null
+      : null,
   }));
 }
 
