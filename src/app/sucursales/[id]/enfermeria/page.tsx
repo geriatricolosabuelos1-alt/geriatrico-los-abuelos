@@ -2,12 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
-import {
-  BotonPdfSignos,
-  ENCABEZADOS_SIGNOS,
-  FilaSignosVitales,
-  SelectorFechaSignos,
-} from "@/components/SignosVitales";
+import { BotonPdfSignos, FilaSignosVitales, SelectorFechaSignos } from "@/components/SignosVitales";
+import { ENCABEZADOS_SIGNOS } from "@/lib/signosVitales";
 import { hoyArgentina } from "@/lib/fechas";
 import type { SignosVitales } from "./actions";
 import type { Perfil } from "@/lib/types";

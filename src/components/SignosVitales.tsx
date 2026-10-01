@@ -30,8 +30,6 @@ const COLUMNAS: { campo: keyof ValoresSignos; placeholder: string; modo: "text" 
   { campo: "temperatura", placeholder: "36.5", modo: "decimal" },
 ];
 
-export const ENCABEZADOS_SIGNOS = ["TA", "FC", "FR", "SO2 (%)", "T° (°C)"];
-
 // Una fila de la planilla: los cinco valores medidos de un residente en un día, con su botón Guardar.
 export function FilaSignosVitales({
   residenteId,
