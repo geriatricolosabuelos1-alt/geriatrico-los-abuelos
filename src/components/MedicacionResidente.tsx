@@ -21,6 +21,7 @@ import {
 } from "@/app/residentes/[id]/legajo/medicacion-actions";
 import { BotonDarDosis } from "@/components/BotonDarDosis";
 import { CamposFrecuencia } from "@/components/CamposFrecuencia";
+import { BotonPlanillaTomas } from "@/components/BotonPlanillaTomas";
 import type { AvisoPolifarmacia } from "@/app/residentes/[id]/legajo/medicacion-actions";
 import type {
   AlertaMedicacion,
@@ -772,6 +773,7 @@ export function MedicacionResidente({
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-display text-base font-semibold text-ink">Medicación</h2>
         <div className="flex flex-wrap items-center gap-2">
+          {registroHref && <BotonPlanillaTomas filtro={{ residenteId }} />}
           {registroHref && (
             <a
               href={registroHref}
