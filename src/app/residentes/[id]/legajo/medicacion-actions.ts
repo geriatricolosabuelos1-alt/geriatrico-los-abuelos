@@ -815,3 +815,73 @@ export async function eliminarDosisAdministrada(
 
   revalidatePath(`/residentes/${residenteId}/legajo`);
 }
+
+export type PlanillaTomasResidente = {
+  nombre: string;
+  dni: string | null;
+  habitacion: string | null;
+  sede: string;
+  medicamentos: {
+    nombre: string;
+    dosis: string | null;
+    via: string | null;
+    tipo: "continua" | "sos";
+    horarios: string[];
+    instrucciones: string | null;
+  }[];
+};
+
+// Medicación activa por residente para la planilla de tomas en papel (tildar a mano).
+export async function obtenerPlanillaTomas(
+  filtro: { residenteId: string } | { sucursalId: string },
+): Promise<PlanillaTomasResidente[]> {
+  const supabase = await createClient();
+  let consulta = supabase
+    .from("residentes")
+    .select(
+      "id, nombre, apellido, dni, habitacion, sucursales(nombre), medicamentos_residente(nombre, dosis, via_administracion, tipo_administracion, horarios, horario, instrucciones, activo)",
+    )
+    .order("apellido");
+  consulta =
+    "residenteId" in filtro
+      ? consulta.eq("id", filtro.residenteId)
+      : consulta.eq("sucursal_id", filtro.sucursalId).eq("activo", true);
+
+  const { data } = await consulta.returns<
+    {
+      nombre: string;
+      apellido: string;
+      dni: string | null;
+      habitacion: string | null;
+      sucursales: { nombre: string } | null;
+      medicamentos_residente: {
+        nombre: string;
+        dosis: string | null;
+        via_administracion: string | null;
+        tipo_administracion: "continua" | "sos";
+        horarios: string[] | null;
+        horario: string | null;
+        instrucciones: string | null;
+        activo: boolean;
+      }[];
+    }[]
+  >();
+
+  return (data ?? []).map((r) => ({
+    nombre: `${r.apellido}, ${r.nombre}`,
+    dni: r.dni,
+    habitacion: r.habitacion,
+    sede: r.sucursales?.nombre ?? "",
+    medicamentos: r.medicamentos_residente
+      .filter((m) => m.activo)
+      .sort((a, b) => a.nombre.localeCompare(b.nombre))
+      .map((m) => ({
+        nombre: m.nombre,
+        dosis: m.dosis,
+        via: m.via_administracion,
+        tipo: m.tipo_administracion,
+        horarios: m.horarios?.length ? m.horarios : m.horario ? [m.horario] : [],
+        instrucciones: m.instrucciones,
+      })),
+  }));
+}

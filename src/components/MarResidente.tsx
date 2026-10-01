@@ -9,6 +9,7 @@ import {
 } from "@/app/residentes/[id]/legajo/medicacion-actions";
 import type { AvisoPolifarmacia } from "@/app/residentes/[id]/legajo/medicacion-actions";
 import type { EstadoToma, MedicamentoResidente, TomaMar } from "@/lib/types";
+import { BotonPlanillaTomas } from "@/components/BotonPlanillaTomas";
 
 type Props = {
   residenteId: string;
@@ -214,6 +215,7 @@ export function MarResidente({
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="font-display text-base font-semibold text-ink">{residenteNombre}</p>
         <div className="flex flex-wrap items-center gap-2">
+          <BotonPlanillaTomas filtro={{ residenteId }} />
           {polifarmacia.esPolifarmacia && (
             <span
               className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[0.65rem] font-semibold text-amber-800"
