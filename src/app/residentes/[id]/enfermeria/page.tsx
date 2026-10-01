@@ -98,7 +98,7 @@ export default async function EnfermeriaResidentePage({
               </span>
             </p>
           </div>
-          <BotonPdfSignos filtro={{ residenteId: id }} mesInicial={mes} etiqueta="Imprimir planilla (PDF)" />
+          <BotonPdfSignos filtro={{ residenteId: id }} hoy={hoy} etiqueta="Imprimir planilla (PDF)" />
         </div>
 
         <div className="flex items-center gap-3 text-sm">

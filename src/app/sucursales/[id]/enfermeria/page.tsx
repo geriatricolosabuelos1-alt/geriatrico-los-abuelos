@@ -81,7 +81,7 @@ export default async function EnfermeriaSedePage({
           </div>
           <BotonPdfSignos
             filtro={{ sucursalId: id }}
-            mesInicial={fecha.slice(0, 7)}
+            hoy={hoy}
             etiqueta="Imprimir todas (PDF)"
           />
         </div>

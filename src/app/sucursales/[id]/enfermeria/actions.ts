@@ -103,12 +103,15 @@ export type PlanillaResidente = {
   registros: SignosVitales[];
 };
 
-// Datos para el PDF del mes (AAAA-MM): de un residente, o de todos los residentes activos de la sede.
-export async function obtenerPlanillasMes(
+// Datos para el PDF de un período (desde/hasta, AAAA-MM-DD): de un residente, o de todos
+// los residentes activos de la sede.
+export async function obtenerPlanillas(
   filtro: { residenteId: string } | { sucursalId: string },
-  mes: string,
+  desde: string,
+  hasta: string,
 ): Promise<PlanillaResidente[]> {
-  if (!/^\d{4}-\d{2}$/.test(mes)) return [];
+  const FECHA = /^\d{4}-\d{2}-\d{2}$/;
+  if (!FECHA.test(desde) || !FECHA.test(hasta) || desde > hasta) return [];
   const supabase = await createClient();
 
   let consulta = supabase
@@ -132,9 +135,6 @@ export async function obtenerPlanillasMes(
   >();
   if (!residentes || residentes.length === 0) return [];
 
-  const [anio, numMes] = mes.split("-").map(Number);
-  const ultimoDia = new Date(anio, numMes, 0).getDate();
-
   const { data: registros } = await supabase
     .from("signos_vitales")
     .select(COLUMNAS)
@@ -142,8 +142,8 @@ export async function obtenerPlanillasMes(
       "residente_id",
       residentes.map((r) => r.id),
     )
-    .gte("fecha", `${mes}-01`)
-    .lte("fecha", `${mes}-${String(ultimoDia).padStart(2, "0")}`)
+    .gte("fecha", desde)
+    .lte("fecha", hasta)
     .returns<SignosVitales[]>();
 
   return residentes.map((r) => ({
