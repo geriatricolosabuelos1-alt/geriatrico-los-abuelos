@@ -1,7 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
+import { COLUMNAS_FICHA_NUTRICION, nombrePeriodo, type FichaNutricion } from "@/lib/nutricion";
 import { generarLibroFoliado } from "@/app/sucursales/[id]/legales/sanitario-actions";
 import { calcularEdad } from "@/lib/residentes";
 import { ETIQUETA_TIPO_INTERCONSULTA } from "@/lib/interconsultas";
+import type { SignosVitales } from "@/app/sucursales/[id]/enfermeria/actions";
 import type {
   Emergencia,
   EvaluacionKinesiologia,
@@ -9,8 +11,6 @@ import type {
   FichaMedica,
   InterconsultaCompleta,
   MedicamentoResidente,
-  PrescripcionDietaria,
-  RestriccionResidente,
   Residente,
   SesionKinesiologia,
   VacunacionResidente,
@@ -30,6 +30,7 @@ const ETIQUETA_TIPO_DOCUMENTO: Record<string, string> = {
   contrato: "Contrato",
   evaluacion_kinesiologia: "Evaluación kinesiológica (PDF)",
   evolucion_kinesiologia: "Evolución kinesiológica (PDF)",
+  indicacion_emergencia: "Receta / indicación de emergencia",
 };
 
 function fecha(valor: string | null | undefined): string {
@@ -39,7 +40,7 @@ function fecha(valor: string | null | undefined): string {
 
 function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <section className="mt-5">
+    <section className="mt-5" data-seccion={titulo}>
       <h3 className="mb-2 border-b border-black pb-0.5 text-[0.8rem] font-bold uppercase tracking-wide">{titulo}</h3>
       {children}
     </section>
@@ -48,9 +49,9 @@ function Seccion({ titulo, children }: { titulo: string; children: React.ReactNo
 
 function Campo({ etiqueta, valor }: { etiqueta: string; valor: string | number | null | undefined }) {
   return (
-    <p>
+    <p data-campo={etiqueta}>
       <span className="font-semibold">{etiqueta}:</span>{" "}
-      {valor === null || valor === undefined || valor === "" ? "—" : valor}
+      <span data-valor>{valor === null || valor === undefined || valor === "" ? "—" : valor}</span>
     </p>
   );
 }
@@ -97,11 +98,13 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
     { data: interconsultas },
     { data: evalKinesio },
     { data: sesionesKinesio },
-    { data: dieta },
-    { data: restricciones },
+    { data: signosVitales },
+    { data: movimientosInsumos },
+    { data: fichasNutricion },
     { data: documentos },
     { data: emergencias },
     entradasClinicas,
+    { data: tomas },
   ] = await Promise.all([
     supabase.from("residentes").select("*").eq("id", residenteId).single<Residente>(),
     supabase.from("ficha_administrativa").select("*").eq("residente_id", residenteId).maybeSingle<FichaAdministrativa>(),
@@ -138,19 +141,26 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
       .order("fecha")
       .returns<SesionKinesiologia[]>(),
     supabase
-      .from("prescripcion_dietaria")
+      .from("signos_vitales")
       .select("*")
       .eq("residente_id", residenteId)
-      .eq("activa", true)
-      .order("vigente_desde", { ascending: false })
-      .limit(1)
-      .maybeSingle<PrescripcionDietaria>(),
+      .order("fecha")
+      .returns<SignosVitales[]>(),
     supabase
-      .from("restricciones_residente")
-      .select("*")
+      .from("movimientos_inventario")
+      .select("fecha, tipo, cantidad, insumos(nombre, unidad)")
       .eq("residente_id", residenteId)
-      .eq("activo", true)
-      .returns<RestriccionResidente[]>(),
+      .order("fecha")
+      .returns<
+        { fecha: string; tipo: string; cantidad: number; insumos: { nombre: string; unidad: string } | null }[]
+      >(),
+    supabase
+      .from("fichas_nutricion")
+      .select(COLUMNAS_FICHA_NUTRICION)
+      .eq("residente_id", residenteId)
+      .order("periodo", { ascending: false })
+      .order("created_at", { ascending: false })
+      .returns<FichaNutricion[]>(),
     supabase
       .from("documentos_residente")
       .select("tipo, nombre_archivo, created_at")
@@ -164,7 +174,48 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
       .order("fecha")
       .returns<Emergencia[]>(),
     generarLibroFoliado(residenteId),
+    supabase
+      .from("dosis_administradas")
+      .select("fecha, estado, cantidad, motivo, horario_previsto, medicamentos_residente(nombre)")
+      .eq("residente_id", residenteId)
+      .order("fecha")
+      .limit(20000)
+      .returns<
+        {
+          fecha: string;
+          estado: string;
+          cantidad: number;
+          motivo: string | null;
+          horario_previsto: string | null;
+          medicamentos_residente: { nombre: string } | null;
+        }[]
+      >(),
   ]);
+
+  // Tomas resumidas por mes y medicamento (el detalle está en "Tomas por período (PDF)").
+  const resumenTomas = new Map<
+    string,
+    { mes: string; medicamento: string; dadas: number; unidades: number; noDadas: number; motivos: string[] }
+  >();
+  for (const t of tomas ?? []) {
+    const mes = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Mendoza" })
+      .format(new Date(t.fecha))
+      .slice(0, 7);
+    const medicamento = t.medicamentos_residente?.nombre ?? "—";
+    const clave = `${mes}|${medicamento}`;
+    const r = resumenTomas.get(clave) ?? { mes, medicamento, dadas: 0, unidades: 0, noDadas: 0, motivos: [] };
+    if (t.estado === "administrado") {
+      r.dadas += 1;
+      r.unidades += Number(t.cantidad) || 0;
+    } else {
+      r.noDadas += 1;
+      if (t.motivo) {
+        const dia = new Date(t.fecha).toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" });
+        r.motivos.push(`${dia}${t.horario_previsto ? ` ${t.horario_previsto}` : ""}: ${t.motivo}`);
+      }
+    }
+    resumenTomas.set(clave, r);
+  }
 
   if (!residente) return null;
 
@@ -247,20 +298,70 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
         />
       </Seccion>
 
-      <Seccion titulo="5. Nutrición">
-        <Campo
-          etiqueta="Dieta vigente"
-          valor={
-            dieta
-              ? `${dieta.tipo_dieta} · IDDSI ${dieta.nivel_iddsi} · Líquidos ${dieta.tipo_liquido} (desde ${fecha(
-                  dieta.vigente_desde,
-                )})${dieta.notas ? ` — ${dieta.notas}` : ""}`
-              : null
-          }
+      <Seccion titulo="4.1 Tomas de medicación (resumen mensual)">
+        <Tabla
+          columnas={["Mes", "Medicamento", "Tomas dadas", "Unidades", "No dadas", "Motivos"]}
+          filas={[...resumenTomas.values()].map((r) => [
+            `${r.mes.slice(5, 7)}/${r.mes.slice(0, 4)}`,
+            r.medicamento,
+            r.dadas,
+            Math.round(r.unidades * 100) / 100,
+            r.noDadas,
+            r.motivos.join("; "),
+          ])}
         />
-        <Campo
-          etiqueta="Restricciones"
-          valor={(restricciones ?? []).map((r) => `${r.tipo}: ${r.detalle}`).join("; ")}
+      </Seccion>
+
+      <Seccion titulo="5. Nutrición · ficha nutricional mensual">
+        {(() => {
+          const n = fichasNutricion?.[0];
+          if (!n) return null;
+          const lista = (v: string[]) => v.join(", ");
+          return (
+            <>
+              <Campo etiqueta="Último mes evaluado" valor={`${nombrePeriodo(n.periodo)} (${fecha(n.fecha)})`} />
+              <Campo etiqueta="Diagnóstico principal" valor={n.diagnostico_principal} />
+              <Campo etiqueta="Patologías asociadas" valor={n.patologias_asociadas} />
+              <Campo etiqueta="Consistencia" valor={lista(n.consistencia)} />
+              <Campo
+                etiqueta="Según patología"
+                valor={[lista(n.segun_patologia), n.patologia_otra].filter(Boolean).join(" — ")}
+              />
+              <Campo etiqueta="Vía de administración" valor={lista(n.via_administracion)} />
+              <Campo etiqueta="Asistencia para alimentarse" valor={n.asistencia} />
+              <Campo etiqueta="Ingesta alimentaria" valor={n.ingesta} />
+              <Campo etiqueta="Prótesis dental" valor={n.protesis_dental === null ? null : n.protesis_dental ? "Sí" : "No"} />
+              <Campo etiqueta="Disfagia" valor={n.disfagia} />
+              <Campo
+                etiqueta="Suplementación"
+                valor={[lista(n.suplementacion), n.suplementacion_cantidad].filter(Boolean).join(" — ")}
+              />
+              <Campo
+                etiqueta="Antropometría"
+                valor={[
+                  n.peso_actual !== null && `Peso ${n.peso_actual} kg`,
+                  n.peso_ideal !== null && `Peso ideal ${n.peso_ideal} kg`,
+                  n.talla !== null && `Talla ${n.talla} m`,
+                  n.imc !== null && `IMC ${n.imc}`,
+                  n.perdida_peso && `Pérdida de peso${n.perdida_peso_pct !== null ? ` ${n.perdida_peso_pct}%` : ""}`,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              />
+              <Campo etiqueta="Evaluación nutricional" valor={n.evaluacion_nutricional} />
+              <Campo etiqueta="Evaluación funcional" valor={lista(n.evaluacion_funcional)} />
+              <Campo etiqueta="Observaciones y plan" valor={n.observaciones} />
+            </>
+          );
+        })()}
+        <Tabla
+          columnas={["Meses anteriores", "Evaluación", "Peso", "IMC"]}
+          filas={(fichasNutricion ?? []).slice(1).map((n) => [
+            nombrePeriodo(n.periodo),
+            n.evaluacion_nutricional,
+            n.peso_actual === null ? null : `${n.peso_actual} kg`,
+            n.imc,
+          ])}
         />
       </Seccion>
 
@@ -322,7 +423,34 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
         />
       </Seccion>
 
-      <Seccion titulo="9. Emergencias">
+      <Seccion titulo="9. Enfermería · Control de signos vitales">
+        <Tabla
+          columnas={["Fecha", "TA", "FC", "FR", "SO2", "T°", "Observaciones"]}
+          filas={(signosVitales ?? []).map((s) => [
+            fecha(s.fecha),
+            s.tension_arterial,
+            s.frecuencia_cardiaca,
+            s.frecuencia_respiratoria,
+            s.saturacion_o2 === null ? null : `${s.saturacion_o2}%`,
+            s.temperatura === null ? null : `${s.temperatura}°`,
+            s.observaciones,
+          ])}
+        />
+      </Seccion>
+
+      <Seccion titulo="10. Insumos (aportados por la familia y consumidos)">
+        <Tabla
+          columnas={["Fecha", "Movimiento", "Insumo", "Cantidad"]}
+          filas={(movimientosInsumos ?? []).map((m) => [
+            fecha(m.fecha),
+            m.tipo === "entrada" ? "Aportado" : "Consumido",
+            m.insumos?.nombre ?? null,
+            `${m.cantidad} ${m.insumos?.unidad ?? ""}`.trim(),
+          ])}
+        />
+      </Seccion>
+
+      <Seccion titulo="11. Emergencias">
         <Tabla
           columnas={["Fecha", "Hora", "Prestador", "Motivo", "Traslado", "Satisfactoria"]}
           filas={(emergencias ?? []).map((e) => [
@@ -336,7 +464,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
         />
       </Seccion>
 
-      <Seccion titulo="10. Historia clínica (evoluciones y notas)">
+      <Seccion titulo="12. Historia clínica (evoluciones y notas)">
         <Tabla
           columnas={["N°", "Fecha", "Tipo", "Autor", "Contenido"]}
           filas={entradasClinicas.map((e) => [
@@ -349,7 +477,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
         />
       </Seccion>
 
-      <Seccion titulo="11. Documentación archivada">
+      <Seccion titulo="13. Documentación archivada">
         <Tabla
           columnas={["Tipo", "Archivo", "Cargado"]}
           filas={(documentos ?? []).map((d) => [

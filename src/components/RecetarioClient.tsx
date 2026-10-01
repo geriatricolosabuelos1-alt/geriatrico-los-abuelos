@@ -7,6 +7,7 @@ import {
   eliminarReceta,
   type RecetaEstado,
 } from "@/app/sucursales/[id]/medicacion/recetario/actions";
+import { mensajePedidoReceta, telefonoWhatsapp } from "@/lib/recetas";
 import type { EstadoReceta, MedicamentoResidente, RecetaMedicamento } from "@/lib/types";
 
 type ResidenteConMeds = {
@@ -20,10 +21,17 @@ type ResidenteConMeds = {
 type RecetaConNombres = RecetaMedicamento & {
   residente_nombre: string;
   medicamento_nombre: string | null;
+  contacto_familiar: string | null;
+  telefono_familiar: string | null;
+  residente_dni: string | null;
+  numero_afiliado: string | null;
+  obra_social_ficha: string | null;
+  medicamento_detalle: string | null;
 };
 
 type Props = {
   sucursalId: string;
+  nombreSede: string;
   residentes: ResidenteConMeds[];
   recetas: RecetaConNombres[];
   puedeEliminar: boolean;
@@ -171,10 +179,12 @@ function FormularioNuevaReceta({
 
 function FilaReceta({
   sucursalId,
+  nombreSede,
   receta,
   puedeEliminar,
 }: {
   sucursalId: string;
+  nombreSede: string;
   receta: RecetaConNombres;
   puedeEliminar: boolean;
 }) {
@@ -191,6 +201,30 @@ function FilaReceta({
   async function borrar() {
     if (!window.confirm("¿Eliminar esta receta?")) return;
     await eliminarReceta(sucursalId, receta.id);
+  }
+
+  const telefono = telefonoWhatsapp(receta.telefono_familiar);
+
+  // Abre WhatsApp con el pedido de la receta al familiar y, si estaba pendiente, la marca pedida hoy.
+  async function enviarWhatsapp() {
+    if (!telefono) return;
+    const texto = mensajePedidoReceta({
+      contacto: receta.contacto_familiar,
+      sede: nombreSede,
+      // "Pérez, Ana" -> "Ana Pérez"
+      residente: receta.residente_nombre.split(", ").reverse().join(" "),
+      dni: receta.residente_dni,
+      obraSocial: receta.obra_social ?? receta.obra_social_ficha,
+      numeroAfiliado: receta.numero_afiliado,
+      medicamento: receta.medicamento_nombre,
+      detalleMedicamento: receta.medicamento_detalle,
+    });
+    window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(texto)}`, "_blank", "noopener");
+    if (receta.estado === "pendiente_pedir") {
+      setEnviando(true);
+      await actualizarEstadoReceta(sucursalId, receta.id, "pedida");
+      setEnviando(false);
+    }
   }
 
   return (
@@ -226,7 +260,22 @@ function FilaReceta({
       </td>
       <td className="px-3 py-2 text-xs text-ink-soft">{receta.notas ?? "—"}</td>
       <td className="px-3 py-2 text-right">
-        <div className="flex justify-end gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
+          {receta.estado !== "recibida" && (
+            <button
+              type="button"
+              onClick={enviarWhatsapp}
+              disabled={!telefono || enviando}
+              title={
+                telefono
+                  ? `Enviar a ${receta.contacto_familiar ?? "el familiar"} (${receta.telefono_familiar})`
+                  : "Falta el teléfono del familiar: cargalo en el legajo del residente"
+              }
+              className="text-xs font-semibold text-emerald-700 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {receta.estado === "pedida" ? "Reenviar por WhatsApp" : "Enviar por WhatsApp"}
+            </button>
+          )}
           {siguiente && (
             <button
               type="button"
@@ -248,7 +297,7 @@ function FilaReceta({
   );
 }
 
-export function RecetarioClient({ sucursalId, residentes, recetas, puedeEliminar }: Props) {
+export function RecetarioClient({ sucursalId, nombreSede, residentes, recetas, puedeEliminar }: Props) {
   return (
     <div className="space-y-4">
       <FormularioNuevaReceta
@@ -271,7 +320,13 @@ export function RecetarioClient({ sucursalId, residentes, recetas, puedeEliminar
           </thead>
           <tbody>
             {recetas.map((r) => (
-              <FilaReceta key={r.id} sucursalId={sucursalId} receta={r} puedeEliminar={puedeEliminar} />
+              <FilaReceta
+                key={r.id}
+                sucursalId={sucursalId}
+                nombreSede={nombreSede}
+                receta={r}
+                puedeEliminar={puedeEliminar}
+              />
             ))}
             {recetas.length === 0 && (
               <tr>

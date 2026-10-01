@@ -187,3 +187,13 @@ select option {
   background-color: var(--color-card);
   color: var(--color-ink);
 }
+
+/* Regla de impresión de Medicina (src/lib/impresionHtml.ts): lo vacío o en 0 no se imprime. */
+@media print {
+  .omitir-impresion {
+    display: none !important;
+  }
+  .vaciar-impresion {
+    color: transparent !important;
+  }
+}

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BotonImprimir } from "@/components/BotonImprimir";
 import { ContratoEditable } from "@/components/ContratoEditable";
+import { FichaIngreso } from "@/components/FichaIngreso";
 import { hoyArgentina } from "@/lib/fechas";
 
 type Params = { id: string };
@@ -370,6 +371,11 @@ export default async function ContratoResidentePage({
           los datos cargados en el legajo del residente. Sujeto a revisión y completamiento del
           ANEXO I (evaluación médica) antes de su firma.
         </p>
+
+        {/* La ficha de ingreso sale impresa en una hoja aparte, a continuación del contrato. */}
+        <div className="mt-10 rounded-xl bg-white p-8 print:mt-0 print:break-before-page print:rounded-none print:p-0">
+          <FichaIngreso residenteId={id} sede={nombreSucursal} />
+        </div>
       </div>
     </div>
   );

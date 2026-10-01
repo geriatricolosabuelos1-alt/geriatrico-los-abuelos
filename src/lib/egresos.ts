@@ -6,3 +6,12 @@ export const MOTIVOS_EGRESO = [
   "Falta de pago",
   "Otro",
 ] as const;
+
+export const MOTIVOS_BAJA_EMPLEADO = [
+  "Renuncia",
+  "Despido",
+  "Fin de contrato",
+  "Jubilación",
+  "Fallecimiento",
+  "Otro",
+] as const;

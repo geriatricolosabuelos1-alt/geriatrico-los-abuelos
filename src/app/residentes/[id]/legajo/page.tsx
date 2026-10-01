@@ -7,6 +7,7 @@ import {
   listarAlertasActivas,
   listarCatalogoMedicamentos,
   listarMedicamentos,
+  actualizarTomasAutomaticas,
 } from "@/app/residentes/[id]/legajo/medicacion-actions";
 import type { FichaAdministrativa, FichaMedica, Perfil, Residente } from "@/lib/types";
 
@@ -62,10 +63,18 @@ export default async function LegajoResidentePage({
     .eq("residente_id", id)
     .maybeSingle<FichaMedica>();
 
-  const [medicamentos, alertasMedicacion, catalogoMedicamentos] = await Promise.all([
+  await actualizarTomasAutomaticas();
+  const [medicamentos, alertasMedicacion, catalogoMedicamentos, { data: insumosAportados }] = await Promise.all([
     listarMedicamentos(id),
     listarAlertasActivas(id),
     listarCatalogoMedicamentos(),
+    supabase
+      .from("movimientos_inventario")
+      .select("id, fecha, cantidad, insumos(nombre, unidad)")
+      .eq("residente_id", id)
+      .eq("tipo", "entrada")
+      .order("fecha", { ascending: false })
+      .returns<{ id: string; fecha: string; cantidad: number; insumos: { nombre: string; unidad: string } | null }[]>(),
   ]);
 
   return (
@@ -114,6 +123,18 @@ export default async function LegajoResidentePage({
             >
               Kinesiología
             </Link>
+            <Link
+              href={`/residentes/${id}/enfermeria`}
+              className="text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+            >
+              Signos vitales
+            </Link>
+            <Link
+              href={`/sucursales/${residente.sucursal_id}/nutricion/imprimir?residente=${id}`}
+              className="text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+            >
+              Ficha nutricional
+            </Link>
           </div>
         </div>
 
@@ -126,6 +147,39 @@ export default async function LegajoResidentePage({
           alertasMedicacion={alertasMedicacion}
           catalogoMedicamentos={catalogoMedicamentos}
         />
+
+        <section className="rounded-2xl border border-edge bg-card p-5">
+          <h2 className="mb-3 font-display text-base font-semibold text-ink">Insumos aportados por la familia</h2>
+          {(insumosAportados ?? []).length === 0 ? (
+            <p className="text-sm text-ink-soft">
+              Todavía no hay insumos aportados. Se cargan en Inventario → Registrar movimiento → Ingreso, tildando
+              &quot;Lo aportó un residente&quot;.
+            </p>
+          ) : (
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+                  <th className="py-1.5 pr-4">Fecha</th>
+                  <th className="py-1.5 pr-4">Insumo</th>
+                  <th className="py-1.5">Cantidad</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(insumosAportados ?? []).map((m) => (
+                  <tr key={m.id} className="border-t border-edge">
+                    <td className="py-1.5 pr-4 text-ink-soft">
+                      {new Date(m.fecha).toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}
+                    </td>
+                    <td className="py-1.5 pr-4 text-ink">{m.insumos?.nombre ?? "—"}</td>
+                    <td className="py-1.5 text-ink">
+                      {m.cantidad} {m.insumos?.unidad}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
       </main>
     </div>
   );

@@ -16,22 +16,26 @@ export function BotonCarpetaLegales({ sucursalId }: { sucursalId: string }) {
       // Se carga solo al usarlo: pdf-lib y jsPDF son pesados.
       const { generarCarpetaLegalesPdf } = await import("@/lib/carpetaLegalesPdf");
       const pdf = await generarCarpetaLegalesPdf(datos, setProgreso);
-
+      const nombreArchivo = `documentacion-legal-${datos.sede}.pdf`.toLowerCase().replace(/\s+/g, "-");
       const url = URL.createObjectURL(pdf);
       const enlace = document.createElement("a");
       enlace.href = url;
-      enlace.download = `documentacion-legal-${datos.sede}.pdf`.toLowerCase().replace(/\s+/g, "-");
+      enlace.download = nombreArchivo;
       enlace.click();
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
-    } catch {
-      setError("No se pudo armar el PDF. Probá de nuevo.");
+    } catch (err) {
+      setError(
+        err instanceof Error && err.message === "sin archivos"
+          ? "No hay archivos cargados para descargar."
+          : "No se pudo armar el PDF. Probá de nuevo.",
+      );
     } finally {
       setProgreso(null);
     }
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex flex-col items-end gap-2">
       <button
         type="button"
         onClick={descargar}
@@ -40,7 +44,7 @@ export function BotonCarpetaLegales({ sucursalId }: { sucursalId: string }) {
       >
         {progreso ?? "Sacar todo junto (PDF)"}
       </button>
-      <p className="text-[0.65rem] text-ink-soft">Resumen + todos los documentos cargados, foliado</p>
+      <p className="text-[0.65rem] text-ink-soft">Todos los archivos cargados en un solo PDF, foliado</p>
       {error && <p className="text-xs text-red-700">{error}</p>}
     </div>
   );

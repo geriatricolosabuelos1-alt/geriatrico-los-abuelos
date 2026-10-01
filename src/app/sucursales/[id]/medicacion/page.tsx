@@ -4,11 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { MedicacionResidente } from "@/components/MedicacionResidente";
 import { MarResidente } from "@/components/MarResidente";
+import { BotonPlanillaTomas } from "@/components/BotonPlanillaTomas";
 import {
   evaluarPolifarmacia,
   listarCatalogoMedicamentos,
   obtenerDosisSosHoy,
   obtenerTomasDeHoy,
+  actualizarTomasAutomaticas,
 } from "@/app/residentes/[id]/legajo/medicacion-actions";
 import type { AlertaMedicacion, MedicamentoResidente, Perfil } from "@/lib/types";
 
@@ -37,6 +39,9 @@ export default async function MedicacionSucursalPage({
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Antes de mostrar stock y planilla, se registran las tomas cuyo horario ya pasó.
+  await actualizarTomasAutomaticas();
 
   const [{ data: perfil }, { data: sucursal }, { data: residentes }, { data: alertas }, catalogo] =
     await Promise.all([
@@ -112,7 +117,8 @@ export default async function MedicacionSucursalPage({
                 : "Cargá, editá o dá de baja medicación, registrá ingresos y administrá dosis — todo se refleja también en el legajo de cada residente."}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-start gap-2">
+            <BotonPlanillaTomas filtro={{ sucursalId: id }} etiqueta="Planilla de tomas de todos (PDF)" />
             <Link
               href={`/sucursales/${id}/medicacion/registro`}
               className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
@@ -173,6 +179,7 @@ export default async function MedicacionSucursalPage({
                     alertas={(alertas ?? []).filter((a) => a.residente_id === r.id)}
                     catalogo={catalogo}
                     sucursalId={id}
+                    registroHref={`/sucursales/${id}/medicacion/registro?tipo=administrada&residente=${r.id}`}
                   />
                 </div>
               ))}

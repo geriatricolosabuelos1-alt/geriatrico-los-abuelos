@@ -114,6 +114,7 @@ export default async function RecetarioPage({ params }: { params: Promise<Params
 
         <RecetarioClient
           sucursalId={id}
+          nombreSede={sucursal!.nombre}
           residentes={residentes ?? []}
           recetas={recetas}
           puedeEliminar={perfil!.rol !== "medico"}

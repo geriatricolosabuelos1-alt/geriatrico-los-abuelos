@@ -57,6 +57,7 @@ export function ExportarPdfMenuSemanal({ menu, sucursalNombre }: Props) {
         fecha: `Semana desde ${new Date(menu.semana_desde + "T00:00:00").toLocaleDateString("es-AR")} al ${new Date(menu.semana_hasta + "T00:00:00").toLocaleDateString("es-AR")}`,
       },
       secciones,
+      { omitirVacios: true },
     );
   }
 

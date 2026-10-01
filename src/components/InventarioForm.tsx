@@ -35,6 +35,7 @@ export function InventarioForm({ sucursalId, categoria, insumos, residentes }: P
   const [cantidad, setCantidad] = useState("");
   const [tipo, setTipo] = useState<"entrada" | "salida">("entrada");
   const [imputar, setImputar] = useState(false);
+  const [aporte, setAporte] = useState(false);
 
   const importeTotal = useMemo(() => {
     const p = Number(precio);
@@ -131,6 +132,38 @@ export function InventarioForm({ sucursalId, categoria, insumos, residentes }: P
           {enviando ? "Guardando..." : "Registrar"}
         </button>
       </div>
+
+      {tipo === "entrada" && (
+        <div className="flex flex-wrap items-end gap-3 rounded-lg border border-edge bg-panel-deep p-3">
+          <label className="flex items-center gap-2 text-xs font-medium text-ink">
+            <input
+              type="checkbox"
+              name="aporte_residente"
+              checked={aporte}
+              onChange={(e) => setAporte(e.target.checked)}
+            />
+            Lo aportó un residente (lo trajo la familia)
+          </label>
+          {aporte && (
+            <div className="min-w-[220px] flex-1">
+              <label className={ETIQUETA}>Residente que lo aportó</label>
+              <select name="residente_id" required className={CAMPO}>
+                <option value="">Seleccionar...</option>
+                {residentes.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.apellido}, {r.nombre}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+          {aporte && (
+            <p className="w-full text-xs text-ink-soft">
+              Suma al stock y queda registrado en el legajo del residente. No se carga como gasto de la sede.
+            </p>
+          )}
+        </div>
+      )}
 
       {tipo === "salida" && (
         <div className="flex flex-wrap items-end gap-3 rounded-lg border border-edge bg-panel-deep p-3">

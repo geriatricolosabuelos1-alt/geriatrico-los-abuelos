@@ -1,5 +1,6 @@
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { avisarOmitidos, limpiarSeccionesPdf } from "@/lib/impresion";
 
 export type SeccionPdf = {
   titulo?: string;
@@ -63,7 +64,18 @@ export function crearPdfTablas(encabezado: EncabezadoPdf, secciones: SeccionPdf[
   return doc;
 }
 
-export function descargarPdf(nombreArchivo: string, encabezado: EncabezadoPdf, secciones: SeccionPdf[]): void {
+export function descargarPdf(
+  nombreArchivo: string,
+  encabezado: EncabezadoPdf,
+  secciones: SeccionPdf[],
+  opciones?: { omitirVacios?: boolean },
+): void {
+  // Solo Nutrición: lo vacío o en 0 no sale, y se avisa antes qué se omite.
+  if (opciones?.omitirVacios) {
+    const limpio = limpiarSeccionesPdf(secciones);
+    avisarOmitidos(limpio.omitidos, "PDF");
+    secciones = limpio.secciones.length > 0 ? limpio.secciones : [{ columnas: ["Sin datos"], filas: [] }];
+  }
   const doc = crearPdfTablas(encabezado, secciones);
 
   // Foliado: número de hoja en el pie de cada página.

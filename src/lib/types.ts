@@ -87,7 +87,8 @@ export type TipoDocumentoResidente =
   | "nota_derivacion"
   | "contrato"
   | "evaluacion_kinesiologia"
-  | "evolucion_kinesiologia";
+  | "evolucion_kinesiologia"
+  | "indicacion_emergencia";
 
 export interface DocumentoResidente {
   id: string;
@@ -267,6 +268,7 @@ export interface DosisAdministrada {
   horario_previsto: string | null;
   administrado_por: string | null;
   fecha: string;
+  automatica?: boolean;
 }
 
 export type EstadoToma = "pendiente" | EstadoDosis;
@@ -278,6 +280,7 @@ export interface TomaMar {
   estado: EstadoToma;
   dosisId: string | null;
   motivo: string | null;
+  automatica?: boolean;
 }
 
 export type EstadoReceta = "pendiente_pedir" | "pedida" | "recibida";
@@ -654,6 +657,24 @@ export interface TurnoProgramado {
   vigente_desde: string;
   vigente_hasta: string;
   activo: boolean;
+  created_at: string;
+  // Turno rotativo (ej. 2×2): trabaja dias_trabajo seguidos y descansa dias_franco, desde vigente_desde.
+  dias_trabajo?: number | null;
+  dias_franco?: number | null;
+}
+
+export type TipoCambioTurno = "cambio" | "guardia";
+
+export interface CambioTurno {
+  id: string;
+  sucursal_id: string;
+  fecha: string;
+  tipo: TipoCambioTurno;
+  empleado_original_id: string | null;
+  empleado_reemplazo_id: string;
+  hora_inicio: string;
+  hora_fin: string;
+  motivo: string | null;
   created_at: string;
 }
 

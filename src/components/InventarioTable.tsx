@@ -3,9 +3,8 @@
 import { useMemo, useState } from "react";
 import {
   actualizarInsumo,
-  crearInsumo,
   eliminarInsumo,
-  type CrearInsumoEstado,
+  usarInsumo,
 } from "@/app/sucursales/[id]/inventario/actions";
 import type { CategoriaInsumo } from "@/lib/types";
 
@@ -23,6 +22,7 @@ type FilaInsumo = {
 };
 
 type Props = {
+  sucursalId: string;
   insumos: FilaInsumo[];
   esAdmin: boolean;
 };
@@ -38,7 +38,74 @@ function tieneAlerta(insumo: FilaInsumo): boolean {
   return insumo.stockFinal <= 0 || insumo.stockFinal <= insumo.stockMinimo;
 }
 
-function FilaEditable({ insumo }: { insumo: FilaInsumo }) {
+// "− Usar": descuenta del stock la cantidad que se usó (salida de uso general).
+function BotonUsar({ sucursalId, insumo }: { sucursalId: string; insumo: FilaInsumo }) {
+  const [abierto, setAbierto] = useState(false);
+  const [cantidad, setCantidad] = useState("1");
+  const [enviando, setEnviando] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function confirmar() {
+    setEnviando(true);
+    setError(null);
+    const resultado = await usarInsumo(sucursalId, insumo.id, Number(cantidad));
+    setEnviando(false);
+    if (resultado.error) {
+      setError(resultado.error);
+      return;
+    }
+    setAbierto(false);
+    setCantidad("1");
+  }
+
+  if (!abierto) {
+    return (
+      <button
+        type="button"
+        onClick={() => setAbierto(true)}
+        disabled={insumo.stockFinal <= 0}
+        title={insumo.stockFinal <= 0 ? "Sin stock" : `Descontar ${insumo.unidad} usados`}
+        className="rounded-md border border-edge px-2 py-1 text-xs font-medium text-ink hover:border-brass disabled:opacity-40"
+      >
+        − Usar
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-1.5">
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          autoFocus
+          value={cantidad}
+          onChange={(e) => setCantidad(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") confirmar();
+            if (e.key === "Escape") setAbierto(false);
+          }}
+          className="w-16 rounded-md border border-edge bg-panel-deep px-2 py-1 text-xs text-ink focus:border-brass focus:outline-none"
+        />
+        <button
+          type="button"
+          onClick={confirmar}
+          disabled={enviando || !(Number(cantidad) > 0)}
+          className="rounded-md bg-brass px-2 py-1 text-xs font-semibold text-btn-ink disabled:opacity-50"
+        >
+          {enviando ? "..." : "OK"}
+        </button>
+        <button type="button" onClick={() => setAbierto(false)} className="text-xs text-ink-soft hover:text-ink">
+          ✕
+        </button>
+      </div>
+      {error && <p className="max-w-[200px] text-xs text-red-700">{error}</p>}
+    </div>
+  );
+}
+
+function FilaEditable({ sucursalId, insumo }: { sucursalId: string; insumo: FilaInsumo }) {
   const [nombre, setNombre] = useState(insumo.nombre);
   const [unidad, setUnidad] = useState(insumo.unidad);
   const [stockMinimo, setStockMinimo] = useState(String(insumo.stockMinimo));
@@ -126,6 +193,9 @@ function FilaEditable({ insumo }: { insumo: FilaInsumo }) {
           </span>
         )}
       </td>
+      <td className="px-4 py-3">
+        <BotonUsar sucursalId={sucursalId} insumo={insumo} />
+      </td>
       <td className="px-4 py-3 text-right whitespace-nowrap">
         <form id={`form-${insumo.id}`} onSubmit={manejarSubmit} className="inline">
           <input type="hidden" name="insumo_id" value={insumo.id} />
@@ -150,72 +220,8 @@ function FilaEditable({ insumo }: { insumo: FilaInsumo }) {
   );
 }
 
-const CAMPO =
-  "rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
-
-function FormularioNuevoInsumo({ onCreado }: { onCreado: () => void }) {
-  const [estado, setEstado] = useState<CrearInsumoEstado>({ error: null });
-  const [enviando, setEnviando] = useState(false);
-
-  async function manejarSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setEnviando(true);
-    const formData = new FormData(e.currentTarget);
-    const resultado = await crearInsumo({ error: null }, formData);
-    setEnviando(false);
-    if (resultado.error) {
-      setEstado(resultado);
-    } else {
-      setEstado({ error: null });
-      (e.target as HTMLFormElement).reset();
-      onCreado();
-    }
-  }
-
-  return (
-    <form
-      onSubmit={manejarSubmit}
-      className="flex flex-wrap items-end gap-3 rounded-2xl border border-edge bg-card p-4"
-    >
-      <div>
-        <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
-          Nombre
-        </label>
-        <input name="nombre" required className={CAMPO} placeholder="Ej: Aceite" />
-      </div>
-      <div>
-        <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
-          Categoría
-        </label>
-        <select name="categoria" required defaultValue="varios" className={CAMPO}>
-          {ORDEN_CATEGORIAS.map((cat) => (
-            <option key={cat} value={cat}>
-              {ETIQUETA_CATEGORIA[cat]}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
-          Unidad
-        </label>
-        <input name="unidad" className={CAMPO} placeholder="unidades" />
-      </div>
-      {estado.error && <p className="text-xs text-red-700">{estado.error}</p>}
-      <button
-        type="submit"
-        disabled={enviando}
-        className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
-      >
-        {enviando ? "Guardando..." : "Agregar insumo"}
-      </button>
-    </form>
-  );
-}
-
-export function InventarioTable({ insumos, esAdmin }: Props) {
+export function InventarioTable({ sucursalId, insumos, esAdmin }: Props) {
   const [busqueda, setBusqueda] = useState("");
-  const [mostrarNuevo, setMostrarNuevo] = useState(false);
 
   const filtrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
@@ -232,20 +238,7 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
           onChange={(e) => setBusqueda(e.target.value)}
           className="w-64 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none"
         />
-        {esAdmin && (
-          <button
-            type="button"
-            onClick={() => setMostrarNuevo((v) => !v)}
-            className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:text-ink"
-          >
-            {mostrarNuevo ? "Cancelar" : "+ Nuevo insumo"}
-          </button>
-        )}
       </div>
-
-      {esAdmin && mostrarNuevo && (
-        <FormularioNuevoInsumo onCreado={() => setMostrarNuevo(false)} />
-      )}
 
       {ORDEN_CATEGORIAS.map((cat) => {
         const items = filtrados.filter((i) => i.categoria === cat);
@@ -272,6 +265,7 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
                     <th className="px-4 py-3">Stock mínimo</th>
                     <th className="px-4 py-3">Precio ref.</th>
                     <th className="px-4 py-3">Alerta</th>
+                    <th className="px-4 py-3">Usar</th>
                     {esAdmin && <th className="px-4 py-3"></th>}
                   </tr>
                 </thead>
@@ -279,7 +273,7 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
                   {items.map((i) =>
                     esAdmin ? (
                       <tr key={i.id} className="border-b border-edge last:border-0">
-                        <FilaEditable insumo={i} />
+                        <FilaEditable sucursalId={sucursalId} insumo={i} />
                       </tr>
                     ) : (
                       <tr key={i.id} className="border-b border-edge last:border-0">
@@ -313,6 +307,9 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
                               Comprar
                             </span>
                           )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <BotonUsar sucursalId={sucursalId} insumo={i} />
                         </td>
                       </tr>
                     ),

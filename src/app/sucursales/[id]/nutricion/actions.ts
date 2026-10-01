@@ -2,422 +2,119 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import type {
-  AlertaNutricion,
-  ComidaIngesta,
-  EvaluacionMna,
-  FichaNutricional,
-  MedicionAntropometrica,
-  MenuSemanal,
-  MenuSemanalContenido,
-  PrescripcionDietaria,
-  RegistroIngesta,
-  RestriccionResidente,
-  TipoDieta,
-  TipoLiquido,
-  ValoracionDeglucion,
-} from "@/lib/types";
-import { hoyArgentina } from "@/lib/fechas";
+import type { MenuSemanal, MenuSemanalContenido } from "@/lib/types";
+import { COLUMNAS_FICHA_NUTRICION, type FichaNutricion } from "@/lib/nutricion";
 
-type Estado = { error: string | null };
+type Estado = { error: string | null; guardado?: boolean };
 const OK: Estado = { error: null };
 
 function rutaNutricion(sucursalId: string, sub?: string): string {
   return `/sucursales/${sucursalId}/nutricion${sub ? `/${sub}` : ""}`;
 }
 
-// ---------- Fase 0: ficha nutricional + antropometria ----------
+// ---------- Ficha nutricional (formulario de la nutricionista) ----------
 
-export async function obtenerFichaNutricional(residenteId: string): Promise<FichaNutricional | null> {
+// Fichas de los residentes, de la más nueva a la más vieja.
+export async function listarFichasNutricion(residenteIds: string[]): Promise<FichaNutricion[]> {
+  if (residenteIds.length === 0) return [];
   const supabase = await createClient();
   const { data } = await supabase
-    .from("ficha_nutricional")
-    .select(
-      "residente_id, peso_habitual, peso_actual, metodo_pesaje, talla_cm, talla_estimada, circunferencia_pantorrilla, circunferencia_braquial, dinamometria_kg, updated_at",
-    )
-    .eq("residente_id", residenteId)
-    .maybeSingle<FichaNutricional>();
-  return data ?? null;
-}
-
-export async function listarMediciones(residenteId: string): Promise<MedicionAntropometrica[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("mediciones_antropometricas")
-    .select("id, residente_id, fecha, peso, circunferencia_pantorrilla, circunferencia_braquial, registrado_por, created_at")
-    .eq("residente_id", residenteId)
-    .order("fecha", { ascending: false })
-    .returns<MedicionAntropometrica[]>();
+    .from("fichas_nutricion")
+    .select(COLUMNAS_FICHA_NUTRICION)
+    .in("residente_id", residenteIds)
+    .order("periodo", { ascending: false })
+    .order("created_at", { ascending: false })
+    .returns<FichaNutricion[]>();
   return data ?? [];
 }
 
-export async function guardarFichaNutricional(
+function texto(formData: FormData, campo: string): string | null {
+  return String(formData.get(campo) ?? "").trim() || null;
+}
+
+function numero(formData: FormData, campo: string): number | null {
+  const valor = String(formData.get(campo) ?? "").trim().replace(",", ".");
+  if (!valor) return null;
+  const n = Number(valor);
+  return Number.isFinite(n) ? n : null;
+}
+
+function siNo(formData: FormData, campo: string): boolean | null {
+  const valor = formData.get(campo);
+  return valor === "si" ? true : valor === "no" ? false : null;
+}
+
+// Guarda la ficha del mes: una por residente y por mes (si ya existe la de ese mes, se corrige).
+export async function guardarFichaNutricion(
   sucursalId: string,
-  residenteId: string,
   _estado: Estado,
   formData: FormData,
 ): Promise<Estado> {
   const supabase = await createClient();
+  const residenteId = String(formData.get("residente_id") ?? "");
+  const periodo = String(formData.get("periodo") ?? "");
+  const fecha = String(formData.get("fecha") ?? "");
+  if (!residenteId || !/^\d{4}-\d{2}$/.test(periodo)) return { error: "Falta el mes de la ficha." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return { error: "Falta la fecha." };
 
-  const num = (k: string) => {
-    const v = String(formData.get(k) ?? "").trim();
-    return v ? Number(v) : null;
-  };
+  const talla = numero(formData, "talla");
+  const pesoActual = numero(formData, "peso_actual");
+  // Talla en metros (si la escriben en cm, se pasa a metros).
+  const tallaMetros = talla && talla > 3 ? Math.round(talla) / 100 : talla;
+  const imc =
+    pesoActual && tallaMetros ? Math.round((pesoActual / (tallaMetros * tallaMetros)) * 10) / 10 : numero(formData, "imc");
+  const perdida = siNo(formData, "perdida_peso");
 
-  const patch = {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const datos = {
     residente_id: residenteId,
-    peso_habitual: num("peso_habitual"),
-    peso_actual: num("peso_actual"),
-    metodo_pesaje: String(formData.get("metodo_pesaje") ?? "").trim() || null,
-    talla_cm: num("talla_cm"),
-    talla_estimada: formData.get("talla_estimada") === "on",
-    circunferencia_pantorrilla: num("circunferencia_pantorrilla"),
-    circunferencia_braquial: num("circunferencia_braquial"),
-    dinamometria_kg: num("dinamometria_kg"),
+    periodo,
+    fecha,
+    diagnostico_principal: texto(formData, "diagnostico_principal"),
+    patologias_asociadas: texto(formData, "patologias_asociadas"),
+    consistencia: formData.getAll("consistencia").map(String),
+    segun_patologia: formData.getAll("segun_patologia").map(String),
+    patologia_otra: texto(formData, "patologia_otra"),
+    via_administracion: formData.getAll("via_administracion").map(String),
+    asistencia: texto(formData, "asistencia"),
+    ingesta: texto(formData, "ingesta"),
+    protesis_dental: siNo(formData, "protesis_dental"),
+    disfagia: texto(formData, "disfagia"),
+    suplementacion: formData.getAll("suplementacion").map(String),
+    suplementacion_cantidad: texto(formData, "suplementacion_cantidad"),
+    peso_actual: pesoActual,
+    peso_ideal: numero(formData, "peso_ideal"),
+    perdida_peso: perdida,
+    perdida_peso_pct: perdida ? numero(formData, "perdida_peso_pct") : null,
+    talla: tallaMetros,
+    imc,
+    evaluacion_nutricional: texto(formData, "evaluacion_nutricional"),
+    evaluacion_funcional: formData.getAll("evaluacion_funcional").map(String),
+    observaciones: texto(formData, "observaciones"),
+    registrado_por: user?.id ?? null,
     updated_at: new Date().toISOString(),
   };
 
-  const { error } = await supabase.from("ficha_nutricional").upsert(patch, { onConflict: "residente_id" });
+  const { data, error } = await supabase
+    .from("fichas_nutricion")
+    .upsert(datos, { onConflict: "residente_id,periodo" })
+    .select("id");
+
   if (error) return { error: error.message };
+  if (!data || data.length === 0) return { error: "No tenés permiso para cargar la ficha nutricional." };
 
   revalidatePath(rutaNutricion(sucursalId));
-  return OK;
+  revalidatePath(`/residentes/${residenteId}/legajo`);
+  return { error: null, guardado: true };
 }
 
-export async function registrarMedicion(
-  sucursalId: string,
-  residenteId: string,
-  _estado: Estado,
-  formData: FormData,
-): Promise<Estado> {
+export async function eliminarFichaNutricion(sucursalId: string, fichaId: string): Promise<void> {
   const supabase = await createClient();
-
-  const num = (k: string) => {
-    const v = String(formData.get(k) ?? "").trim();
-    return v ? Number(v) : null;
-  };
-  const peso = num("peso");
-  const cp = num("circunferencia_pantorrilla");
-  const cb = num("circunferencia_braquial");
-
-  if (peso === null && cp === null && cb === null) {
-    return { error: "Ingresá al menos una medida." };
-  }
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { error } = await supabase.from("mediciones_antropometricas").insert({
-    residente_id: residenteId,
-    peso,
-    circunferencia_pantorrilla: cp,
-    circunferencia_braquial: cb,
-    registrado_por: user?.id ?? null,
-  });
-
-  if (error) return { error: error.message };
-
+  await supabase.from("fichas_nutricion").delete().eq("id", fichaId);
   revalidatePath(rutaNutricion(sucursalId));
-  return OK;
-}
-
-// ---------- Fase 1: MNA + alertas ----------
-
-export async function listarEvaluacionesMna(residenteId: string): Promise<EvaluacionMna[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("evaluaciones_mna")
-    .select(
-      "id, residente_id, fecha, movilidad, estres_agudo, problemas_neuropsicologicos, imc_o_cp, ingesta_reciente, perdida_peso, puntaje, proxima_evaluacion, registrado_por, created_at",
-    )
-    .eq("residente_id", residenteId)
-    .order("fecha", { ascending: false })
-    .returns<EvaluacionMna[]>();
-  return data ?? [];
-}
-
-export async function registrarMna(
-  sucursalId: string,
-  residenteId: string,
-  _estado: Estado,
-  formData: FormData,
-): Promise<Estado> {
-  const supabase = await createClient();
-  const n = (k: string) => Number(formData.get(k) ?? 0);
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { error } = await supabase.from("evaluaciones_mna").insert({
-    residente_id: residenteId,
-    movilidad: n("movilidad"),
-    estres_agudo: n("estres_agudo"),
-    problemas_neuropsicologicos: n("problemas_neuropsicologicos"),
-    imc_o_cp: n("imc_o_cp"),
-    ingesta_reciente: n("ingesta_reciente"),
-    perdida_peso: n("perdida_peso"),
-    registrado_por: user?.id ?? null,
-  });
-
-  if (error) return { error: error.message };
-
-  revalidatePath(rutaNutricion(sucursalId));
-  return OK;
-}
-
-export async function listarAlertasNutricion(residenteId?: string): Promise<AlertaNutricion[]> {
-  const supabase = await createClient();
-  let query = supabase
-    .from("alertas_nutricion")
-    .select("id, residente_id, tipo, nivel, detalle, creada_at, resuelta")
-    .eq("resuelta", false)
-    .order("creada_at", { ascending: false });
-
-  if (residenteId) query = query.eq("residente_id", residenteId);
-
-  const { data } = await query.returns<AlertaNutricion[]>();
-  return data ?? [];
-}
-
-export async function resolverAlertaNutricion(sucursalId: string, alertaId: string): Promise<void> {
-  const supabase = await createClient();
-  await supabase.from("alertas_nutricion").update({ resuelta: true }).eq("id", alertaId);
-  revalidatePath(rutaNutricion(sucursalId));
-}
-
-// ---------- Fase 2: prescripcion dietaria + restricciones ----------
-
-export async function listarPrescripcionActiva(residenteId: string): Promise<PrescripcionDietaria | null> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("prescripcion_dietaria")
-    .select("id, residente_id, tipo_dieta, nivel_iddsi, tipo_liquido, activa, vigente_desde, vigente_hasta, prescripto_por, notas, created_at")
-    .eq("residente_id", residenteId)
-    .eq("activa", true)
-    .order("vigente_desde", { ascending: false })
-    .limit(1)
-    .maybeSingle<PrescripcionDietaria>();
-  return data ?? null;
-}
-
-export async function listarHistorialDietario(residenteId: string): Promise<PrescripcionDietaria[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("prescripcion_dietaria")
-    .select("id, residente_id, tipo_dieta, nivel_iddsi, tipo_liquido, activa, vigente_desde, vigente_hasta, prescripto_por, notas, created_at")
-    .eq("residente_id", residenteId)
-    .order("vigente_desde", { ascending: false })
-    .returns<PrescripcionDietaria[]>();
-  return data ?? [];
-}
-
-export async function prescribirDieta(
-  sucursalId: string,
-  residenteId: string,
-  _estado: Estado,
-  formData: FormData,
-): Promise<Estado> {
-  const supabase = await createClient();
-
-  const tipo_dieta = String(formData.get("tipo_dieta") ?? "") as TipoDieta;
-  const nivel_iddsi = String(formData.get("nivel_iddsi") ?? "7");
-  const tipo_liquido = String(formData.get("tipo_liquido") ?? "normal") as TipoLiquido;
-  const notas = String(formData.get("notas") ?? "").trim() || null;
-
-  if (!tipo_dieta) return { error: "Seleccioná un tipo de dieta." };
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const hoy = hoyArgentina();
-
-  await supabase
-    .from("prescripcion_dietaria")
-    .update({ activa: false, vigente_hasta: hoy })
-    .eq("residente_id", residenteId)
-    .eq("activa", true);
-
-  const { error } = await supabase.from("prescripcion_dietaria").insert({
-    residente_id: residenteId,
-    tipo_dieta,
-    nivel_iddsi,
-    tipo_liquido,
-    notas,
-    prescripto_por: user?.id ?? null,
-  });
-
-  if (error) return { error: error.message };
-
-  revalidatePath(rutaNutricion(sucursalId, "dietas"));
-  revalidatePath(rutaNutricion(sucursalId, "cocina"));
-  return OK;
-}
-
-export async function listarRestricciones(residenteId: string): Promise<RestriccionResidente[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("restricciones_residente")
-    .select("id, residente_id, tipo, detalle, activo, created_at")
-    .eq("residente_id", residenteId)
-    .eq("activo", true)
-    .returns<RestriccionResidente[]>();
-  return data ?? [];
-}
-
-export async function agregarRestriccion(
-  sucursalId: string,
-  residenteId: string,
-  _estado: Estado,
-  formData: FormData,
-): Promise<Estado> {
-  const supabase = await createClient();
-  const tipo = String(formData.get("tipo") ?? "alergia");
-  const detalle = String(formData.get("detalle") ?? "").trim();
-
-  if (!detalle) return { error: "Describí la restricción." };
-
-  const { error } = await supabase.from("restricciones_residente").insert({
-    residente_id: residenteId,
-    tipo,
-    detalle,
-  });
-
-  if (error) return { error: error.message };
-
-  revalidatePath(rutaNutricion(sucursalId, "dietas"));
-  revalidatePath(rutaNutricion(sucursalId, "cocina"));
-  return OK;
-}
-
-export async function quitarRestriccion(sucursalId: string, restriccionId: string): Promise<void> {
-  const supabase = await createClient();
-  await supabase.from("restricciones_residente").update({ activo: false }).eq("id", restriccionId);
-  revalidatePath(rutaNutricion(sucursalId, "dietas"));
-  revalidatePath(rutaNutricion(sucursalId, "cocina"));
-}
-
-// ---------- Fase 4: disfagia ----------
-
-export async function listarValoracionesDeglucion(residenteId: string): Promise<ValoracionDeglucion[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("valoracion_deglucion")
-    .select(
-      "id, residente_id, fecha, tos_al_comer, voz_humeda, deglucion_fraccionada, carraspeo, retencion_carrillos, indicacion_espesante, medicacion_triturada, notas, registrado_por, created_at",
-    )
-    .eq("residente_id", residenteId)
-    .order("fecha", { ascending: false })
-    .returns<ValoracionDeglucion[]>();
-  return data ?? [];
-}
-
-export async function registrarValoracionDeglucion(
-  sucursalId: string,
-  residenteId: string,
-  _estado: Estado,
-  formData: FormData,
-): Promise<Estado> {
-  const supabase = await createClient();
-  const bool = (k: string) => formData.get(k) === "on";
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const { error } = await supabase.from("valoracion_deglucion").insert({
-    residente_id: residenteId,
-    tos_al_comer: bool("tos_al_comer"),
-    voz_humeda: bool("voz_humeda"),
-    deglucion_fraccionada: bool("deglucion_fraccionada"),
-    carraspeo: bool("carraspeo"),
-    retencion_carrillos: bool("retencion_carrillos"),
-    indicacion_espesante: String(formData.get("indicacion_espesante") ?? "").trim() || null,
-    medicacion_triturada: bool("medicacion_triturada"),
-    notas: String(formData.get("notas") ?? "").trim() || null,
-    registrado_por: user?.id ?? null,
-  });
-
-  if (error) return { error: error.message };
-
-  revalidatePath(rutaNutricion(sucursalId, "disfagia"));
-  return OK;
-}
-
-// ---------- Fase 5: registro de ingesta ----------
-
-export async function obtenerIngestaDeHoy(residenteId: string): Promise<RegistroIngesta[]> {
-  const supabase = await createClient();
-  const hoy = hoyArgentina();
-  const { data } = await supabase
-    .from("registro_ingesta")
-    .select("id, residente_id, fecha, comida, porcentaje, vasos_agua, registrado_por, created_at")
-    .eq("residente_id", residenteId)
-    .eq("fecha", hoy)
-    .returns<RegistroIngesta[]>();
-  return data ?? [];
-}
-
-export async function registrarIngesta(
-  sucursalId: string,
-  residenteId: string,
-  comida: ComidaIngesta,
-  porcentaje: 0 | 25 | 50 | 75 | 100,
-): Promise<void> {
-  const supabase = await createClient();
-  const hoy = hoyArgentina();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  await supabase
-    .from("registro_ingesta")
-    .upsert(
-      {
-        residente_id: residenteId,
-        fecha: hoy,
-        comida,
-        porcentaje,
-        registrado_por: user?.id ?? null,
-      },
-      { onConflict: "residente_id,fecha,comida" },
-    );
-
-  revalidatePath(rutaNutricion(sucursalId, "ingesta"));
-}
-
-export async function registrarVasosAgua(sucursalId: string, residenteId: string, comida: ComidaIngesta, vasos: number): Promise<void> {
-  const supabase = await createClient();
-  const hoy = hoyArgentina();
-
-  const { data: existente } = await supabase
-    .from("registro_ingesta")
-    .select("porcentaje")
-    .eq("residente_id", residenteId)
-    .eq("fecha", hoy)
-    .eq("comida", comida)
-    .maybeSingle<{ porcentaje: number }>();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  await supabase.from("registro_ingesta").upsert(
-    {
-      residente_id: residenteId,
-      fecha: hoy,
-      comida,
-      porcentaje: existente?.porcentaje ?? 0,
-      vasos_agua: vasos,
-      registrado_por: user?.id ?? null,
-    },
-    { onConflict: "residente_id,fecha,comida" },
-  );
-
-  revalidatePath(rutaNutricion(sucursalId, "ingesta"));
 }
 
 // ---------- Fase 6: menu semanal + control de heladeras ----------

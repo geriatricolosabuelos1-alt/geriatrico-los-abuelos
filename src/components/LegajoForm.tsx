@@ -294,6 +294,7 @@ export function LegajoForm({
       medicamentos={medicamentos}
       alertas={alertasMedicacion}
       catalogo={catalogoMedicamentos}
+      registroHref={`/sucursales/${residente.sucursal_id}/medicacion/registro?tipo=administrada&residente=${residente.id}`}
     />
     </div>
   );

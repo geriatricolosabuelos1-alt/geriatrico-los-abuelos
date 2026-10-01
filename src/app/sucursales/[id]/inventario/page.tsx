@@ -166,9 +166,12 @@ export default async function InventarioSucursalPage({
           residentes={residentes ?? []}
         />
 
-        <InventarioTicketForm sucursalId={id} />
+        <InventarioTicketForm
+          sucursalId={id}
+          catalogo={listaInsumos.map((i) => ({ id: i.id, nombre: i.nombre, categoria: i.categoria }))}
+        />
 
-        <InventarioTable insumos={filasInsumo} esAdmin={esAdmin} />
+        <InventarioTable sucursalId={id} insumos={filasInsumo} esAdmin={esAdmin} />
       </main>
     </div>
   );

@@ -1,12 +1,14 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import {
   eliminarDocumentoHabilitacion,
   subirDocumentoHabilitacion,
   type ActualizarHabilitacionEstado,
   type DocumentoConUrl,
 } from "@/app/sucursales/[id]/legales/habilitacion/actions";
+import { BotonMailDocumentos } from "@/components/BotonMailDocumentos";
+import { VisorDocumento } from "@/components/VisorDocumento";
 import type { ItemHabilitacion } from "@/lib/types";
 
 type Props = {
@@ -16,6 +18,22 @@ type Props = {
 };
 
 const ESTADO_INICIAL: ActualizarHabilitacionEstado = { error: null };
+
+// Vercel corta los envíos de más de 4,5 MB antes de llegar al servidor: se avisa antes de subir.
+const MAX_BYTES = 4 * 1024 * 1024;
+const TIPOS_ACEPTADOS = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+
+function validarArchivo(archivo: FormDataEntryValue | null): string | null {
+  if (!(archivo instanceof File) || archivo.size === 0) return null;
+  if (!TIPOS_ACEPTADOS.includes(archivo.type)) {
+    return "Ese tipo de archivo no se acepta. Subí un PDF o una foto JPG/PNG.";
+  }
+  if (archivo.size > MAX_BYTES) {
+    const mb = (archivo.size / 1024 / 1024).toFixed(1);
+    return `El archivo pesa ${mb} MB y el máximo es 4 MB. Comprimilo (por ejemplo en ilovepdf.com) o escanealo en menor calidad.`;
+  }
+  return null;
+}
 
 function EditorItem({
   sucursalId,
@@ -30,6 +48,12 @@ function EditorItem({
 }) {
   const accionConId = subirDocumentoHabilitacion.bind(null, sucursalId);
   const [estado, formAction, enviando] = useActionState(accionConId, ESTADO_INICIAL);
+  const [errorArchivo, setErrorArchivo] = useState<string | null>(null);
+
+  // Se cierra solo si guardó bien; si hubo error queda abierto mostrándolo.
+  useEffect(() => {
+    if (estado.guardado) onCerrar();
+  }, [estado, onCerrar]);
 
   async function borrar() {
     if (!documento) return;
@@ -41,9 +65,10 @@ function EditorItem({
 
   return (
     <form
-      action={async (formData) => {
-        await formAction(formData);
-        onCerrar();
+      action={(formData) => {
+        const problema = validarArchivo(formData.get("archivo"));
+        setErrorArchivo(problema);
+        if (!problema) formAction(formData);
       }}
       className="mt-2 flex flex-wrap items-end gap-2 rounded-lg border border-edge bg-panel-deep p-3"
     >
@@ -96,7 +121,9 @@ function EditorItem({
       <button type="button" onClick={onCerrar} className="text-xs text-ink-soft hover:text-ink">
         Cancelar
       </button>
-      {estado.error && <p className="w-full text-xs text-red-700">{estado.error}</p>}
+      {(errorArchivo ?? estado.error) && (
+        <p className="w-full text-xs text-red-700">{errorArchivo ?? estado.error}</p>
+      )}
     </form>
   );
 }
@@ -105,7 +132,11 @@ function FilaItem({
   sucursalId,
   item,
   documento,
+  seleccionado,
+  onSeleccionar,
 }: {
+  seleccionado: boolean;
+  onSeleccionar: () => void;
   sucursalId: string;
   item: ItemHabilitacion;
   documento: DocumentoConUrl | undefined;
@@ -117,7 +148,20 @@ function FilaItem({
   return (
     <li className="border-t border-edge/60 py-2.5">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <p className="max-w-2xl text-sm text-ink">{item.descripcion}</p>
+        <label className="flex max-w-2xl items-start gap-2 text-sm text-ink">
+          {documento?.archivo_url ? (
+            <input
+              type="checkbox"
+              checked={seleccionado}
+              onChange={onSeleccionar}
+              title="Seleccionar para enviar por mail"
+              className="mt-0.5 h-4 w-4 flex-shrink-0 accent-[var(--color-brass)]"
+            />
+          ) : (
+            <span className="w-4 flex-shrink-0" />
+          )}
+          {item.descripcion}
+        </label>
         <div className="flex flex-shrink-0 items-center gap-2">
           <span
             className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold ${
@@ -128,6 +172,20 @@ function FilaItem({
           >
             {actualizado ? "Actualizado" : "Sin documentación"}
           </span>
+          {documento?.urlFirmada && (
+            <VisorDocumento
+              url={documento.urlFirmada}
+              nombre={documento.nombre_archivo ?? documento.archivo_url ?? ""}
+              titulo={item.descripcion}
+            />
+          )}
+          {documento?.archivo_url && (
+            <BotonMailDocumentos
+              sucursalId={sucursalId}
+              documentoIds={[documento.id]}
+              etiqueta="Enviar por mail"
+            />
+          )}
           <button
             type="button"
             onClick={() => setEditando((v) => !v)}
@@ -191,6 +249,18 @@ export function HabilitacionChecklist({ sucursalId, items, documentos }: Props) 
     return !!d && (!!d.archivo_url || !!d.fecha_presentacion);
   }).length;
 
+  // Selección de documentos (con archivo) para mandar varios juntos en un mail.
+  const conArchivo = documentos.filter((d) => d.archivo_url).map((d) => d.id);
+  const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
+  function alternar(id: string) {
+    setSeleccionados((prev) => {
+      const nuevo = new Set(prev);
+      if (nuevo.has(id)) nuevo.delete(id);
+      else nuevo.add(id);
+      return nuevo;
+    });
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between rounded-2xl border border-edge bg-card p-4">
@@ -206,6 +276,43 @@ export function HabilitacionChecklist({ sucursalId, items, documentos }: Props) 
         </div>
       </div>
 
+      {conArchivo.length > 0 && (
+        <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-edge bg-card p-4">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-ink">
+            <span>
+              <span className="font-semibold">{seleccionados.size}</span> documento
+              {seleccionados.size === 1 ? "" : "s"} seleccionado{seleccionados.size === 1 ? "" : "s"}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSeleccionados(new Set(conArchivo))}
+              className="text-xs text-brass hover:text-ink"
+            >
+              Seleccionar todos
+            </button>
+            {seleccionados.size > 0 && (
+              <button
+                type="button"
+                onClick={() => setSeleccionados(new Set())}
+                className="text-xs text-ink-soft hover:text-ink"
+              >
+                Quitar selección
+              </button>
+            )}
+          </div>
+          {seleccionados.size > 0 ? (
+            <BotonMailDocumentos
+              sucursalId={sucursalId}
+              documentoIds={[...seleccionados]}
+              etiqueta={`Enviar seleccionados por mail (${seleccionados.size})`}
+              destacado
+            />
+          ) : (
+            <p className="text-xs text-ink-soft">Tildá los documentos que quieras mandar juntos en un mail.</p>
+          )}
+        </div>
+      )}
+
       {categorias.map((categoria) => (
         <section key={categoria} className="rounded-2xl border border-edge bg-card p-5">
           <h3 className="mb-1 font-display text-sm font-semibold text-ink">{categoria}</h3>
@@ -218,6 +325,11 @@ export function HabilitacionChecklist({ sucursalId, items, documentos }: Props) 
                   sucursalId={sucursalId}
                   item={item}
                   documento={documentoPorItem.get(item.id)}
+                  seleccionado={seleccionados.has(documentoPorItem.get(item.id)?.id ?? "")}
+                  onSeleccionar={() => {
+                    const id = documentoPorItem.get(item.id)?.id;
+                    if (id) alternar(id);
+                  }}
                 />
               ))}
           </ul>

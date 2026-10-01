@@ -53,12 +53,18 @@ export async function registrarMovimiento(
   const precio = precioRaw ? Number(precioRaw) : null;
   const residente_id = String(formData.get("residente_id") ?? "") || null;
   const imputarResidente = formData.get("imputar_residente") === "on" && tipo === "salida";
+  // Insumo que trajo la familia de un residente: suma stock pero no es una compra de la sede.
+  const aporteResidente = formData.get("aporte_residente") === "on" && tipo === "entrada";
 
   if (!insumoNombre || (tipo !== "entrada" && tipo !== "salida") || !cantidad || cantidad <= 0) {
     return { error: "Completá insumo, tipo y una cantidad mayor a cero." };
   }
 
   const importe_total = precio ? precio * cantidad : null;
+
+  if (aporteResidente && !residente_id) {
+    return { error: "Elegí qué residente aportó el insumo." };
+  }
 
   if (imputarResidente && (!residente_id || !importe_total)) {
     return {
@@ -110,7 +116,7 @@ export async function registrarMovimiento(
       cantidad,
       precio,
       importe_total,
-      residente_id,
+      residente_id: imputarResidente || aporteResidente ? residente_id : null,
       registrado_por: user?.id,
     })
     .select("id")
@@ -136,7 +142,7 @@ export async function registrarMovimiento(
       }
 
       revalidatePath(`/residentes/${residente_id}/cuenta-corriente`);
-    } else if (tipo === "entrada") {
+    } else if (tipo === "entrada" && !aporteResidente) {
       const { error: errorGasto } = await crearGastoDeCompra(
         supabase,
         sucursalId,
@@ -151,6 +157,7 @@ export async function registrarMovimiento(
     }
   }
 
+  if (aporteResidente && residente_id) revalidatePath(`/residentes/${residente_id}/legajo`);
   revalidatePath(`/sucursales/${sucursalId}/inventario`);
   return { error: null };
 }
@@ -176,7 +183,44 @@ export async function cargarStockInicial(
     items = [];
   }
 
+  let nuevos: { nombre: string; categoria: CategoriaInsumo; unidad: string; cantidad: number }[] = [];
+  try {
+    nuevos = JSON.parse(String(formData.get("nuevos") ?? "[]"));
+  } catch {
+    nuevos = [];
+  }
+
   const movimientos = items.filter((i) => i.insumo_id && Number(i.cantidad) > 0);
+
+  // Insumos que no estaban en el catálogo: se crean (o se reutilizan si ya existe uno con ese nombre).
+  for (const n of nuevos) {
+    const nombre = n.nombre?.trim();
+    if (!nombre || !(Number(n.cantidad) > 0)) continue;
+    const categoria: CategoriaInsumo = n.categoria === "medicos" ? "medicos" : "varios";
+
+    const { data: existente } = await supabase
+      .from("insumos")
+      .select("id")
+      .ilike("nombre", nombre.replace(/[\\%_]/g, (c) => `\\${c}`))
+      .limit(1)
+      .maybeSingle<{ id: string }>();
+
+    let insumoId = existente?.id;
+    if (!insumoId) {
+      const { data: creado, error: errorCrear } = await supabase
+        .from("insumos")
+        .insert({ nombre, categoria, unidad: n.unidad?.trim() || "unidades", activo: true })
+        .select("id")
+        .single<{ id: string }>();
+      if (errorCrear || !creado) {
+        return { error: `No se pudo crear "${nombre}": ${errorCrear?.message ?? "error desconocido"}`, guardado: false };
+      }
+      insumoId = creado.id;
+    } else {
+      await supabase.from("insumos").update({ activo: true }).eq("id", insumoId);
+    }
+    movimientos.push({ insumo_id: insumoId, cantidad: Number(n.cantidad) });
+  }
 
   if (movimientos.length === 0) {
     return { error: "Cargá una cantidad mayor a cero en al menos un insumo.", guardado: false };
@@ -223,31 +267,40 @@ export async function actualizarInsumo(formData: FormData): Promise<void> {
   revalidatePath("/sucursales/[id]/inventario", "page");
 }
 
-export type CrearInsumoEstado = { error: string | null };
-
-export async function crearInsumo(
-  _estado: CrearInsumoEstado,
-  formData: FormData,
-): Promise<CrearInsumoEstado> {
+// Salida rápida desde la tabla ("Usar"): descuenta stock de uso general, sin imputar a nadie.
+export async function usarInsumo(
+  sucursalId: string,
+  insumoId: string,
+  cantidad: number,
+): Promise<{ error: string | null }> {
+  if (!(cantidad > 0)) return { error: "Poné una cantidad mayor a cero." };
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const nombre = String(formData.get("nombre") ?? "").trim();
-  const categoria = String(formData.get("categoria") ?? "");
-  const unidad = String(formData.get("unidad") ?? "").trim() || "unidades";
-
-  if (!nombre || !["medicos", "varios"].includes(categoria)) {
-    return { error: "Completá nombre y categoría." };
-  }
-
-  const { error } = await supabase
+  const { data: insumo } = await supabase
     .from("insumos")
-    .insert({ nombre, categoria, unidad, activo: true });
+    .select("id, nombre, unidad")
+    .eq("id", insumoId)
+    .single<{ id: string; nombre: string; unidad: string }>();
+  if (!insumo) return { error: "No se encontró el insumo." };
 
-  if (error) {
-    return { error: error.message };
-  }
+  const errorStock = await validarSalidas(supabase, sucursalId, [
+    { insumoId: insumo.id, nombre: insumo.nombre, unidad: insumo.unidad, cantidad },
+  ]);
+  if (errorStock) return { error: errorStock };
 
-  revalidatePath("/sucursales/[id]/inventario", "page");
+  const { error } = await supabase.from("movimientos_inventario").insert({
+    sucursal_id: sucursalId,
+    insumo_id: insumo.id,
+    tipo: "salida",
+    cantidad,
+    registrado_por: user?.id,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath(`/sucursales/${sucursalId}/inventario`);
   return { error: null };
 }
 
@@ -278,6 +331,8 @@ type ItemAEnviar = ItemExistente | ItemNuevo;
 export type ItemLeido = {
   insumo_id: string | null;
   nombre: string;
+  // Lo que dice el ticket, tal cual lo leyó la IA (puede diferir del nombre del catálogo).
+  textoTicket: string;
   cantidad: number;
   categoriaSugerida: CategoriaInsumo;
   precioUnitario: number | null;
@@ -393,6 +448,7 @@ Reglas:
       return {
         insumo_id: coincidencia?.id ?? null,
         nombre: coincidencia?.nombre ?? it.nombre,
+        textoTicket: it.nombre,
         cantidad: Number(it.cantidad) > 0 ? Number(it.cantidad) : 1,
         categoriaSugerida: (coincidencia?.categoria as CategoriaInsumo) ?? categoria,
         precioUnitario:
