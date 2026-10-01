@@ -70,7 +70,7 @@ export function descargarPdf(
   secciones: SeccionPdf[],
   opciones?: { omitirVacios?: boolean },
 ): void {
-  // Regla de Medicina: lo vacío o en 0 no sale, y se avisa antes qué se omite.
+  // Solo Nutrición: lo vacío o en 0 no sale, y se avisa antes qué se omite.
   if (opciones?.omitirVacios) {
     const limpio = limpiarSeccionesPdf(secciones);
     avisarOmitidos(limpio.omitidos, "PDF");
