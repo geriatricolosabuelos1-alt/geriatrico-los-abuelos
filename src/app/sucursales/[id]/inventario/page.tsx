@@ -171,7 +171,7 @@ export default async function InventarioSucursalPage({
           catalogo={listaInsumos.map((i) => ({ id: i.id, nombre: i.nombre, categoria: i.categoria }))}
         />
 
-        <InventarioTable insumos={filasInsumo} esAdmin={esAdmin} />
+        <InventarioTable sucursalId={id} insumos={filasInsumo} esAdmin={esAdmin} />
       </main>
     </div>
   );

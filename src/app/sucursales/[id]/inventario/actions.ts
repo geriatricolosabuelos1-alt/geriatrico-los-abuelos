@@ -267,6 +267,43 @@ export async function actualizarInsumo(formData: FormData): Promise<void> {
   revalidatePath("/sucursales/[id]/inventario", "page");
 }
 
+// Salida rápida desde la tabla ("Usar"): descuenta stock de uso general, sin imputar a nadie.
+export async function usarInsumo(
+  sucursalId: string,
+  insumoId: string,
+  cantidad: number,
+): Promise<{ error: string | null }> {
+  if (!(cantidad > 0)) return { error: "Poné una cantidad mayor a cero." };
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: insumo } = await supabase
+    .from("insumos")
+    .select("id, nombre, unidad")
+    .eq("id", insumoId)
+    .single<{ id: string; nombre: string; unidad: string }>();
+  if (!insumo) return { error: "No se encontró el insumo." };
+
+  const errorStock = await validarSalidas(supabase, sucursalId, [
+    { insumoId: insumo.id, nombre: insumo.nombre, unidad: insumo.unidad, cantidad },
+  ]);
+  if (errorStock) return { error: errorStock };
+
+  const { error } = await supabase.from("movimientos_inventario").insert({
+    sucursal_id: sucursalId,
+    insumo_id: insumo.id,
+    tipo: "salida",
+    cantidad,
+    registrado_por: user?.id,
+  });
+  if (error) return { error: error.message };
+
+  revalidatePath(`/sucursales/${sucursalId}/inventario`);
+  return { error: null };
+}
+
 export async function eliminarInsumo(insumoId: string): Promise<void> {
   const supabase = await createClient();
   await supabase.from("insumos").update({ activo: false }).eq("id", insumoId);
