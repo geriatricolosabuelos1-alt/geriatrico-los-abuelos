@@ -176,7 +176,44 @@ export async function cargarStockInicial(
     items = [];
   }
 
+  let nuevos: { nombre: string; categoria: CategoriaInsumo; unidad: string; cantidad: number }[] = [];
+  try {
+    nuevos = JSON.parse(String(formData.get("nuevos") ?? "[]"));
+  } catch {
+    nuevos = [];
+  }
+
   const movimientos = items.filter((i) => i.insumo_id && Number(i.cantidad) > 0);
+
+  // Insumos que no estaban en el catálogo: se crean (o se reutilizan si ya existe uno con ese nombre).
+  for (const n of nuevos) {
+    const nombre = n.nombre?.trim();
+    if (!nombre || !(Number(n.cantidad) > 0)) continue;
+    const categoria: CategoriaInsumo = n.categoria === "medicos" ? "medicos" : "varios";
+
+    const { data: existente } = await supabase
+      .from("insumos")
+      .select("id")
+      .ilike("nombre", nombre.replace(/[\\%_]/g, (c) => `\\${c}`))
+      .limit(1)
+      .maybeSingle<{ id: string }>();
+
+    let insumoId = existente?.id;
+    if (!insumoId) {
+      const { data: creado, error: errorCrear } = await supabase
+        .from("insumos")
+        .insert({ nombre, categoria, unidad: n.unidad?.trim() || "unidades", activo: true })
+        .select("id")
+        .single<{ id: string }>();
+      if (errorCrear || !creado) {
+        return { error: `No se pudo crear "${nombre}": ${errorCrear?.message ?? "error desconocido"}`, guardado: false };
+      }
+      insumoId = creado.id;
+    } else {
+      await supabase.from("insumos").update({ activo: true }).eq("id", insumoId);
+    }
+    movimientos.push({ insumo_id: insumoId, cantidad: Number(n.cantidad) });
+  }
 
   if (movimientos.length === 0) {
     return { error: "Cargá una cantidad mayor a cero en al menos un insumo.", guardado: false };
@@ -221,34 +258,6 @@ export async function actualizarInsumo(formData: FormData): Promise<void> {
     .eq("id", insumoId);
 
   revalidatePath("/sucursales/[id]/inventario", "page");
-}
-
-export type CrearInsumoEstado = { error: string | null };
-
-export async function crearInsumo(
-  _estado: CrearInsumoEstado,
-  formData: FormData,
-): Promise<CrearInsumoEstado> {
-  const supabase = await createClient();
-
-  const nombre = String(formData.get("nombre") ?? "").trim();
-  const categoria = String(formData.get("categoria") ?? "");
-  const unidad = String(formData.get("unidad") ?? "").trim() || "unidades";
-
-  if (!nombre || !["medicos", "varios"].includes(categoria)) {
-    return { error: "Completá nombre y categoría." };
-  }
-
-  const { error } = await supabase
-    .from("insumos")
-    .insert({ nombre, categoria, unidad, activo: true });
-
-  if (error) {
-    return { error: error.message };
-  }
-
-  revalidatePath("/sucursales/[id]/inventario", "page");
-  return { error: null };
 }
 
 export async function eliminarInsumo(insumoId: string): Promise<void> {

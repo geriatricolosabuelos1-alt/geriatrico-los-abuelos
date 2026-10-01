@@ -3,9 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   actualizarInsumo,
-  crearInsumo,
   eliminarInsumo,
-  type CrearInsumoEstado,
 } from "@/app/sucursales/[id]/inventario/actions";
 import type { CategoriaInsumo } from "@/lib/types";
 
@@ -150,72 +148,8 @@ function FilaEditable({ insumo }: { insumo: FilaInsumo }) {
   );
 }
 
-const CAMPO =
-  "rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none";
-
-function FormularioNuevoInsumo({ onCreado }: { onCreado: () => void }) {
-  const [estado, setEstado] = useState<CrearInsumoEstado>({ error: null });
-  const [enviando, setEnviando] = useState(false);
-
-  async function manejarSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setEnviando(true);
-    const formData = new FormData(e.currentTarget);
-    const resultado = await crearInsumo({ error: null }, formData);
-    setEnviando(false);
-    if (resultado.error) {
-      setEstado(resultado);
-    } else {
-      setEstado({ error: null });
-      (e.target as HTMLFormElement).reset();
-      onCreado();
-    }
-  }
-
-  return (
-    <form
-      onSubmit={manejarSubmit}
-      className="flex flex-wrap items-end gap-3 rounded-2xl border border-edge bg-card p-4"
-    >
-      <div>
-        <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
-          Nombre
-        </label>
-        <input name="nombre" required className={CAMPO} placeholder="Ej: Aceite" />
-      </div>
-      <div>
-        <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
-          Categoría
-        </label>
-        <select name="categoria" required defaultValue="varios" className={CAMPO}>
-          {ORDEN_CATEGORIAS.map((cat) => (
-            <option key={cat} value={cat}>
-              {ETIQUETA_CATEGORIA[cat]}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-ink-soft">
-          Unidad
-        </label>
-        <input name="unidad" className={CAMPO} placeholder="unidades" />
-      </div>
-      {estado.error && <p className="text-xs text-red-700">{estado.error}</p>}
-      <button
-        type="submit"
-        disabled={enviando}
-        className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
-      >
-        {enviando ? "Guardando..." : "Agregar insumo"}
-      </button>
-    </form>
-  );
-}
-
 export function InventarioTable({ insumos, esAdmin }: Props) {
   const [busqueda, setBusqueda] = useState("");
-  const [mostrarNuevo, setMostrarNuevo] = useState(false);
 
   const filtrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
@@ -232,20 +166,7 @@ export function InventarioTable({ insumos, esAdmin }: Props) {
           onChange={(e) => setBusqueda(e.target.value)}
           className="w-64 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none"
         />
-        {esAdmin && (
-          <button
-            type="button"
-            onClick={() => setMostrarNuevo((v) => !v)}
-            className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:text-ink"
-          >
-            {mostrarNuevo ? "Cancelar" : "+ Nuevo insumo"}
-          </button>
-        )}
       </div>
-
-      {esAdmin && mostrarNuevo && (
-        <FormularioNuevoInsumo onCreado={() => setMostrarNuevo(false)} />
-      )}
 
       {ORDEN_CATEGORIAS.map((cat) => {
         const items = filtrados.filter((i) => i.categoria === cat);
