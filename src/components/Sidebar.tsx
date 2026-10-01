@@ -4,6 +4,7 @@ import { cerrarSesion } from "@/app/actions";
 import { ETIQUETA_ROL, inicioMedicina, veTodasLasSedes } from "@/lib/roles";
 import { puedeVerSeguridad } from "@/lib/auditoria";
 import { SidebarIcon, type SidebarIconName } from "@/components/SidebarIcons";
+import { BuscadorGlobal, type DestinoBuscador } from "@/components/BuscadorGlobal";
 import type { CategoriaInsumo, Perfil, RolUsuario, Sucursal } from "@/lib/types";
 
 type Seccion =
@@ -96,6 +97,181 @@ const ROLES_MEDICINA: RolUsuario[] = [
   "enfermero",
   "cuidador",
 ];
+
+// Pantallas que sugiere el buscador, con palabras que la gente usa para encontrarlas.
+// Respeta los mismos permisos por rol que el menú.
+function armarDestinos(
+  rol: RolUsuario,
+  sucursales: Sucursal[],
+  puedeAdministrativa: boolean,
+  verSeguridad: boolean,
+): DestinoBuscador[] {
+  const destinos: DestinoBuscador[] = [];
+  const agregar = (roles: RolUsuario[] | null, titulo: string, detalle: string, href: string, palabras: string) => {
+    if (!roles || roles.includes(rol)) destinos.push({ titulo, detalle, href, palabras });
+  };
+
+  for (const s of sucursales) {
+    const base = `/sucursales/${s.id}`;
+    const adm = `Administrativa · ${s.nombre}`;
+    const med = `Medicina · ${s.nombre}`;
+
+    agregar(ROLES_DASHBOARD, "Dashboard de la sede", adm, `${base}/dashboard`, "inicio resumen ocupacion camas tablero");
+    agregar(
+      ROLES_RESIDENTES,
+      "Residentes",
+      puedeAdministrativa ? adm : med,
+      `${base}/residentes${puedeAdministrativa ? "" : "?vista=medicina"}`,
+      "residente abuelo abuela paciente legajo ficha evolucion baja egreso habitacion familiar contacto dni foto",
+    );
+    agregar(
+      ROLES_ADMINISTRATIVA,
+      "Nuevo residente (alta)",
+      adm,
+      `${base}/residentes/nuevo`,
+      "alta ingreso contrato ficha de ingreso nuevo agregar residente",
+    );
+    agregar(
+      ROLES_MEDICACION.filter((r) => ROLES_ADMINISTRATIVA.includes(r)),
+      "Medicación",
+      adm,
+      `${base}/medicacion`,
+      "medicamento remedio pastilla comprimido dosis stock frecuencia horario cargar ingreso medicacion",
+    );
+    agregar(
+      ROLES_MEDICACION.filter((r) => ROLES_MEDICINA.includes(r)),
+      "Medicamentos · planilla de tomas (MAR)",
+      med,
+      `${base}/medicacion?vista=medicina`,
+      "tomas administrar dar remedio pastilla planilla mar sos rechazado suspendido dosis",
+    );
+    agregar(
+      ROLES_MEDICACION,
+      "Registro de medicación (PDF)",
+      puedeAdministrativa ? adm : med,
+      `${base}/medicacion/registro`,
+      "pdf tomas periodo administradas historial imprimir medicacion indicada",
+    );
+    agregar(ROLES_RECETARIO, "Recetario", adm, `${base}/medicacion/recetario`, "receta recetas pedir whatsapp familiar obra social medico");
+    agregar(ROLES_RECETARIO, "Vacunación", adm, `${base}/medicacion/vacunacion`, "vacuna vacunas antigripal covid neumococo hepatitis planilla");
+    agregar(
+      ROLES_ENFERMERIA,
+      "Enfermería · signos vitales",
+      med,
+      `${base}/enfermeria`,
+      "signos vitales presion tension arterial temperatura fiebre saturacion oxigeno pulso frecuencia cardiaca respiratoria control enfermera",
+    );
+    agregar(
+      ROLES_ACCION_MEDICA,
+      "Acción Médica",
+      med,
+      `${base}/accion-medica`,
+      "medico interconsulta interconsultas especialista estudio indicacion pendientes",
+    );
+    agregar(
+      ROLES_KINESIOLOGIA,
+      "Kinesiología",
+      med,
+      `${base}/kinesiologia`,
+      "kinesio kinesiologa rehabilitacion sesion evaluacion caidas marcha movilidad",
+    );
+    agregar(ROLES_NUTRICION, "Nutrición", med, `${base}/nutricion`, "nutricion alimentacion comida peso nutricionista");
+    agregar(
+      ROLES_NUTRICION_CLINICO,
+      "Prescripción dietaria",
+      med,
+      `${base}/nutricion/dietas`,
+      "dieta dietas celiaco diabetico hiposodico sin sal restriccion alergia alimentaria",
+    );
+    agregar(ROLES_NUTRICION_CLINICO, "Cocina", med, `${base}/nutricion/cocina`, "cocina comida raciones cocinera planilla");
+    agregar(ROLES_NUTRICION_CLINICO, "Disfagia", med, `${base}/nutricion/disfagia`, "disfagia iddsi espesante tragar deglucion licuado");
+    agregar(ROLES_NUTRICION, "Ingesta diaria", med, `${base}/nutricion/ingesta`, "ingesta comio desayuno almuerzo merienda cena registro hidratacion");
+    agregar(ROLES_NUTRICION_CLINICO, "Menú semanal", med, `${base}/nutricion/menu-semanal`, "menu semanal comida almuerzo cena");
+    agregar(
+      ROLES_CUOTAS,
+      "Aranceles",
+      adm,
+      `${base}/cuotas`,
+      "cuota cuotas arancel pago pagos cobro cobrar factura recibo cuenta corriente mensualidad",
+    );
+    agregar(ROLES_CUOTAS, "Informe de deudores", adm, `${base}/cuotas/informe-deudores`, "deudores deuda morosos debe atrasados");
+    agregar(
+      ROLES_INVENTARIO,
+      "Inventario",
+      adm,
+      `${base}/inventario`,
+      "stock insumo insumos pañales apositos guantes descartables limpieza ticket compra usar consumo",
+    );
+    agregar(ROLES_INVENTARIO, "Carga inicial de stock", adm, `${base}/inventario/carga-inicial`, "carga inicial stock inventario cargar");
+    agregar(ROLES_INVENTARIO, "Informe de stock de insumos", adm, `${base}/inventario/informe-stock`, "stock bajo faltante reponer comprar");
+    agregar(ROLES_GASTOS, "Gastos", adm, `${base}/gastos`, "gasto gastos factura proveedor pago compra ticket servicios luz gas");
+    agregar(ROLES_REPORTES, "Reportes", adm, `${base}/reportes`, "reporte reportes informe estadisticas numeros");
+    agregar(
+      ROLES_LEGALES,
+      "Habilitación",
+      `Legales · ${s.nombre}`,
+      `${base}/legales/habilitacion`,
+      "legales habilitacion documentos documentacion mail municipio ministerio",
+    );
+    agregar(ROLES_LEGALES, "Libro foliado", `Legales · ${s.nombre}`, `${base}/legales/libro-foliado`, "libro foliado actas novedades");
+    agregar(
+      ROLES_LEGALES,
+      "Certificaciones y proveedores",
+      `Legales · ${s.nombre}`,
+      `${base}/legales/certificaciones`,
+      "certificado certificados proveedor matafuego matafuegos fumigacion desinfeccion tanque agua",
+    );
+    agregar(ROLES_LEGALES, "Libretas sanitarias", `Legales · ${s.nombre}`, `${base}/legales/libretas`, "libreta sanitaria empleados vencimiento");
+    agregar(
+      ROLES_LEGALES,
+      "Emergencias (ambulancia)",
+      `Legales · ${s.nombre}`,
+      `${base}/legales/emergencias`,
+      "emergencia emergencias ambulancia llamado traslado guardia urgencia",
+    );
+    agregar(
+      ROLES_LEGALES,
+      "Emitir legajos completos",
+      `Legales · ${s.nombre}`,
+      `${base}/legales/legajos`,
+      "legajo legajos completo imprimir pdf",
+    );
+  }
+
+  agregar(ROLES_DASHBOARD, "Dashboard general", "Administrativa · ambas sedes", "/administrativa", "inicio resumen general tablero");
+  agregar(ROLES_ADMINISTRATIVA, "Informe de deudores (ambas sedes)", "Administrativa", "/administrativa/informe-deudores", "deudores deuda morosos");
+  agregar(ROLES_ADMINISTRATIVA, "Informe de stock de insumos (ambas sedes)", "Administrativa", "/administrativa/informe-insumos", "stock bajo insumos faltante");
+  agregar(
+    ROLES_ADMINISTRATIVA,
+    "Informe de stock de medicación (ambas sedes)",
+    "Administrativa",
+    "/administrativa/informe-medicacion",
+    "stock medicacion sin stock faltante remedios",
+  );
+  agregar(ROLES_ADMINISTRATIVA, "Informe de residentes (ambas sedes)", "Administrativa", "/administrativa/informe-residentes", "residentes listado ocupacion");
+  agregar(ROLES_EMPLEADOS, "Empleados", "Administrativa", "/empleados", "empleado empleados personal sueldo baja recibo de sueldo enfermera cuidadora");
+  agregar(
+    ROLES_EMPLEADOS,
+    "Turnos semanales",
+    "Empleados",
+    "/empleados/turnos",
+    "turno turnos horario horarios guardia cambio de turno semanal franco",
+  );
+  agregar(ROLES_EMPLEADOS, "Control de turnos", "Empleados", "/empleados/control-turnos", "control turnos llegadas tarde faltas ausencias");
+  agregar(
+    ROLES_EMPLEADOS,
+    "Fichadas",
+    "Empleados",
+    "/empleados/fichadas",
+    "fichada fichadas ingreso egreso entrada salida asistencia marcacion reloj",
+  );
+  agregar(["admin"], "Claves y usuarios", "Administración", "/admin/claves", "usuario usuarios clave contraseña acceso permisos");
+  if (verSeguridad) {
+    agregar(null, "Seguridad", "Administración", "/admin/seguridad", "seguridad auditoria registro cambios quien modifico");
+  }
+
+  return destinos;
+}
 
 function NavRow({
   href,
@@ -220,6 +396,8 @@ export async function Sidebar({ perfil, activo }: Props) {
           </span>
         </Link>
       </div>
+
+      <BuscadorGlobal destinos={armarDestinos(perfil.rol, sucursalesVisibles, puedeAdministrativa, verSeguridad)} />
 
       {puedeAdministrativa && puedeMedicina && (
         <div className="mb-4 flex rounded-lg border border-edge bg-card p-1 text-xs font-medium">
