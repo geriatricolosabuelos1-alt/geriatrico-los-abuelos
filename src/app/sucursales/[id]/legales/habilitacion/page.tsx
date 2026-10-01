@@ -64,7 +64,7 @@ export default async function HabilitacionSucursalPage({
           <div className="flex flex-wrap items-start gap-2">
             <BotonMailDocumentos
               sucursalId={id}
-              documentoId={null}
+              documentoIds={null}
               etiqueta="Enviar todo por mail"
               destacado
             />

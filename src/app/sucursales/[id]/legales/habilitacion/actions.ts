@@ -170,10 +170,10 @@ function nombreAdjunto(orden: number, descripcion: string, original: string): st
 }
 
 // Manda por mail los archivos cargados en Habilitación, tal cual se subieron:
-// uno solo (documentoId) o todos los de la sede (documentoId = null).
+// algunos (lista de ids: uno o varios) o todos los de la sede (documentoIds = null).
 export async function enviarDocumentosHabilitacionPorMail(
   sucursalId: string,
-  documentoId: string | null,
+  documentoIds: string[] | null,
   destinatario: string,
 ): Promise<EnviarDocumentosPorMailEstado> {
   const supabase = await createClient();
@@ -190,7 +190,10 @@ export async function enviarDocumentosHabilitacionPorMail(
     .select("id, item_id, archivo_url, nombre_archivo")
     .eq("sucursal_id", sucursalId)
     .not("archivo_url", "is", null);
-  if (documentoId) consulta = consulta.eq("id", documentoId);
+  if (documentoIds) {
+    if (documentoIds.length === 0) return { error: "Seleccioná al menos un documento.", ok: false };
+    consulta = consulta.in("id", documentoIds);
+  }
 
   const [{ data: documentos }, items, { data: sucursal }] = await Promise.all([
     consulta.returns<{ id: string; item_id: string; archivo_url: string; nombre_archivo: string | null }[]>(),
