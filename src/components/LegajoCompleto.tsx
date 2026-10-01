@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { generarLibroFoliado } from "@/app/sucursales/[id]/legales/sanitario-actions";
 import { calcularEdad } from "@/lib/residentes";
 import { ETIQUETA_TIPO_INTERCONSULTA } from "@/lib/interconsultas";
+import type { SignosVitales } from "@/app/sucursales/[id]/enfermeria/actions";
 import type {
   Emergencia,
   EvaluacionKinesiologia,
@@ -97,6 +98,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
     { data: interconsultas },
     { data: evalKinesio },
     { data: sesionesKinesio },
+    { data: signosVitales },
     { data: dieta },
     { data: restricciones },
     { data: documentos },
@@ -137,6 +139,12 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
       .eq("residente_id", residenteId)
       .order("fecha")
       .returns<SesionKinesiologia[]>(),
+    supabase
+      .from("signos_vitales")
+      .select("*")
+      .eq("residente_id", residenteId)
+      .order("fecha")
+      .returns<SignosVitales[]>(),
     supabase
       .from("prescripcion_dietaria")
       .select("*")
@@ -322,7 +330,21 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
         />
       </Seccion>
 
-      <Seccion titulo="9. Emergencias">
+      <Seccion titulo="9. Enfermería · Control de signos vitales">
+        <Tabla
+          columnas={["Fecha", "TA", "FC", "FR", "SO2", "T°"]}
+          filas={(signosVitales ?? []).map((s) => [
+            fecha(s.fecha),
+            s.tension_arterial,
+            s.frecuencia_cardiaca,
+            s.frecuencia_respiratoria,
+            s.saturacion_o2 === null ? null : `${s.saturacion_o2}%`,
+            s.temperatura === null ? null : `${s.temperatura}°`,
+          ])}
+        />
+      </Seccion>
+
+      <Seccion titulo="10. Emergencias">
         <Tabla
           columnas={["Fecha", "Hora", "Prestador", "Motivo", "Traslado", "Satisfactoria"]}
           filas={(emergencias ?? []).map((e) => [
@@ -336,7 +358,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
         />
       </Seccion>
 
-      <Seccion titulo="10. Historia clínica (evoluciones y notas)">
+      <Seccion titulo="11. Historia clínica (evoluciones y notas)">
         <Tabla
           columnas={["N°", "Fecha", "Tipo", "Autor", "Contenido"]}
           filas={entradasClinicas.map((e) => [
@@ -349,7 +371,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
         />
       </Seccion>
 
-      <Seccion titulo="11. Documentación archivada">
+      <Seccion titulo="12. Documentación archivada">
         <Tabla
           columnas={["Tipo", "Archivo", "Cargado"]}
           filas={(documentos ?? []).map((d) => [

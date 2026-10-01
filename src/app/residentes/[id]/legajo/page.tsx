@@ -114,6 +114,12 @@ export default async function LegajoResidentePage({
             >
               Kinesiología
             </Link>
+            <Link
+              href={`/residentes/${id}/enfermeria`}
+              className="text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+            >
+              Signos vitales
+            </Link>
           </div>
         </div>
 
