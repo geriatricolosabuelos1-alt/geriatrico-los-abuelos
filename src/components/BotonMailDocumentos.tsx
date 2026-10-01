@@ -3,15 +3,15 @@
 import { useState } from "react";
 import { enviarDocumentosHabilitacionPorMail } from "@/app/sucursales/[id]/legales/habilitacion/actions";
 
-// Manda por mail los archivos cargados en Habilitación: uno (documentoId) o todos (documentoId = null).
+// Manda por mail los archivos cargados en Habilitación: algunos (documentoIds) o todos (documentoIds = null).
 export function BotonMailDocumentos({
   sucursalId,
-  documentoId,
+  documentoIds,
   etiqueta,
   destacado = false,
 }: {
   sucursalId: string;
-  documentoId: string | null;
+  documentoIds: string[] | null;
   etiqueta: string;
   destacado?: boolean;
 }) {
@@ -25,7 +25,7 @@ export function BotonMailDocumentos({
     setError(null);
     setMensaje(null);
     setEnviando(true);
-    const resultado = await enviarDocumentosHabilitacionPorMail(sucursalId, documentoId, destinatario);
+    const resultado = await enviarDocumentosHabilitacionPorMail(sucursalId, documentoIds, destinatario);
     setEnviando(false);
     if (resultado.error) {
       setError(resultado.error);

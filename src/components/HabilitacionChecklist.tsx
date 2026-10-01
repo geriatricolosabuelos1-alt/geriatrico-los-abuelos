@@ -132,7 +132,11 @@ function FilaItem({
   sucursalId,
   item,
   documento,
+  seleccionado,
+  onSeleccionar,
 }: {
+  seleccionado: boolean;
+  onSeleccionar: () => void;
   sucursalId: string;
   item: ItemHabilitacion;
   documento: DocumentoConUrl | undefined;
@@ -144,7 +148,20 @@ function FilaItem({
   return (
     <li className="border-t border-edge/60 py-2.5">
       <div className="flex flex-wrap items-start justify-between gap-2">
-        <p className="max-w-2xl text-sm text-ink">{item.descripcion}</p>
+        <label className="flex max-w-2xl items-start gap-2 text-sm text-ink">
+          {documento?.archivo_url ? (
+            <input
+              type="checkbox"
+              checked={seleccionado}
+              onChange={onSeleccionar}
+              title="Seleccionar para enviar por mail"
+              className="mt-0.5 h-4 w-4 flex-shrink-0 accent-[var(--color-brass)]"
+            />
+          ) : (
+            <span className="w-4 flex-shrink-0" />
+          )}
+          {item.descripcion}
+        </label>
         <div className="flex flex-shrink-0 items-center gap-2">
           <span
             className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold ${
@@ -165,7 +182,7 @@ function FilaItem({
           {documento?.archivo_url && (
             <BotonMailDocumentos
               sucursalId={sucursalId}
-              documentoId={documento.id}
+              documentoIds={[documento.id]}
               etiqueta="Enviar por mail"
             />
           )}
@@ -232,6 +249,18 @@ export function HabilitacionChecklist({ sucursalId, items, documentos }: Props) 
     return !!d && (!!d.archivo_url || !!d.fecha_presentacion);
   }).length;
 
+  // Selección de documentos (con archivo) para mandar varios juntos en un mail.
+  const conArchivo = documentos.filter((d) => d.archivo_url).map((d) => d.id);
+  const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
+  function alternar(id: string) {
+    setSeleccionados((prev) => {
+      const nuevo = new Set(prev);
+      if (nuevo.has(id)) nuevo.delete(id);
+      else nuevo.add(id);
+      return nuevo;
+    });
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between rounded-2xl border border-edge bg-card p-4">
@@ -247,6 +276,43 @@ export function HabilitacionChecklist({ sucursalId, items, documentos }: Props) 
         </div>
       </div>
 
+      {conArchivo.length > 0 && (
+        <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-edge bg-card p-4">
+          <div className="flex flex-wrap items-center gap-3 text-sm text-ink">
+            <span>
+              <span className="font-semibold">{seleccionados.size}</span> documento
+              {seleccionados.size === 1 ? "" : "s"} seleccionado{seleccionados.size === 1 ? "" : "s"}
+            </span>
+            <button
+              type="button"
+              onClick={() => setSeleccionados(new Set(conArchivo))}
+              className="text-xs text-brass hover:text-ink"
+            >
+              Seleccionar todos
+            </button>
+            {seleccionados.size > 0 && (
+              <button
+                type="button"
+                onClick={() => setSeleccionados(new Set())}
+                className="text-xs text-ink-soft hover:text-ink"
+              >
+                Quitar selección
+              </button>
+            )}
+          </div>
+          {seleccionados.size > 0 ? (
+            <BotonMailDocumentos
+              sucursalId={sucursalId}
+              documentoIds={[...seleccionados]}
+              etiqueta={`Enviar seleccionados por mail (${seleccionados.size})`}
+              destacado
+            />
+          ) : (
+            <p className="text-xs text-ink-soft">Tildá los documentos que quieras mandar juntos en un mail.</p>
+          )}
+        </div>
+      )}
+
       {categorias.map((categoria) => (
         <section key={categoria} className="rounded-2xl border border-edge bg-card p-5">
           <h3 className="mb-1 font-display text-sm font-semibold text-ink">{categoria}</h3>
@@ -259,6 +325,11 @@ export function HabilitacionChecklist({ sucursalId, items, documentos }: Props) 
                   sucursalId={sucursalId}
                   item={item}
                   documento={documentoPorItem.get(item.id)}
+                  seleccionado={seleccionados.has(documentoPorItem.get(item.id)?.id ?? "")}
+                  onSeleccionar={() => {
+                    const id = documentoPorItem.get(item.id)?.id;
+                    if (id) alternar(id);
+                  }}
                 />
               ))}
           </ul>
