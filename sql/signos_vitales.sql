@@ -64,3 +64,6 @@ create policy signos_vitales_escribir on public.signos_vitales
 drop trigger if exists zz_auditar on public.signos_vitales;
 create trigger zz_auditar after insert or update or delete on public.signos_vitales
   for each row execute function public.fn_auditar();
+
+-- Observaciones del control (agregado después).
+alter table public.signos_vitales add column if not exists observaciones text;

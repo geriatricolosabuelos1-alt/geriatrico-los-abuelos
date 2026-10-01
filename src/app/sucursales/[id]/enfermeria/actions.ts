@@ -12,6 +12,7 @@ export type SignosVitales = {
   frecuencia_respiratoria: number | null;
   saturacion_o2: number | null;
   temperatura: number | null;
+  observaciones: string | null;
 };
 
 export type ValoresSignos = {
@@ -20,12 +21,13 @@ export type ValoresSignos = {
   frecuencia_respiratoria: string;
   saturacion_o2: string;
   temperatura: string;
+  observaciones: string;
 };
 
 export type GuardarSignosEstado = { error: string | null };
 
 const COLUMNAS =
-  "residente_id, fecha, tension_arterial, frecuencia_cardiaca, frecuencia_respiratoria, saturacion_o2, temperatura";
+  "residente_id, fecha, tension_arterial, frecuencia_cardiaca, frecuencia_respiratoria, saturacion_o2, temperatura, observaciones";
 
 function numero(valor: string, nombre: string, min: number, max: number): number | null | string {
   const limpio = valor.trim().replace(",", ".");
@@ -58,7 +60,8 @@ export async function guardarSignosVitales(
   } = await supabase.auth.getUser();
   if (!user) return { error: "Tenés que iniciar sesión." };
 
-  const vacio = !ta && fc === null && fr === null && so2 === null && temp === null;
+  const observaciones = valores.observaciones.trim() || null;
+  const vacio = !ta && fc === null && fr === null && so2 === null && temp === null && !observaciones;
 
   if (vacio) {
     const { error } = await supabase
@@ -79,6 +82,7 @@ export async function guardarSignosVitales(
           frecuencia_respiratoria: fr as number | null,
           saturacion_o2: so2 as number | null,
           temperatura: temp as number | null,
+          observaciones,
           registrado_por: user.id,
           updated_at: new Date().toISOString(),
         },

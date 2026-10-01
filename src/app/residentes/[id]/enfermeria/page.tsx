@@ -62,7 +62,7 @@ export default async function EnfermeriaResidentePage({
   const ultimoDia = mes === mesActual ? Number(hoy.slice(8, 10)) : new Date(anio, numMes, 0).getDate();
   const { data: registros } = await supabase
     .from("signos_vitales")
-    .select("residente_id, fecha, tension_arterial, frecuencia_cardiaca, frecuencia_respiratoria, saturacion_o2, temperatura")
+    .select("residente_id, fecha, tension_arterial, frecuencia_cardiaca, frecuencia_respiratoria, saturacion_o2, temperatura, observaciones")
     .eq("residente_id", id)
     .gte("fecha", `${mes}-01`)
     .lte("fecha", `${mes}-${String(ultimoDia).padStart(2, "0")}`)

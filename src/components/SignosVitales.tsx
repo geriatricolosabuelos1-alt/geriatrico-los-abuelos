@@ -19,6 +19,7 @@ function valoresIniciales(r: SignosVitales | undefined): ValoresSignos {
     frecuencia_respiratoria: r?.frecuencia_respiratoria?.toString() ?? "",
     saturacion_o2: r?.saturacion_o2?.toString() ?? "",
     temperatura: r?.temperatura?.toString() ?? "",
+    observaciones: r?.observaciones ?? "",
   };
 }
 
@@ -28,6 +29,7 @@ const COLUMNAS: { campo: keyof ValoresSignos; placeholder: string; modo: "text" 
   { campo: "frecuencia_respiratoria", placeholder: "16", modo: "numeric" },
   { campo: "saturacion_o2", placeholder: "96", modo: "numeric" },
   { campo: "temperatura", placeholder: "36.5", modo: "decimal" },
+  { campo: "observaciones", placeholder: "Opcional", modo: "text" },
 ];
 
 // Una fila de la planilla: los cinco valores medidos de un residente en un día, con su botón Guardar.
@@ -75,7 +77,7 @@ export function FilaSignosVitales({
             onKeyDown={(e) => {
               if (e.key === "Enter" && cambiado && !enviando) guardar();
             }}
-            className={CAMPO}
+            className={`${CAMPO} ${c.campo === "observaciones" ? "min-w-[180px]" : ""}`}
           />
         </td>
       ))}

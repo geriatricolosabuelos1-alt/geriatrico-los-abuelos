@@ -157,7 +157,7 @@ export default async function RegistroMedicacionPage({
           >
             ← Volver a medicación
           </Link>
-          <BotonExportarPdf />
+          <BotonExportarPdf omitirVacios />
         </div>
 
         <form className="mb-6 flex flex-wrap items-end gap-3 rounded-lg border border-edge bg-panel-deep p-3 print:hidden">

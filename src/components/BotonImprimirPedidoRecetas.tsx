@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { marcarRecetasPedidas } from "@/app/sucursales/[id]/medicacion/recetario/actions";
+import { imprimirSinVacios } from "@/lib/impresionHtml";
 
 type Props = {
   sucursalId: string;
@@ -14,7 +15,7 @@ export function BotonImprimirPedidoRecetas({ sucursalId, idsPendientes }: Props)
   const [marcando, setMarcando] = useState(false);
 
   async function imprimir() {
-    window.print();
+    imprimirSinVacios();
     if (idsPendientes.length === 0) return;
     setMarcando(true);
     await marcarRecetasPedidas(sucursalId, idsPendientes);
