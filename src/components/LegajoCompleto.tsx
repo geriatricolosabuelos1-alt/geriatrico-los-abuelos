@@ -31,6 +31,7 @@ const ETIQUETA_TIPO_DOCUMENTO: Record<string, string> = {
   contrato: "Contrato",
   evaluacion_kinesiologia: "Evaluación kinesiológica (PDF)",
   evolucion_kinesiologia: "Evolución kinesiológica (PDF)",
+  indicacion_emergencia: "Receta / indicación de emergencia",
 };
 
 function fecha(valor: string | null | undefined): string {

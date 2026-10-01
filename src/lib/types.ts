@@ -87,7 +87,8 @@ export type TipoDocumentoResidente =
   | "nota_derivacion"
   | "contrato"
   | "evaluacion_kinesiologia"
-  | "evolucion_kinesiologia";
+  | "evolucion_kinesiologia"
+  | "indicacion_emergencia";
 
 export interface DocumentoResidente {
   id: string;
