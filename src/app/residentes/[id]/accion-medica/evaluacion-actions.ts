@@ -27,7 +27,7 @@ async function requiereMedico(): Promise<{ error: string | null; userId: string 
   return { error: null, userId: user.id };
 }
 
-// ---------- Evaluación médica (checklist) ----------
+// ---------- Evaluación médica + Indicaciones médicas (un solo documento) ----------
 
 export async function listarEvaluacionesMedicas(residenteId: string): Promise<EvaluacionMedica[]> {
   const supabase = await createClient();
@@ -42,7 +42,91 @@ export async function listarEvaluacionesMedicas(residenteId: string): Promise<Ev
   return data ?? [];
 }
 
-export async function guardarEvaluacionMedica(
+export async function listarIndicacionesMedicas(residenteId: string): Promise<IndicacionMedica[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("indicaciones_medicas")
+    .select(
+      "id, residente_id, periodo_desde, periodo_hasta, items, observaciones, firmado_por, matricula, firmado_at, created_at",
+    )
+    .eq("residente_id", residenteId)
+    .order("periodo_desde", { ascending: false })
+    .returns<IndicacionMedica[]>();
+  return data ?? [];
+}
+
+export type ResidenteListado = { id: string; nombre: string; apellido: string; habitacion: string | null };
+
+export async function listarResidentesSede(sedeId: string): Promise<ResidenteListado[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("residentes")
+    .select("id, nombre, apellido, habitacion")
+    .eq("sucursal_id", sedeId)
+    .eq("activo", true)
+    .order("habitacion")
+    .returns<ResidenteListado[]>();
+  return data ?? [];
+}
+
+export type DatosResidenteEvaluacion = {
+  id: string;
+  nombre: string;
+  apellido: string;
+  habitacion: string | null;
+  dni: string | null;
+  fechaNacimiento: string | null;
+  sede: string;
+  obraSocial: string | null;
+  afiliado: string | null;
+  evaluaciones: EvaluacionMedica[];
+  indicaciones: IndicacionMedica[];
+};
+
+type ResidenteCompletoRow = {
+  id: string;
+  nombre: string;
+  apellido: string;
+  habitacion: string | null;
+  dni: string | null;
+  fecha_nacimiento: string | null;
+  sucursales: { nombre: string } | null;
+  ficha_administrativa: { obra_social: string | null; numero_afiliado: string | null } | null;
+};
+
+export async function obtenerDatosResidenteEvaluacion(residenteId: string): Promise<DatosResidenteEvaluacion | null> {
+  const supabase = await createClient();
+  const { data: residente } = await supabase
+    .from("residentes")
+    .select(
+      "id, nombre, apellido, habitacion, dni, fecha_nacimiento, sucursales(nombre), ficha_administrativa(obra_social, numero_afiliado)",
+    )
+    .eq("id", residenteId)
+    .single<ResidenteCompletoRow>();
+
+  if (!residente) return null;
+
+  const [evaluaciones, indicaciones] = await Promise.all([
+    listarEvaluacionesMedicas(residenteId),
+    listarIndicacionesMedicas(residenteId),
+  ]);
+
+  return {
+    id: residente.id,
+    nombre: residente.nombre,
+    apellido: residente.apellido,
+    habitacion: residente.habitacion,
+    dni: residente.dni,
+    fechaNacimiento: residente.fecha_nacimiento,
+    sede: residente.sucursales?.nombre ?? "",
+    obraSocial: residente.ficha_administrativa?.obra_social ?? null,
+    afiliado: residente.ficha_administrativa?.numero_afiliado ?? null,
+    evaluaciones,
+    indicaciones,
+  };
+}
+
+export async function guardarEvaluacionIndicacionMedica(
   residenteId: string,
   _estado: Estado,
   formData: FormData,
@@ -60,7 +144,7 @@ export async function guardarEvaluacionMedica(
   const supabase = await createClient();
   const matricula = String(formData.get("matricula") ?? "").trim() || null;
 
-  const { error } = await supabase.from("evaluaciones_medicas").insert({
+  const { error: errorEvaluacion } = await supabase.from("evaluaciones_medicas").insert({
     residente_id: residenteId,
     fecha,
     antecedentes: String(formData.get("antecedentes") ?? "").trim() || null,
@@ -78,43 +162,7 @@ export async function guardarEvaluacionMedica(
     firmado_por: userId,
     matricula,
   });
-
-  if (error) return { error: error.message };
-
-  revalidatePath(`/residentes/${residenteId}/accion-medica`);
-  return { error: null };
-}
-
-// ---------- Indicaciones médicas (cuadro de medicación por período) ----------
-
-export async function listarIndicacionesMedicas(residenteId: string): Promise<IndicacionMedica[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("indicaciones_medicas")
-    .select(
-      "id, residente_id, periodo_desde, periodo_hasta, items, observaciones, firmado_por, matricula, firmado_at, created_at",
-    )
-    .eq("residente_id", residenteId)
-    .order("periodo_desde", { ascending: false })
-    .returns<IndicacionMedica[]>();
-  return data ?? [];
-}
-
-export async function guardarIndicacionMedica(
-  residenteId: string,
-  _estado: Estado,
-  formData: FormData,
-): Promise<Estado> {
-  const { error: errorRol, userId } = await requiereMedico();
-  if (errorRol) return { error: errorRol };
-
-  const pin = String(formData.get("pin") ?? "");
-  const validacionPin = await validarOConfigurarPin(pin);
-  if (validacionPin.error) return { error: validacionPin.error };
-
-  const periodo_desde = String(formData.get("periodo_desde") ?? "");
-  const periodo_hasta = String(formData.get("periodo_hasta") ?? "");
-  if (!periodo_desde || !periodo_hasta) return { error: "Indicá el período (desde / hasta)." };
+  if (errorEvaluacion) return { error: errorEvaluacion.message };
 
   let items: ItemIndicacionMedica[] = [];
   try {
@@ -122,24 +170,23 @@ export async function guardarIndicacionMedica(
   } catch {
     return { error: "No se pudo leer el cuadro de medicación." };
   }
-  if (!Array.isArray(items) || items.length === 0) {
-    return { error: "Agregá al menos un medicamento." };
+
+  if (Array.isArray(items) && items.length > 0) {
+    const periodo_desde = String(formData.get("periodo_desde") ?? "");
+    const periodo_hasta = String(formData.get("periodo_hasta") ?? "");
+    if (!periodo_desde || !periodo_hasta) return { error: "Indicá el período (desde / hasta)." };
+
+    const { error: errorIndicacion } = await supabase.from("indicaciones_medicas").insert({
+      residente_id: residenteId,
+      periodo_desde,
+      periodo_hasta,
+      items,
+      observaciones: String(formData.get("observaciones") ?? "").trim() || null,
+      firmado_por: userId,
+      matricula,
+    });
+    if (errorIndicacion) return { error: errorIndicacion.message };
   }
-
-  const supabase = await createClient();
-  const matricula = String(formData.get("matricula") ?? "").trim() || null;
-
-  const { error } = await supabase.from("indicaciones_medicas").insert({
-    residente_id: residenteId,
-    periodo_desde,
-    periodo_hasta,
-    items,
-    observaciones: String(formData.get("observaciones") ?? "").trim() || null,
-    firmado_por: userId,
-    matricula,
-  });
-
-  if (error) return { error: error.message };
 
   revalidatePath(`/residentes/${residenteId}/accion-medica`);
   return { error: null };

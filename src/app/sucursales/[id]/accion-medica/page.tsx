@@ -48,12 +48,20 @@ export default async function AccionMedicaListaPage({ params }: { params: Promis
       />
 
       <main className="flex-1 space-y-6 px-9 py-8">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-widest text-brass">{sucursal!.nombre}</p>
-          <h1 className="font-display text-[32px] font-semibold text-ink">Acción Médica</h1>
-          <p className="mt-1 text-sm text-ink-soft">
-            Elegí un residente para cargar la evolución del pase y revisar su kardex.
-          </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-brass">{sucursal!.nombre}</p>
+            <h1 className="font-display text-[32px] font-semibold text-ink">Acción Médica</h1>
+            <p className="mt-1 text-sm text-ink-soft">
+              Elegí un residente para cargar la evolución del pase y revisar su kardex.
+            </p>
+          </div>
+          <Link
+            href={`/sucursales/${id}/accion-medica/evaluacion-medica`}
+            className="rounded-lg border border-brass px-4 py-2 text-sm font-semibold text-brass hover:bg-brass/10"
+          >
+            Evaluación médica (plantilla)
+          </Link>
         </div>
 
         {interconsultas.length > 0 && (
