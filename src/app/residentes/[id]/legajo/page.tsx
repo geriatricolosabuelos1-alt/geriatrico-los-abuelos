@@ -129,6 +129,12 @@ export default async function LegajoResidentePage({
             >
               Signos vitales
             </Link>
+            <Link
+              href={`/sucursales/${residente.sucursal_id}/nutricion/imprimir?residente=${id}`}
+              className="text-sm text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+            >
+              Ficha nutricional
+            </Link>
           </div>
         </div>
 
