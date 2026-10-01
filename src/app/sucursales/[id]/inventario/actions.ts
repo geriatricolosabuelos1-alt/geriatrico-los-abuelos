@@ -53,12 +53,18 @@ export async function registrarMovimiento(
   const precio = precioRaw ? Number(precioRaw) : null;
   const residente_id = String(formData.get("residente_id") ?? "") || null;
   const imputarResidente = formData.get("imputar_residente") === "on" && tipo === "salida";
+  // Insumo que trajo la familia de un residente: suma stock pero no es una compra de la sede.
+  const aporteResidente = formData.get("aporte_residente") === "on" && tipo === "entrada";
 
   if (!insumoNombre || (tipo !== "entrada" && tipo !== "salida") || !cantidad || cantidad <= 0) {
     return { error: "Completá insumo, tipo y una cantidad mayor a cero." };
   }
 
   const importe_total = precio ? precio * cantidad : null;
+
+  if (aporteResidente && !residente_id) {
+    return { error: "Elegí qué residente aportó el insumo." };
+  }
 
   if (imputarResidente && (!residente_id || !importe_total)) {
     return {
@@ -110,7 +116,7 @@ export async function registrarMovimiento(
       cantidad,
       precio,
       importe_total,
-      residente_id,
+      residente_id: imputarResidente || aporteResidente ? residente_id : null,
       registrado_por: user?.id,
     })
     .select("id")
@@ -136,7 +142,7 @@ export async function registrarMovimiento(
       }
 
       revalidatePath(`/residentes/${residente_id}/cuenta-corriente`);
-    } else if (tipo === "entrada") {
+    } else if (tipo === "entrada" && !aporteResidente) {
       const { error: errorGasto } = await crearGastoDeCompra(
         supabase,
         sucursalId,
@@ -151,6 +157,7 @@ export async function registrarMovimiento(
     }
   }
 
+  if (aporteResidente && residente_id) revalidatePath(`/residentes/${residente_id}/legajo`);
   revalidatePath(`/sucursales/${sucursalId}/inventario`);
   return { error: null };
 }
