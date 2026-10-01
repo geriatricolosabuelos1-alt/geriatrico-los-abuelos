@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { COLUMNAS_FICHA_NUTRICION, type FichaNutricion } from "@/lib/nutricion";
 import { generarLibroFoliado } from "@/app/sucursales/[id]/legales/sanitario-actions";
 import { calcularEdad } from "@/lib/residentes";
 import { ETIQUETA_TIPO_INTERCONSULTA } from "@/lib/interconsultas";
@@ -10,8 +11,6 @@ import type {
   FichaMedica,
   InterconsultaCompleta,
   MedicamentoResidente,
-  PrescripcionDietaria,
-  RestriccionResidente,
   Residente,
   SesionKinesiologia,
   VacunacionResidente,
@@ -101,8 +100,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
     { data: sesionesKinesio },
     { data: signosVitales },
     { data: movimientosInsumos },
-    { data: dieta },
-    { data: restricciones },
+    { data: fichasNutricion },
     { data: documentos },
     { data: emergencias },
     entradasClinicas,
@@ -157,19 +155,12 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
         { fecha: string; tipo: string; cantidad: number; insumos: { nombre: string; unidad: string } | null }[]
       >(),
     supabase
-      .from("prescripcion_dietaria")
-      .select("*")
+      .from("fichas_nutricion")
+      .select(COLUMNAS_FICHA_NUTRICION)
       .eq("residente_id", residenteId)
-      .eq("activa", true)
-      .order("vigente_desde", { ascending: false })
-      .limit(1)
-      .maybeSingle<PrescripcionDietaria>(),
-    supabase
-      .from("restricciones_residente")
-      .select("*")
-      .eq("residente_id", residenteId)
-      .eq("activo", true)
-      .returns<RestriccionResidente[]>(),
+      .order("fecha", { ascending: false })
+      .order("created_at", { ascending: false })
+      .returns<FichaNutricion[]>(),
     supabase
       .from("documentos_residente")
       .select("tipo, nombre_archivo, created_at")
@@ -321,20 +312,56 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
         />
       </Seccion>
 
-      <Seccion titulo="5. Nutrición">
-        <Campo
-          etiqueta="Dieta vigente"
-          valor={
-            dieta
-              ? `${dieta.tipo_dieta} · IDDSI ${dieta.nivel_iddsi} · Líquidos ${dieta.tipo_liquido} (desde ${fecha(
-                  dieta.vigente_desde,
-                )})${dieta.notas ? ` — ${dieta.notas}` : ""}`
-              : null
-          }
-        />
-        <Campo
-          etiqueta="Restricciones"
-          valor={(restricciones ?? []).map((r) => `${r.tipo}: ${r.detalle}`).join("; ")}
+      <Seccion titulo="5. Nutrición · ficha nutricional">
+        {(() => {
+          const n = fichasNutricion?.[0];
+          if (!n) return null;
+          const lista = (v: string[]) => v.join(", ");
+          return (
+            <>
+              <Campo etiqueta="Fecha de la ficha" valor={fecha(n.fecha)} />
+              <Campo etiqueta="Diagnóstico principal" valor={n.diagnostico_principal} />
+              <Campo etiqueta="Patologías asociadas" valor={n.patologias_asociadas} />
+              <Campo etiqueta="Consistencia" valor={lista(n.consistencia)} />
+              <Campo
+                etiqueta="Según patología"
+                valor={[lista(n.segun_patologia), n.patologia_otra].filter(Boolean).join(" — ")}
+              />
+              <Campo etiqueta="Vía de administración" valor={lista(n.via_administracion)} />
+              <Campo etiqueta="Asistencia para alimentarse" valor={n.asistencia} />
+              <Campo etiqueta="Ingesta alimentaria" valor={n.ingesta} />
+              <Campo etiqueta="Prótesis dental" valor={n.protesis_dental === null ? null : n.protesis_dental ? "Sí" : "No"} />
+              <Campo etiqueta="Disfagia" valor={n.disfagia} />
+              <Campo
+                etiqueta="Suplementación"
+                valor={[lista(n.suplementacion), n.suplementacion_cantidad].filter(Boolean).join(" — ")}
+              />
+              <Campo
+                etiqueta="Antropometría"
+                valor={[
+                  n.peso_actual !== null && `Peso ${n.peso_actual} kg`,
+                  n.peso_ideal !== null && `Peso ideal ${n.peso_ideal} kg`,
+                  n.talla !== null && `Talla ${n.talla} m`,
+                  n.imc !== null && `IMC ${n.imc}`,
+                  n.perdida_peso && `Pérdida de peso${n.perdida_peso_pct !== null ? ` ${n.perdida_peso_pct}%` : ""}`,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              />
+              <Campo etiqueta="Evaluación nutricional" valor={n.evaluacion_nutricional} />
+              <Campo etiqueta="Evaluación funcional" valor={lista(n.evaluacion_funcional)} />
+              <Campo etiqueta="Observaciones y plan" valor={n.observaciones} />
+            </>
+          );
+        })()}
+        <Tabla
+          columnas={["Fichas anteriores", "Evaluación", "Peso", "IMC"]}
+          filas={(fichasNutricion ?? []).slice(1).map((n) => [
+            fecha(n.fecha),
+            n.evaluacion_nutricional,
+            n.peso_actual === null ? null : `${n.peso_actual} kg`,
+            n.imc,
+          ])}
         />
       </Seccion>
 

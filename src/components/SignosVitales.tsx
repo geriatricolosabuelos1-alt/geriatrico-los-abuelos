@@ -150,7 +150,8 @@ export function BotonPdfSignos({
 }) {
   const [desde, setDesde] = useState(`${hoy.slice(0, 7)}-01`);
   const [hasta, setHasta] = useState(hoy);
-  const [generando, setGenerando] = useState(false);
+  const [mes, setMes] = useState(hoy.slice(0, 7));
+  const [generando, setGenerando] = useState<"periodo" | "mes" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const inicioMesAnterior = `${sumarDias(`${hoy.slice(0, 7)}-01`, -1).slice(0, 7)}-01`;
@@ -160,32 +161,36 @@ export function BotonPdfSignos({
     { etiqueta: "Mes anterior", desde: inicioMesAnterior, hasta: ultimoDiaDelMes(inicioMesAnterior) },
   ];
 
-  async function descargar() {
-    if (!desde || !hasta || desde > hasta) {
-      setError("Revisá el período: la fecha Desde tiene que ser anterior a Hasta.");
+  // Período elegido (solo lo controlado) o mes completo para completar a mano.
+  async function descargar(tipo: "periodo" | "mes") {
+    const completo = tipo === "mes";
+    const d = completo ? `${mes}-01` : desde;
+    const h = completo ? ultimoDiaDelMes(`${mes}-01`) : hasta;
+    if (!d || !h || d > h || (completo && !/^\d{4}-\d{2}$/.test(mes))) {
+      setError(completo ? "Elegí el mes." : "Revisá el período: la fecha Desde tiene que ser anterior a Hasta.");
       return;
     }
-    setGenerando(true);
+    setGenerando(tipo);
     setError(null);
     try {
-      const planillas = await obtenerPlanillas(filtro, desde, hasta);
+      const planillas = await obtenerPlanillas(filtro, d, h);
       if (planillas.length === 0) {
         setError("No hay residentes para imprimir.");
         return;
       }
       const { generarSignosVitalesPdf } = await import("@/lib/signosVitalesPdf");
-      const pdf = generarSignosVitalesPdf(planillas, desde, hasta);
+      const pdf = generarSignosVitalesPdf(planillas, d, h, { completo });
       const quien = planillas.length === 1 ? planillas[0].nombre : planillas[0].sede;
       const url = URL.createObjectURL(pdf);
       const enlace = document.createElement("a");
       enlace.href = url;
-      enlace.download = `signos-vitales-${quien}-${desde}-al-${hasta}.pdf`.toLowerCase().replace(/[,\s]+/g, "-");
+      enlace.download = `signos-vitales-${quien}-${completo ? `mes-${mes}` : `${d}-al-${h}`}.pdf`.toLowerCase().replace(/[,\s]+/g, "-");
       enlace.click();
       setTimeout(() => URL.revokeObjectURL(url), 10_000);
     } catch {
       setError("No se pudo armar el PDF. Probá de nuevo.");
     } finally {
-      setGenerando(false);
+      setGenerando(null);
     }
   }
 
@@ -201,11 +206,24 @@ export function BotonPdfSignos({
         <input type="date" value={hasta} max={hoy} onChange={(e) => setHasta(e.target.value)} className={CAMPO_FECHA} />
         <button
           type="button"
-          onClick={descargar}
-          disabled={generando}
+          onClick={() => descargar("periodo")}
+          disabled={generando !== null}
           className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-60"
         >
-          {generando ? "Armando PDF..." : etiqueta}
+          {generando === "periodo" ? "Armando PDF..." : etiqueta}
+        </button>
+      </div>
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        <label className="text-xs font-bold uppercase tracking-wide text-ink-soft">Mes completo</label>
+        <input type="month" value={mes} onChange={(e) => setMes(e.target.value)} className={CAMPO_FECHA} />
+        <button
+          type="button"
+          onClick={() => descargar("mes")}
+          disabled={generando !== null}
+          title="Todos los días del mes, con lo ya cargado y el resto en blanco para completar a mano"
+          className="rounded-lg border border-brass px-4 py-2 text-sm font-semibold text-brass hover:bg-brass-soft disabled:opacity-60"
+        >
+          {generando === "mes" ? "Armando PDF..." : "Planilla del mes (para completar a mano)"}
         </button>
       </div>
       <div className="flex gap-3">

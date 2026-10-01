@@ -23,7 +23,7 @@ type Seccion =
 
 type SubseccionLegales = "habilitacion" | "libro-foliado" | "certificaciones" | "libretas";
 type SubseccionMedicacion = "recetario" | "vacunacion";
-type SubseccionNutricion = "dietas" | "cocina" | "disfagia" | "ingesta" | "menu-semanal";
+type SubseccionNutricion = "menu-semanal";
 
 type Props = {
   perfil: Perfil;
@@ -175,17 +175,13 @@ function armarDestinos(
       `${base}/kinesiologia`,
       "kinesio kinesiologa rehabilitacion sesion evaluacion caidas marcha movilidad",
     );
-    agregar(ROLES_NUTRICION, "Nutrición", med, `${base}/nutricion`, "nutricion alimentacion comida peso nutricionista");
     agregar(
-      ROLES_NUTRICION_CLINICO,
-      "Prescripción dietaria",
+      ROLES_NUTRICION,
+      "Nutrición · ficha nutricional",
       med,
-      `${base}/nutricion/dietas`,
-      "dieta dietas celiaco diabetico hiposodico sin sal restriccion alergia alimentaria",
+      `${base}/nutricion`,
+      "nutricion nutricionista ficha alimentacion comida dieta peso talla imc consistencia disfagia suplemento desnutricion celiaco diabetico sin tacc",
     );
-    agregar(ROLES_NUTRICION_CLINICO, "Cocina", med, `${base}/nutricion/cocina`, "cocina comida raciones cocinera planilla");
-    agregar(ROLES_NUTRICION_CLINICO, "Disfagia", med, `${base}/nutricion/disfagia`, "disfagia iddsi espesante tragar deglucion licuado");
-    agregar(ROLES_NUTRICION, "Ingesta diaria", med, `${base}/nutricion/ingesta`, "ingesta comio desayuno almuerzo merienda cena registro hidratacion");
     agregar(ROLES_NUTRICION_CLINICO, "Menú semanal", med, `${base}/nutricion/menu-semanal`, "menu semanal comida almuerzo cena");
     agregar(
       ROLES_CUOTAS,
@@ -560,30 +556,6 @@ export async function Sidebar({ perfil, activo }: Props) {
               return (
                 <GrupoConSub>
                   {filaNutricion}
-                  {ROLES_NUTRICION_CLINICO.includes(perfil.rol) && (
-                    <>
-                      <SubSubTab
-                        href={`/sucursales/${s.id}/nutricion/dietas`}
-                        label="Prescripción dietaria"
-                        activo={activo.subseccion === "dietas"}
-                      />
-                      <SubSubTab
-                        href={`/sucursales/${s.id}/nutricion/cocina`}
-                        label="Cocina"
-                        activo={activo.subseccion === "cocina"}
-                      />
-                      <SubSubTab
-                        href={`/sucursales/${s.id}/nutricion/disfagia`}
-                        label="Disfagia"
-                        activo={activo.subseccion === "disfagia"}
-                      />
-                    </>
-                  )}
-                  <SubSubTab
-                    href={`/sucursales/${s.id}/nutricion/ingesta`}
-                    label="Ingesta diaria"
-                    activo={activo.subseccion === "ingesta"}
-                  />
                   {ROLES_NUTRICION_CLINICO.includes(perfil.rol) && (
                     <SubSubTab
                       href={`/sucursales/${s.id}/nutricion/menu-semanal`}
