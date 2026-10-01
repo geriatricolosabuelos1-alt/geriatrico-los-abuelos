@@ -46,7 +46,7 @@ export async function listarDocumentosHabilitacion(
   );
 }
 
-export type ActualizarHabilitacionEstado = { error: string | null };
+export type ActualizarHabilitacionEstado = { error: string | null; guardado?: boolean };
 
 async function upsertDocumento(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -106,6 +106,13 @@ export async function subirDocumentoHabilitacion(
       .upload(path, archivo, { contentType: archivo.type });
 
     if (uploadError) {
+      const mensaje = uploadError.message.toLowerCase();
+      if (mensaje.includes("mime")) {
+        return { error: "Ese tipo de archivo no se acepta. Subí un PDF o una foto JPG/PNG." };
+      }
+      if (mensaje.includes("size") || mensaje.includes("exceed")) {
+        return { error: "El archivo es demasiado pesado." };
+      }
       return { error: uploadError.message };
     }
 
@@ -124,7 +131,7 @@ export async function subirDocumentoHabilitacion(
   }
 
   revalidatePath(`/sucursales/${sucursalId}/legales/habilitacion`);
-  return { error: null };
+  return { error: null, guardado: true };
 }
 
 export async function eliminarDocumentoHabilitacion(

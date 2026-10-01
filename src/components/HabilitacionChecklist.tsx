@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import {
   eliminarDocumentoHabilitacion,
   subirDocumentoHabilitacion,
@@ -19,6 +19,22 @@ type Props = {
 
 const ESTADO_INICIAL: ActualizarHabilitacionEstado = { error: null };
 
+// Vercel corta los envíos de más de 4,5 MB antes de llegar al servidor: se avisa antes de subir.
+const MAX_BYTES = 4 * 1024 * 1024;
+const TIPOS_ACEPTADOS = ["application/pdf", "image/jpeg", "image/png", "image/webp"];
+
+function validarArchivo(archivo: FormDataEntryValue | null): string | null {
+  if (!(archivo instanceof File) || archivo.size === 0) return null;
+  if (!TIPOS_ACEPTADOS.includes(archivo.type)) {
+    return "Ese tipo de archivo no se acepta. Subí un PDF o una foto JPG/PNG.";
+  }
+  if (archivo.size > MAX_BYTES) {
+    const mb = (archivo.size / 1024 / 1024).toFixed(1);
+    return `El archivo pesa ${mb} MB y el máximo es 4 MB. Comprimilo (por ejemplo en ilovepdf.com) o escanealo en menor calidad.`;
+  }
+  return null;
+}
+
 function EditorItem({
   sucursalId,
   itemId,
@@ -32,6 +48,12 @@ function EditorItem({
 }) {
   const accionConId = subirDocumentoHabilitacion.bind(null, sucursalId);
   const [estado, formAction, enviando] = useActionState(accionConId, ESTADO_INICIAL);
+  const [errorArchivo, setErrorArchivo] = useState<string | null>(null);
+
+  // Se cierra solo si guardó bien; si hubo error queda abierto mostrándolo.
+  useEffect(() => {
+    if (estado.guardado) onCerrar();
+  }, [estado, onCerrar]);
 
   async function borrar() {
     if (!documento) return;
@@ -43,9 +65,10 @@ function EditorItem({
 
   return (
     <form
-      action={async (formData) => {
-        await formAction(formData);
-        onCerrar();
+      action={(formData) => {
+        const problema = validarArchivo(formData.get("archivo"));
+        setErrorArchivo(problema);
+        if (!problema) formAction(formData);
       }}
       className="mt-2 flex flex-wrap items-end gap-2 rounded-lg border border-edge bg-panel-deep p-3"
     >
@@ -98,7 +121,9 @@ function EditorItem({
       <button type="button" onClick={onCerrar} className="text-xs text-ink-soft hover:text-ink">
         Cancelar
       </button>
-      {estado.error && <p className="w-full text-xs text-red-700">{estado.error}</p>}
+      {(errorArchivo ?? estado.error) && (
+        <p className="w-full text-xs text-red-700">{errorArchivo ?? estado.error}</p>
+      )}
     </form>
   );
 }
