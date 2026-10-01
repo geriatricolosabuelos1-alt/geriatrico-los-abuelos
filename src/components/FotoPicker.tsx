@@ -27,7 +27,7 @@ export function FotoPicker({ residenteId, sucursalId, fotoActual }: Props) {
   async function abrirGaleria() {
     setAbierto(true);
     setCargandoGaleria(true);
-    const fotos = await listarFotosGaleria();
+    const fotos = await listarFotosGaleria(sucursalId);
     setGaleria(fotos);
     setCargandoGaleria(false);
   }
@@ -59,6 +59,7 @@ export function FotoPicker({ residenteId, sucursalId, fotoActual }: Props) {
 
     const formData = new FormData();
     formData.append("archivo", archivo);
+    formData.append("sucursal_id", sucursalId);
     const resultado = await subirFotoGaleria({ error: null, url: null }, formData);
 
     setSubiendo(false);
