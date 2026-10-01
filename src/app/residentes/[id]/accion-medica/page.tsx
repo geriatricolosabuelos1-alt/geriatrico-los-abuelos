@@ -1,14 +1,10 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
-import { HistorialEvoluciones } from "@/components/HistorialEvoluciones";
-import { EvolucionForm } from "@/components/EvolucionForm";
 import { KardexInteractivo } from "@/components/KardexInteractivo";
 import {
   listarCambiosRecientes,
   listarCatalogo,
-  listarEvolucionesMedicas,
-  listarInterconsultas,
   listarKardexResidente,
   tienePinConfigurado,
 } from "@/app/residentes/[id]/accion-medica/actions";
@@ -63,33 +59,17 @@ export default async function AccionMedicaResidentePage({ params }: { params: Pr
 
   if (!residente || !perfil) notFound();
 
-  const { data: listaSucursal } = await supabase
-    .from("residentes")
-    .select("id")
-    .eq("sucursal_id", residente.sucursal_id)
-    .eq("activo", true)
-    .order("habitacion")
-    .returns<{ id: string }[]>();
-
-  const orden = (listaSucursal ?? []).map((r) => r.id);
-  const indiceActual = orden.indexOf(id);
-  const siguienteId = indiceActual >= 0 && indiceActual < orden.length - 1 ? orden[indiceActual + 1] : null;
-
   const [
-    evoluciones,
     kardex,
     catalogo,
-    interconsultas,
     cambios,
     pinConfigurado,
     interconsultasCompletas,
     evaluacionesMedicas,
     indicacionesMedicas,
   ] = await Promise.all([
-    listarEvolucionesMedicas(id),
     listarKardexResidente(id),
     listarCatalogo(),
-    listarInterconsultas(id),
     listarCambiosRecientes(id),
     tienePinConfigurado(),
     listarInterconsultasCompletas(id),
@@ -116,19 +96,11 @@ export default async function AccionMedicaResidentePage({ params }: { params: Pr
         </div>
 
         <div className="space-y-6">
-          <HistorialEvoluciones residenteId={id} evoluciones={evoluciones} />
-
           <KardexInteractivo
             residenteId={id}
             kardex={kardex}
             catalogo={catalogo}
             cambiosRecientes={cambios}
-          />
-          <EvolucionForm
-            residenteId={id}
-            siguienteResidenteId={siguienteId}
-            interconsultas={interconsultas}
-            pinConfigurado={pinConfigurado}
           />
           <InterconsultasResidente
             residenteId={id}
