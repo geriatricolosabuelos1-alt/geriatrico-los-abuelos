@@ -278,6 +278,8 @@ type ItemAEnviar = ItemExistente | ItemNuevo;
 export type ItemLeido = {
   insumo_id: string | null;
   nombre: string;
+  // Lo que dice el ticket, tal cual lo leyó la IA (puede diferir del nombre del catálogo).
+  textoTicket: string;
   cantidad: number;
   categoriaSugerida: CategoriaInsumo;
   precioUnitario: number | null;
@@ -393,6 +395,7 @@ Reglas:
       return {
         insumo_id: coincidencia?.id ?? null,
         nombre: coincidencia?.nombre ?? it.nombre,
+        textoTicket: it.nombre,
         cantidad: Number(it.cantidad) > 0 ? Number(it.cantidad) : 1,
         categoriaSugerida: (coincidencia?.categoria as CategoriaInsumo) ?? categoria,
         precioUnitario:
