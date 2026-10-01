@@ -22,7 +22,14 @@ function diasDelPeriodo(desde: string, hasta: string): string[] {
 
 // Planilla "Control de signos vitales" de un período: cada residente empieza en hoja nueva,
 // un renglón por día (si el período es largo, la tabla sigue en las hojas siguientes).
-export function generarSignosVitalesPdf(planillas: PlanillaResidente[], desde: string, hasta: string): Blob {
+// completo: planilla para completar a mano — salen todos los días y columnas, con lo cargado.
+export function generarSignosVitalesPdf(
+  planillas: PlanillaResidente[],
+  desde: string,
+  hasta: string,
+  opciones?: { completo?: boolean },
+): Blob {
+  const completo = opciones?.completo ?? false;
   const doc = new jsPDF({ unit: "pt", format: "a4" });
   const dias = diasDelPeriodo(desde, hasta);
   const periodo = desde === hasta ? fechaCorta(desde) : `del ${fechaCorta(desde)} al ${fechaCorta(hasta)}`;
@@ -46,6 +53,7 @@ export function generarSignosVitalesPdf(planillas: PlanillaResidente[], desde: s
           r?.observaciones ?? "",
         ];
       });
+      if (completo) return { p, tabla: { columnas, filas } };
       const limpio = limpiarSeccionesPdf([{ columnas, filas }]);
       const tabla = limpio.secciones[0];
       diasSinControl += filas.length - (tabla?.filas.length ?? 0);
@@ -56,7 +64,7 @@ export function generarSignosVitalesPdf(planillas: PlanillaResidente[], desde: s
     .filter((x) => x.tabla);
 
   if (diasSinControl > 0) omitidos.unshift(`${diasSinControl} día${diasSinControl === 1 ? "" : "s"} sin control`);
-  avisarOmitidos(omitidos, "PDF");
+  if (!completo) avisarOmitidos(omitidos, "PDF");
 
   if (conDatos.length === 0) {
     doc.setFontSize(12);
@@ -75,8 +83,8 @@ export function generarSignosVitalesPdf(planillas: PlanillaResidente[], desde: s
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.text(`NOMBRE Y APELLIDO: ${p.nombre}`, 40, 80);
-    if (p.edad !== null) doc.text(`EDAD: ${p.edad}`, ancho - 140, 80);
-    if (p.obraSocial) doc.text(`OBRA SOCIAL: ${p.obraSocial}`, 40, 98);
+    if (p.edad !== null || completo) doc.text(`EDAD: ${p.edad ?? "______"}`, ancho - 140, 80);
+    if (p.obraSocial || completo) doc.text(`OBRA SOCIAL: ${p.obraSocial ?? "______________________________"}`, 40, 98);
     doc.text(`${p.sede} · ${periodo}`, ancho - 40, 98, { align: "right" });
 
     const conObservaciones = tabla!.columnas.includes("OBSERVACIONES");
@@ -85,11 +93,23 @@ export function generarSignosVitalesPdf(planillas: PlanillaResidente[], desde: s
       head: [tabla!.columnas],
       body: tabla!.filas,
       theme: "grid",
-      styles: { fontSize: 9, cellPadding: 3.5, halign: "center", lineColor: [0, 0, 0], lineWidth: 0.5, textColor: 0 },
+      // Para completar a mano: renglones más altos, que entre el mes en una hoja.
+      styles: {
+        fontSize: 9,
+        cellPadding: completo ? 2.5 : 3.5,
+        minCellHeight: completo ? 20 : undefined,
+        valign: "middle",
+        halign: "center",
+        lineColor: [0, 0, 0],
+        lineWidth: 0.5,
+        textColor: 0,
+      },
       headStyles: { fillColor: [255, 255, 255], textColor: 0, fontStyle: "bold" },
       columnStyles: {
         0: { cellWidth: 64 },
-        ...(conObservaciones ? { [tabla!.columnas.length - 1]: { halign: "left", cellWidth: 150 } } : {}),
+        ...(conObservaciones
+          ? { [tabla!.columnas.length - 1]: { halign: "left", cellWidth: completo ? 170 : 150 } }
+          : {}),
       },
       margin: { left: 40, right: 40 },
     });
