@@ -27,6 +27,7 @@ type RecetaConNombres = RecetaMedicamento & {
 
 type Props = {
   sucursalId: string;
+  nombreSede: string;
   residentes: ResidenteConMeds[];
   recetas: RecetaConNombres[];
   puedeEliminar: boolean;
@@ -174,10 +175,12 @@ function FormularioNuevaReceta({
 
 function FilaReceta({
   sucursalId,
+  nombreSede,
   receta,
   puedeEliminar,
 }: {
   sucursalId: string;
+  nombreSede: string;
   receta: RecetaConNombres;
   puedeEliminar: boolean;
 }) {
@@ -203,9 +206,10 @@ function FilaReceta({
     if (!telefono) return;
     const texto = mensajePedidoReceta({
       contacto: receta.contacto_familiar,
-      residente: receta.residente_nombre,
+      sede: nombreSede,
+      // "Pérez, Ana" -> "Ana Pérez"
+      residente: receta.residente_nombre.split(", ").reverse().join(" "),
       medicamento: receta.medicamento_nombre,
-      obraSocial: receta.obra_social,
     });
     window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(texto)}`, "_blank", "noopener");
     if (receta.estado === "pendiente_pedir") {
@@ -285,7 +289,7 @@ function FilaReceta({
   );
 }
 
-export function RecetarioClient({ sucursalId, residentes, recetas, puedeEliminar }: Props) {
+export function RecetarioClient({ sucursalId, nombreSede, residentes, recetas, puedeEliminar }: Props) {
   return (
     <div className="space-y-4">
       <FormularioNuevaReceta
@@ -308,7 +312,13 @@ export function RecetarioClient({ sucursalId, residentes, recetas, puedeEliminar
           </thead>
           <tbody>
             {recetas.map((r) => (
-              <FilaReceta key={r.id} sucursalId={sucursalId} receta={r} puedeEliminar={puedeEliminar} />
+              <FilaReceta
+                key={r.id}
+                sucursalId={sucursalId}
+                nombreSede={nombreSede}
+                receta={r}
+                puedeEliminar={puedeEliminar}
+              />
             ))}
             {recetas.length === 0 && (
               <tr>
