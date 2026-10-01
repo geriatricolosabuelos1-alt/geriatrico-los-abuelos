@@ -20,6 +20,7 @@ import {
   type RegistrarIngresoEstado,
 } from "@/app/residentes/[id]/legajo/medicacion-actions";
 import { BotonDarDosis } from "@/components/BotonDarDosis";
+import { CamposFrecuencia } from "@/components/CamposFrecuencia";
 import type { AvisoPolifarmacia } from "@/app/residentes/[id]/legajo/medicacion-actions";
 import type {
   AlertaMedicacion,
@@ -37,6 +38,7 @@ type Props = {
   catalogo: CatalogoMedicamento[];
   sucursalId?: string;
   polifarmacia?: AvisoPolifarmacia;
+  registroHref?: string;
 };
 
 const ESTADO_INICIAL: MedicamentoEstado = { error: null };
@@ -518,35 +520,11 @@ function FormularioPrescripcion({
           ))}
         </datalist>
       </div>
-      <div>
-        <label className={ETIQUETA_MIN}>Frecuencia</label>
-        <input
-          name="frecuencia"
-          defaultValue={medicamento.frecuencia ?? ""}
-          placeholder="Cada 8 horas"
-          className="w-32 rounded-lg border border-edge bg-panel px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
-        />
-      </div>
-      <div>
-        <label className={ETIQUETA_MIN}>Horario</label>
-        <input
-          name="horario"
-          defaultValue={medicamento.horario ?? ""}
-          placeholder="08:00, 16:00, 00:00"
-          className="w-40 rounded-lg border border-edge bg-panel px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
-        />
-      </div>
-      <div>
-        <label className={ETIQUETA_MIN} title="Horas exactas para la planilla MAR de Medicina">
-          Horarios MAR (separados por coma)
-        </label>
-        <input
-          name="horarios"
-          defaultValue={medicamento.horarios?.join(", ") ?? ""}
-          placeholder="08:00, 12:00, 20:00"
-          className="w-40 rounded-lg border border-edge bg-panel px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
-        />
-      </div>
+      <CamposFrecuencia
+        inicial={medicamento}
+        etiqueta={ETIQUETA_MIN}
+        campo="rounded-lg border border-edge bg-panel px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
+      />
       <div>
         <label className={ETIQUETA_MIN}>Vía</label>
         <input
@@ -577,22 +555,6 @@ function FormularioPrescripcion({
           min={0}
           step="0.5"
           defaultValue={medicamento.dosis_maxima_diaria ?? ""}
-          className="w-28 rounded-lg border border-edge bg-panel px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
-        />
-      </div>
-      <div>
-        <label
-          className={ETIQUETA_MIN}
-          title="Unidades consumidas por día, usado para calcular días de stock restante"
-        >
-          Dosis diaria (unid./día)
-        </label>
-        <input
-          type="number"
-          name="dosis_diaria"
-          min={0}
-          step="0.5"
-          defaultValue={medicamento.dosis_diaria ?? ""}
           className="w-28 rounded-lg border border-edge bg-panel px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
         />
       </div>
@@ -786,10 +748,12 @@ export function MedicacionResidente({
   catalogo,
   sucursalId,
   polifarmacia,
+  registroHref,
 }: Props) {
   const accionConId = agregarMedicamento.bind(null, residenteId);
   const [estado, formAction, enviando] = useActionState(accionConId, ESTADO_INICIAL);
   const [nombreNuevo, setNombreNuevo] = useState("");
+  const [formulariosEnviados, setFormulariosEnviados] = useState(0);
   const [mostrarInactivos, setMostrarInactivos] = useState(false);
 
   const nombresConocidos = [...new Set(catalogo.map((c) => c.nombre))];
@@ -808,6 +772,14 @@ export function MedicacionResidente({
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-display text-base font-semibold text-ink">Medicación</h2>
         <div className="flex flex-wrap items-center gap-2">
+          {registroHref && (
+            <a
+              href={registroHref}
+              className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
+            >
+              Tomas por período (PDF)
+            </a>
+          )}
           {polifarmacia && polifarmacia.esPolifarmacia && (
             <span
               className="rounded-full border border-amber-300 bg-amber-100 px-2 py-0.5 text-[0.65rem] font-semibold text-amber-800"
@@ -886,6 +858,7 @@ export function MedicacionResidente({
         action={async (formData) => {
           await formAction(formData);
           setNombreNuevo("");
+          setFormulariosEnviados((n) => n + 1);
         }}
         className="flex flex-wrap items-end gap-3"
       >
@@ -920,32 +893,11 @@ export function MedicacionResidente({
             ))}
           </datalist>
         </div>
-        <div>
-          <label className={ETIQUETA_MIN}>Frecuencia</label>
-          <input
-            name="frecuencia"
-            className="w-32 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none"
-            placeholder="Cada 8 horas"
-          />
-        </div>
-        <div>
-          <label className={ETIQUETA_MIN}>Horario</label>
-          <input
-            name="horario"
-            className="w-40 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none"
-            placeholder="08:00, 16:00, 00:00"
-          />
-        </div>
-        <div>
-          <label className={ETIQUETA_MIN} title="Horas exactas para la planilla MAR de Medicina">
-            Horarios MAR (separados por coma)
-          </label>
-          <input
-            name="horarios"
-            className="w-40 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none"
-            placeholder="08:00, 12:00, 20:00"
-          />
-        </div>
+        <CamposFrecuencia
+          key={formulariosEnviados}
+          etiqueta={ETIQUETA_MIN}
+          campo="rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none"
+        />
         <div>
           <label className={ETIQUETA_MIN}>Vía</label>
           <input
@@ -972,16 +924,6 @@ export function MedicacionResidente({
           <input
             type="number"
             name="dosis_maxima_diaria"
-            min={0}
-            step="0.5"
-            className="w-28 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none"
-          />
-        </div>
-        <div>
-          <label className={ETIQUETA_MIN}>Dosis diaria (unid./día)</label>
-          <input
-            type="number"
-            name="dosis_diaria"
             min={0}
             step="0.5"
             className="w-28 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none"

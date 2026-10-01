@@ -7,6 +7,7 @@ import {
   listarAlertasActivas,
   listarCatalogoMedicamentos,
   listarMedicamentos,
+  actualizarTomasAutomaticas,
 } from "@/app/residentes/[id]/legajo/medicacion-actions";
 import type { FichaAdministrativa, FichaMedica, Perfil, Residente } from "@/lib/types";
 
@@ -62,6 +63,7 @@ export default async function LegajoResidentePage({
     .eq("residente_id", id)
     .maybeSingle<FichaMedica>();
 
+  await actualizarTomasAutomaticas();
   const [medicamentos, alertasMedicacion, catalogoMedicamentos, { data: insumosAportados }] = await Promise.all([
     listarMedicamentos(id),
     listarAlertasActivas(id),

@@ -212,6 +212,7 @@ export interface DosisAdministrada {
   horario_previsto: string | null;
   administrado_por: string | null;
   fecha: string;
+  automatica?: boolean;
 }
 
 export type EstadoToma = "pendiente" | EstadoDosis;
@@ -223,6 +224,7 @@ export interface TomaMar {
   estado: EstadoToma;
   dosisId: string | null;
   motivo: string | null;
+  automatica?: boolean;
 }
 
 export type EstadoReceta = "pendiente_pedir" | "pedida" | "recibida";

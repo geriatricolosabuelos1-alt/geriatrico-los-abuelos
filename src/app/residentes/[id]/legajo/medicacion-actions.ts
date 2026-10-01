@@ -34,6 +34,20 @@ function fechaHoyISO(): string {
   return hoyArgentina();
 }
 
+// Registra como administradas las tomas continuas cuyo horario ya pasó (descuenta stock).
+// También corre sola cada 15 minutos en la base; acá se fuerza para ver todo al día.
+export async function actualizarTomasAutomaticas(): Promise<void> {
+  const supabase = await createClient();
+  await supabase.rpc("registrar_tomas_automaticas");
+}
+
+// Cantidad que descuenta cada toma: dosis diaria repartida en los horarios, o 1.
+function cantidadPorToma(dosisDiaria: number | null, horarios: string[] | null): number {
+  const n = horarios?.length ?? 0;
+  if (!dosisDiaria || dosisDiaria <= 0 || n === 0) return 1;
+  return Math.round((dosisDiaria / n) * 100) / 100;
+}
+
 export async function obtenerTomasDeHoy(residenteId: string): Promise<TomaMar[]> {
   const supabase = await createClient();
 
@@ -53,13 +67,20 @@ export async function obtenerTomasDeHoy(residenteId: string): Promise<TomaMar[]>
   const hoy = fechaHoyISO();
   const { data: registradas } = await supabase
     .from("dosis_administradas")
-    .select("id, medicamento_id, horario_previsto, estado, motivo")
+    .select("id, medicamento_id, horario_previsto, estado, motivo, automatica")
     .eq("residente_id", residenteId)
     .gte("fecha", inicioDiaArgentina(hoy))
     .lte("fecha", finDiaArgentina(hoy))
     .not("horario_previsto", "is", null)
     .returns<
-      { id: string; medicamento_id: string; horario_previsto: string; estado: EstadoDosis; motivo: string | null }[]
+      {
+        id: string;
+        medicamento_id: string;
+        horario_previsto: string;
+        estado: EstadoDosis;
+        motivo: string | null;
+        automatica: boolean;
+      }[]
     >();
 
   const porClave = new Map(
@@ -78,6 +99,7 @@ export async function obtenerTomasDeHoy(residenteId: string): Promise<TomaMar[]>
         estado,
         dosisId: existente?.id ?? null,
         motivo: existente?.motivo ?? null,
+        automatica: existente?.automatica ?? false,
       });
     }
   }
@@ -115,7 +137,7 @@ export async function listarDosisAdministradas(medicamentoId: string): Promise<D
   const { data } = await supabase
     .from("dosis_administradas")
     .select(
-      "id, medicamento_id, residente_id, cantidad, estado, motivo, horario_previsto, administrado_por, fecha",
+      "id, medicamento_id, residente_id, cantidad, estado, motivo, horario_previsto, administrado_por, fecha, automatica",
     )
     .eq("medicamento_id", medicamentoId)
     .order("fecha", { ascending: false })
@@ -279,14 +301,40 @@ async function guardarEnCatalogo(
 
 export type MedicamentoEstado = { error: string | null; guardado?: boolean };
 
+// "8", "8:00" o "08:00" quedan como "08:00"; ordenados y sin repetir.
+function normalizarHora(h: string): string {
+  const m = h.match(/^(\d{1,2})(?:[:.](\d{2}))?\s*(?:hs?)?$/i);
+  if (!m || Number(m[1]) > 23 || Number(m[2] ?? 0) > 59) return h;
+  return `${m[1].padStart(2, "0")}:${m[2] ?? "00"}`;
+}
+
 function parsearHorarios(valor: FormDataEntryValue | null): string[] | null {
   const texto = String(valor ?? "").trim();
   if (!texto) return null;
-  const horarios = texto
-    .split(",")
-    .map((h) => h.trim())
-    .filter(Boolean);
+  const horarios = [
+    ...new Set(
+      texto
+        .split(/[,;]/)
+        .map((h) => normalizarHora(h.trim()))
+        .filter(Boolean),
+    ),
+  ].sort();
   return horarios.length > 0 ? horarios : null;
+}
+
+// Desde cuándo se registran solas las tomas (null = no se registran).
+function tomasAutoDesde(
+  tipo: string,
+  horarios: string[] | null,
+  anterior?: { tipo_administracion: string; horarios: string[] | null; tomas_auto_desde: string | null } | null,
+): string | null {
+  if (tipo !== "continua" || !horarios || horarios.length === 0) return null;
+  const mismos =
+    anterior &&
+    anterior.tipo_administracion === "continua" &&
+    anterior.tomas_auto_desde &&
+    (anterior.horarios ?? []).join(",") === horarios.join(",");
+  return mismos ? anterior.tomas_auto_desde : new Date().toISOString();
 }
 
 export async function agregarMedicamento(
@@ -329,6 +377,7 @@ export async function agregarMedicamento(
     instrucciones,
     cantidad_stock,
     sin_seguimiento_stock,
+    tomas_auto_desde: tomasAutoDesde(tipo_administracion, horarios),
   });
 
   if (error) {
@@ -367,6 +416,12 @@ export async function actualizarPrescripcion(
     return { error: "Falta el nombre del medicamento." };
   }
 
+  const { data: anterior } = await supabase
+    .from("medicamentos_residente")
+    .select("tipo_administracion, horarios, tomas_auto_desde")
+    .eq("id", medicamentoId)
+    .maybeSingle<{ tipo_administracion: string; horarios: string[] | null; tomas_auto_desde: string | null }>();
+
   const { data: actualizados, error } = await supabase
     .from("medicamentos_residente")
     .update({
@@ -381,6 +436,7 @@ export async function actualizarPrescripcion(
       horarios,
       instrucciones,
       sin_seguimiento_stock,
+      tomas_auto_desde: tomasAutoDesde(tipo_administracion, horarios, anterior),
       updated_at: new Date().toISOString(),
     })
     .eq("id", medicamentoId)
@@ -437,7 +493,11 @@ export async function reactivarMedicamento(
   medicamentoId: string,
 ): Promise<void> {
   const supabase = await createClient();
-  await supabase.from("medicamentos_residente").update({ activo: true }).eq("id", medicamentoId);
+  // Las tomas automáticas arrancan de nuevo desde ahora (no se cobran los días de baja).
+  await supabase
+    .from("medicamentos_residente")
+    .update({ activo: true, tomas_auto_desde: new Date().toISOString() })
+    .eq("id", medicamentoId);
   revalidatePath(`/residentes/${residenteId}/legajo`);
 }
 
@@ -649,9 +709,10 @@ export async function registrarEstadoToma(
       .eq("id", dosisIdExistente)
       .single<{ cantidad: number; estado: EstadoDosis }>();
 
+    // Si enfermería corrige una toma automática, queda registrada a su nombre.
     const { error } = await supabase
       .from("dosis_administradas")
-      .update({ estado, motivo })
+      .update({ estado, motivo, automatica: false, administrado_por: user?.id ?? null })
       .eq("id", dosisIdExistente);
 
     if (error) return { error: error.message };
@@ -662,10 +723,16 @@ export async function registrarEstadoToma(
       await ajustarStockPorDelta(supabase, medicamentoId, residenteId, reversion - aplicacion);
     }
   } else {
+    const { data: medicamento } = await supabase
+      .from("medicamentos_residente")
+      .select("dosis_diaria, horarios")
+      .eq("id", medicamentoId)
+      .maybeSingle<{ dosis_diaria: number | null; horarios: string[] | null }>();
+
     const { error } = await supabase.from("dosis_administradas").insert({
       medicamento_id: medicamentoId,
       residente_id: residenteId,
-      cantidad: 1,
+      cantidad: cantidadPorToma(medicamento?.dosis_diaria ?? null, medicamento?.horarios ?? null),
       estado,
       motivo,
       horario_previsto: horario,
