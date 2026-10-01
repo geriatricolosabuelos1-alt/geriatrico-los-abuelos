@@ -35,8 +35,28 @@ function finDeAnio(): string {
   return `${new Date().getFullYear()}-12-31`;
 }
 
+const NOMBRE_DIA = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+// Próximos días del ciclo rotativo para que se vea cómo queda (Trabaja / Franco).
+function vistaPreviaCiclo(primerDia: string, trabajo: number, franco: number): { dia: string; trabaja: boolean }[] {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(primerDia) || trabajo < 1 || franco < 1) return [];
+  const ciclo = trabajo + franco;
+  return Array.from({ length: Math.min(ciclo * 3, 16) }, (_, i) => {
+    const d = new Date(primerDia + "T12:00:00Z");
+    d.setUTCDate(d.getUTCDate() + i);
+    return {
+      dia: `${NOMBRE_DIA[d.getUTCDay()]} ${String(d.getUTCDate()).padStart(2, "0")}/${String(d.getUTCMonth() + 1).padStart(2, "0")}`,
+      trabaja: i % ciclo < trabajo,
+    };
+  });
+}
+
 export function FormularioTurnoPrograma({ sucursalId, empleados }: Props) {
   const [abierto, setAbierto] = useState(false);
+  const [modo, setModo] = useState<"semanal" | "rotativo">("rotativo");
+  const [primerDia, setPrimerDia] = useState(hoy());
+  const [diasTrabajo, setDiasTrabajo] = useState(2);
+  const [diasFranco, setDiasFranco] = useState(2);
   const [estado, formAction, enviando] = useActionState(crearTurnoPrograma, ESTADO_INICIAL);
   const enviandoAnterior = useRef(enviando);
 
@@ -54,7 +74,7 @@ export function FormularioTurnoPrograma({ sucursalId, empleados }: Props) {
         onClick={() => setAbierto(true)}
         className="rounded-lg border border-edge px-3 py-2 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
       >
-        + Nuevo turno semanal
+        + Nuevo turno (2×2 o semanal)
       </button>
     );
   }
@@ -65,9 +85,10 @@ export function FormularioTurnoPrograma({ sucursalId, empleados }: Props) {
       className="grid grid-cols-1 gap-4 rounded-2xl border border-edge bg-card p-5 sm:grid-cols-2"
     >
       <input type="hidden" name="sucursal_id" value={sucursalId} />
+      <input type="hidden" name="modo" value={modo} />
 
       <div className="col-span-full flex items-center justify-between">
-        <h2 className="font-display text-sm font-semibold text-ink">Nuevo turno semanal</h2>
+        <h2 className="font-display text-sm font-semibold text-ink">Nuevo turno</h2>
         <button
           type="button"
           onClick={() => setAbierto(false)}
@@ -89,7 +110,84 @@ export function FormularioTurnoPrograma({ sucursalId, empleados }: Props) {
         </select>
       </div>
 
-      <div className="sm:col-span-2">
+      <div className="col-span-full flex flex-wrap gap-1">
+        {(
+          [
+            ["rotativo", "Rotativo (2 días de trabajo × 2 de franco)"],
+            ["semanal", "Días fijos de la semana"],
+          ] as const
+        ).map(([valor, texto]) => (
+          <button
+            key={valor}
+            type="button"
+            onClick={() => setModo(valor)}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold ${
+              modo === valor ? "bg-brass text-btn-ink" : "border border-edge text-ink-soft hover:text-ink"
+            }`}
+          >
+            {texto}
+          </button>
+        ))}
+      </div>
+
+      {modo === "rotativo" && (
+        <>
+          <div>
+            <label className={ETIQUETA}>Primer día de trabajo</label>
+            <input
+              type="date"
+              name="vigente_desde"
+              value={primerDia}
+              onChange={(e) => setPrimerDia(e.target.value)}
+              required
+              className={CAMPO}
+            />
+            <p className="mt-1 text-[0.65rem] text-ink-soft">
+              El primero de los días que trabaja; desde ahí se repite el ciclo solo.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={ETIQUETA}>Días de trabajo</label>
+              <input
+                type="number"
+                name="dias_trabajo"
+                min={1}
+                max={14}
+                value={diasTrabajo}
+                onChange={(e) => setDiasTrabajo(Number(e.target.value))}
+                className={CAMPO}
+              />
+            </div>
+            <div>
+              <label className={ETIQUETA}>Días de franco</label>
+              <input
+                type="number"
+                name="dias_franco"
+                min={1}
+                max={14}
+                value={diasFranco}
+                onChange={(e) => setDiasFranco(Number(e.target.value))}
+                className={CAMPO}
+              />
+            </div>
+          </div>
+          <div className="col-span-full flex flex-wrap gap-1">
+            {vistaPreviaCiclo(primerDia, diasTrabajo, diasFranco).map((d) => (
+              <span
+                key={d.dia}
+                className={`rounded-md px-2 py-1 text-[0.7rem] ${
+                  d.trabaja ? "bg-brass-soft font-semibold text-ink" : "border border-dashed border-edge text-ink-soft"
+                }`}
+              >
+                {d.dia} · {d.trabaja ? "Trabaja" : "Franco"}
+              </span>
+            ))}
+          </div>
+        </>
+      )}
+
+      <div className={`sm:col-span-2 ${modo === "semanal" ? "" : "hidden"}`}>
         <label className={ETIQUETA}>Días de la semana</label>
         <div className="flex flex-wrap gap-3">
           {DIAS.map((d) => (
@@ -111,10 +209,12 @@ export function FormularioTurnoPrograma({ sucursalId, empleados }: Props) {
         <input type="time" name="hora_fin" required className={CAMPO} />
       </div>
 
-      <div>
-        <label className={ETIQUETA}>Vigente desde</label>
-        <input type="date" name="vigente_desde" defaultValue={hoy()} required className={CAMPO} />
-      </div>
+      {modo === "semanal" && (
+        <div>
+          <label className={ETIQUETA}>Vigente desde</label>
+          <input type="date" name="vigente_desde" defaultValue={hoy()} required className={CAMPO} />
+        </div>
+      )}
 
       <div>
         <label className={ETIQUETA}>Vigente hasta</label>
@@ -132,7 +232,7 @@ export function FormularioTurnoPrograma({ sucursalId, empleados }: Props) {
           disabled={enviando}
           className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
         >
-          {enviando ? "Guardando..." : "Guardar turno semanal"}
+          {enviando ? "Guardando..." : modo === "rotativo" ? "Guardar turno rotativo" : "Guardar turno semanal"}
         </button>
       </div>
     </form>

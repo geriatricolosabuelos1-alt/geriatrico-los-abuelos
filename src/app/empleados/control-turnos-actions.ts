@@ -47,9 +47,10 @@ export async function controlDeTurnos(sucursalId: string, fecha: string): Promis
       .returns<{ id: string; nombre_completo: string }[]>(),
     supabase
       .from("turnos_programados")
-      .select("id, empleado_id, sucursal_id, dia_semana, hora_inicio, hora_fin, vigente_desde, vigente_hasta, activo, created_at")
+      .select("id, empleado_id, sucursal_id, dia_semana, hora_inicio, hora_fin, vigente_desde, vigente_hasta, activo, created_at, dias_trabajo, dias_franco")
       .eq("sucursal_id", sucursalId)
-      .eq("dia_semana", diaSemana)
+      // Los rotativos (2×2) no dependen del día de la semana: turnosEfectivos decide.
+      .or(`dia_semana.eq.${diaSemana},dias_trabajo.not.is.null`)
       .eq("activo", true)
       .lte("vigente_desde", fecha)
       .gte("vigente_hasta", fecha)

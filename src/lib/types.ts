@@ -602,6 +602,9 @@ export interface TurnoProgramado {
   vigente_hasta: string;
   activo: boolean;
   created_at: string;
+  // Turno rotativo (ej. 2×2): trabaja dias_trabajo seguidos y descansa dias_franco, desde vigente_desde.
+  dias_trabajo?: number | null;
+  dias_franco?: number | null;
 }
 
 export type TipoCambioTurno = "cambio" | "guardia";

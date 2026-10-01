@@ -25,3 +25,8 @@ create policy "turnos_programados_all_autenticados" on public.turnos_programados
   to authenticated
   using (true)
   with check (true);
+
+-- Turnos rotativos (ej. 2×2): trabaja dias_trabajo seguidos y descansa dias_franco, a partir de
+-- vigente_desde (primer día de trabajo). Si son nulos, es un turno semanal por dia_semana.
+alter table public.turnos_programados add column if not exists dias_trabajo smallint check (dias_trabajo between 1 and 14);
+alter table public.turnos_programados add column if not exists dias_franco smallint check (dias_franco between 1 and 14);
