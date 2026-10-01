@@ -5,53 +5,6 @@ import { listarDocumentosHabilitacion, listarItemsHabilitacion } from "@/app/suc
 import { listarContratosSalud, listarRetirosResiduos } from "@/app/sucursales/[id]/legales/sanitario-actions";
 import { listarLibretas } from "@/app/sucursales/[id]/legales/libretas-actions";
 import { mesAnioArgentina } from "@/lib/fechas";
-import { enviarMailConAdjunto } from "@/lib/mail";
-
-const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-export type EnviarCarpetaPorMailEstado = { error: string | null; ok: boolean };
-
-// El PDF se arma en el navegador (necesita convertir imágenes a canvas); acá solo lo mandamos por mail.
-export async function enviarCarpetaPorMail(
-  destinatario: string,
-  nombreSede: string,
-  nombreArchivo: string,
-  pdfBase64: string,
-): Promise<EnviarCarpetaPorMailEstado> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: "Tenés que iniciar sesión.", ok: false };
-  }
-
-  const destino = destinatario.trim();
-  if (!EMAIL_VALIDO.test(destino)) {
-    return { error: "Ingresá un mail válido.", ok: false };
-  }
-  if (!pdfBase64) {
-    return { error: "No se generó el PDF.", ok: false };
-  }
-
-  try {
-    const contenido = Buffer.from(pdfBase64, "base64");
-    // Un PDF corrupto/incompleto pesa unos pocos bytes; evita mandar un adjunto vacío.
-    if (contenido.length < 1000) {
-      return { error: "El PDF salió vacío. Probá generarlo de nuevo.", ok: false };
-    }
-    await enviarMailConAdjunto({
-      destinatario: destino,
-      asunto: `Documentación legal — ${nombreSede}`,
-      texto: `Adjuntamos la documentación legal de ${nombreSede}.`,
-      adjunto: { nombreArchivo, contenido, contentType: "application/pdf" },
-    });
-    return { error: null, ok: true };
-  } catch (err) {
-    const mensaje = err instanceof Error ? err.message : "Error desconocido al enviar el mail.";
-    return { error: mensaje, ok: false };
-  }
-}
 
 export type ItemCarpeta = {
   categoria: string;

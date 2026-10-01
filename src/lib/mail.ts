@@ -21,18 +21,25 @@ export async function enviarMailConAdjunto(datos: {
   texto: string;
   adjunto: AdjuntoMail;
 }): Promise<void> {
+  await enviarMailConAdjuntos({ ...datos, adjuntos: [datos.adjunto] });
+}
+
+export async function enviarMailConAdjuntos(datos: {
+  destinatario: string;
+  asunto: string;
+  texto: string;
+  adjuntos: AdjuntoMail[];
+}): Promise<void> {
   const remitente = process.env.GMAIL_USER;
   await transporte().sendMail({
     from: `"Los Abuelos" <${remitente}>`,
     to: datos.destinatario,
     subject: datos.asunto,
     text: datos.texto,
-    attachments: [
-      {
-        filename: datos.adjunto.nombreArchivo,
-        content: datos.adjunto.contenido,
-        contentType: datos.adjunto.contentType,
-      },
-    ],
+    attachments: datos.adjuntos.map((a) => ({
+      filename: a.nombreArchivo,
+      content: a.contenido,
+      contentType: a.contentType,
+    })),
   });
 }

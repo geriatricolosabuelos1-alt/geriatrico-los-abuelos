@@ -1,7 +1,5 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from "pdf-lib";
-import { crearPdfTablas, type SeccionPdf } from "@/lib/pdf";
 import type { DatosCarpeta, ItemCarpeta } from "@/app/sucursales/[id]/legales/carpeta-actions";
-import { diasHastaFecha } from "@/lib/fechas";
 
 // A4 en puntos
 const ANCHO = 595.28;
@@ -17,81 +15,6 @@ function limpiar(texto: string): string {
 
 function fecha(valor: string | null): string {
   return valor ? new Date(valor + "T00:00:00").toLocaleDateString("es-AR") : "—";
-}
-
-function estadoVencimiento(valor: string | null): string {
-  if (!valor) return "—";
-  const dias = diasHastaFecha(valor);
-  if (dias < 0) return "VENCIDO";
-  if (dias <= 30) return `Vence en ${dias} días`;
-  return "Vigente";
-}
-
-// Resumen (índice) de la carpeta, armado con jsPDF.
-function crearResumen(datos: DatosCarpeta, conArchivo: Set<ItemCarpeta>): ArrayBuffer {
-  const presentados = datos.items.filter((i) => i.presentado).length;
-  const secciones: SeccionPdf[] = [
-    {
-      titulo: `1. Habilitación (${presentados} de ${datos.items.length} ítems presentados)`,
-      columnas: ["Categoría", "Requisito", "Estado", "Presentado", "Documento"],
-      filas: datos.items.map((i) => [
-        i.categoria,
-        i.descripcion,
-        i.presentado ? "Presentado" : "PENDIENTE",
-        fecha(i.fechaPresentacion),
-        i.nombreArchivo
-          ? conArchivo.has(i)
-            ? `Adjunto más adelante (${i.nombreArchivo})`
-            : `En otro formato, no incluido (${i.nombreArchivo})`
-          : (i.notas ?? "—"),
-      ]),
-    },
-    {
-      titulo: "2. Contratos con proveedores de salud",
-      columnas: ["Proveedor", "Tipo", "Contacto", "Vencimiento", "Estado"],
-      filas: datos.contratos.length
-        ? datos.contratos.map((c) => [c.proveedor, c.tipo, c.contacto ?? "—", fecha(c.vencimiento), estadoVencimiento(c.vencimiento)])
-        : [["Sin contratos registrados", "", "", "", ""]],
-    },
-    {
-      titulo: "3. Libretas sanitarias del personal",
-      columnas: ["Empleado", "DNI", "N° libreta", "Emitida por", "Vigente hasta", "Estado"],
-      filas: datos.libretas.length
-        ? datos.libretas.map((l) => [
-            l.empleado,
-            l.dni ?? "—",
-            l.numero ?? "—",
-            l.emisor ?? "—",
-            fecha(l.vence),
-            l.vence ? estadoVencimiento(l.vence) : "SIN LIBRETA",
-          ])
-        : [["Sin empleados activos", "", "", "", "", ""]],
-    },
-    {
-      titulo: "4. Retiro de residuos patogénicos",
-      columnas: ["Fecha", "Empresa transportista", "Kg", "N° manifiesto"],
-      filas: datos.residuos.length
-        ? datos.residuos.map((r) => [fecha(r.fecha), r.empresa, r.kg ?? "—", r.manifiesto ?? "—"])
-        : [["Sin retiros registrados", "", "", ""]],
-    },
-    {
-      titulo: `5. Servicio de emergencias ${datos.anio}`,
-      columnas: ["Prestador", "Llamadas", "Satisfactorias", "No satisfactorias"],
-      filas: datos.emergencias.length
-        ? datos.emergencias.map((e) => [e.prestador, e.total, e.si, e.no])
-        : [[`Sin llamadas registradas en ${datos.anio}`, "", "", ""]],
-    },
-  ];
-
-  const doc = crearPdfTablas(
-    {
-      titulo: `Documentación legal · Residencia ${datos.sede}`,
-      subtitulo: datos.direccion ?? undefined,
-      fecha: `Emitido el ${new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}`,
-    },
-    secciones,
-  );
-  return doc.output("arraybuffer");
 }
 
 // Corta un texto en líneas que entren en el ancho indicado.
@@ -169,27 +92,19 @@ function tipoArchivo(nombre: string | null, contentType: string): "pdf" | "image
   return "otro";
 }
 
-function esTipoIncluible(nombre: string | null): boolean {
-  const ext = (nombre ?? "").split(".").pop()?.toLowerCase() ?? "";
-  return ["pdf", "jpg", "jpeg", "png", "webp", "gif", "bmp"].includes(ext);
-}
-
-// Arma un único PDF: resumen + separador y documento de cada ítem de habilitación, todo foliado.
+// Arma un único PDF con los archivos cargados en cada ítem de habilitación (sin resumen):
+// una hoja con el título del ítem y a continuación su documento, todo foliado.
 export async function generarCarpetaLegalesPdf(
   datos: DatosCarpeta,
   onProgreso?: (texto: string) => void,
 ): Promise<Blob> {
-  const conArchivo = new Set(datos.items.filter((i) => i.urlArchivo && esTipoIncluible(i.nombreArchivo)));
+  const conDocumento = datos.items.filter((i) => i.urlArchivo);
+  if (conDocumento.length === 0) throw new Error("sin archivos");
 
   const pdf = await PDFDocument.create();
   const fuente = await pdf.embedFont(StandardFonts.Helvetica);
   const negrita = await pdf.embedFont(StandardFonts.HelveticaBold);
 
-  onProgreso?.("Armando el resumen...");
-  const resumen = await PDFDocument.load(crearResumen(datos, conArchivo));
-  for (const p of await pdf.copyPages(resumen, resumen.getPageIndices())) pdf.addPage(p);
-
-  const conDocumento = datos.items.filter((i) => i.urlArchivo);
   let n = 0;
   for (const item of conDocumento) {
     n++;

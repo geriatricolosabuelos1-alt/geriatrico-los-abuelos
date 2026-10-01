@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { HabilitacionChecklist } from "@/components/HabilitacionChecklist";
 import { BotonCarpetaLegales } from "@/components/BotonCarpetaLegales";
+import { BotonMailDocumentos } from "@/components/BotonMailDocumentos";
 import { listarDocumentosHabilitacion, listarItemsHabilitacion } from "./actions";
 import type { Perfil } from "@/lib/types";
 
@@ -60,7 +61,15 @@ export default async function HabilitacionSucursalPage({
               actualizado subiendo el archivo o registrando la fecha de presentación.
             </p>
           </div>
-          <BotonCarpetaLegales sucursalId={id} />
+          <div className="flex flex-wrap items-start gap-2">
+            <BotonMailDocumentos
+              sucursalId={id}
+              documentoId={null}
+              etiqueta="Enviar todo por mail"
+              destacado
+            />
+            <BotonCarpetaLegales sucursalId={id} />
+          </div>
         </div>
 
         <HabilitacionChecklist sucursalId={id} items={items} documentos={documentos} />
