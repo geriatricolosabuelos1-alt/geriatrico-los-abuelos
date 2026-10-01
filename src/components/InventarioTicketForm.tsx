@@ -9,9 +9,20 @@ import {
 } from "@/app/sucursales/[id]/inventario/actions";
 import type { CategoriaInsumo } from "@/lib/types";
 
+type InsumoCatalogo = { id: string; nombre: string; categoria: CategoriaInsumo };
+
 type Props = {
   sucursalId: string;
+  catalogo: InsumoCatalogo[];
 };
+
+function normalizar(texto: string): string {
+  return texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
 
 type ItemRevision = ItemLeido & { incluido: boolean; clave: string; precio: number | null };
 
@@ -51,7 +62,7 @@ async function comprimirImagen(archivo: File): Promise<File> {
   return new File([blob], archivo.name.replace(/\.\w+$/, ".jpg"), { type: "image/jpeg" });
 }
 
-export function InventarioTicketForm({ sucursalId }: Props) {
+export function InventarioTicketForm({ sucursalId, catalogo }: Props) {
   const accionConSucursal = registrarMovimientosPorTicket.bind(null, sucursalId);
   const [estado, formAction, guardando] = useActionState(accionConSucursal, ESTADO_INICIAL);
 
@@ -86,7 +97,7 @@ export function InventarioTicketForm({ sucursalId }: Props) {
         resultado.items.map((i, idx) => ({
           ...i,
           incluido: true,
-          clave: i.insumo_id ?? `nuevo-${idx}`,
+          clave: `fila-${idx}`,
           precio: i.precioUnitario,
         })),
       );
@@ -99,6 +110,17 @@ export function InventarioTicketForm({ sucursalId }: Props) {
 
   function actualizarItem(clave: string, cambios: Partial<ItemRevision>) {
     setItems((prev) => prev.map((i) => (i.clave === clave ? { ...i, ...cambios } : i)));
+  }
+
+  // Si el nombre escrito coincide con un insumo del catálogo se usa ese; si no, se crea uno nuevo.
+  function cambiarNombre(clave: string, nombre: string) {
+    const existente = catalogo.find((c) => normalizar(c.nombre) === normalizar(nombre));
+    actualizarItem(
+      clave,
+      existente
+        ? { nombre: existente.nombre, insumo_id: existente.id, categoriaSugerida: existente.categoria }
+        : { nombre, insumo_id: null },
+    );
   }
 
   const itemsParaEnviar = JSON.stringify(
@@ -164,6 +186,17 @@ export function InventarioTicketForm({ sucursalId }: Props) {
                 {total !== null && ` · Total del ticket: $${total}`}
               </p>
               {items.length > 0 && (
+                <p className="mb-2 text-[0.7rem] text-ink-soft">
+                  Si leyó mal un producto, cambiale el nombre: al escribir te sugiere los insumos que ya
+                  existen. Si no está en la lista, se crea como nuevo.
+                </p>
+              )}
+              <datalist id="catalogo-insumos-ticket">
+                {catalogo.map((c) => (
+                  <option key={c.id} value={c.nombre} />
+                ))}
+              </datalist>
+              {items.length > 0 && (
                 <div className="space-y-2">
                   {items.map((i) => (
                     <div
@@ -177,23 +210,28 @@ export function InventarioTicketForm({ sucursalId }: Props) {
                         className="h-4 w-4 accent-[var(--color-brass)]"
                       />
 
+                      <div className="flex min-w-[200px] flex-1 flex-col gap-0.5">
+                        <input
+                          type="text"
+                          list="catalogo-insumos-ticket"
+                          value={i.nombre}
+                          disabled={!i.incluido}
+                          onChange={(e) => cambiarNombre(i.clave, e.target.value)}
+                          placeholder="Elegí un insumo existente o escribí uno nuevo"
+                          className="w-full rounded-md border border-edge bg-card px-2 py-1 text-xs text-ink disabled:opacity-40"
+                        />
+                        {normalizar(i.textoTicket) !== normalizar(i.nombre) && (
+                          <span className="text-[0.65rem] text-ink-soft">
+                            En el ticket: {i.textoTicket}
+                          </span>
+                        )}
+                      </div>
                       {i.insumo_id ? (
-                        <span
-                          className={
-                            i.incluido ? "flex-1 text-ink" : "flex-1 text-ink-soft line-through"
-                          }
-                        >
-                          {i.nombre}
+                        <span className="rounded-full border border-edge px-2 py-0.5 text-[0.65rem] font-medium text-ink-soft">
+                          existente
                         </span>
                       ) : (
                         <>
-                          <input
-                            type="text"
-                            value={i.nombre}
-                            disabled={!i.incluido}
-                            onChange={(e) => actualizarItem(i.clave, { nombre: e.target.value })}
-                            className="flex-1 rounded-md border border-edge bg-card px-2 py-1 text-xs text-ink disabled:opacity-40"
-                          />
                           <select
                             value={i.categoriaSugerida}
                             disabled={!i.incluido}
