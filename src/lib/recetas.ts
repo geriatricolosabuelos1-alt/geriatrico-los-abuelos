@@ -71,9 +71,26 @@ export function mensajePedidoReceta(datos: {
   contacto: string | null;
   sede: string;
   residente: string;
+  dni: string | null;
+  obraSocial: string | null;
+  numeroAfiliado: string | null;
   medicamento: string | null;
+  detalleMedicamento: string | null;
 }): string {
   const saludo = datos.contacto ? `Hola ${datos.contacto.trim()}` : "Hola";
   const que = datos.medicamento ? `la receta de ${datos.medicamento}` : "una receta";
-  return `${saludo}, te escribimos de la residencia ${nombreSede(datos.sede)}. Necesitamos que nos hagas llegar ${que} para ${datos.residente}. Muchas gracias`;
+  const datosReceta: [string, string | null][] = [
+    ["Paciente", datos.residente],
+    ["DNI", datos.dni],
+    ["Obra social", datos.obraSocial],
+    ["N° de afiliado", datos.numeroAfiliado],
+    ["Medicamento", datos.medicamento],
+    ["Detalle", datos.detalleMedicamento],
+  ];
+  return [
+    `${saludo}, te escribimos de la residencia ${nombreSede(datos.sede)}. Necesitamos que nos hagas llegar ${que} para ${datos.residente}. Muchas gracias`,
+    "",
+    "*Datos para la receta:*",
+    ...datosReceta.filter(([, valor]) => valor && valor.trim()).map(([etiqueta, valor]) => `• ${etiqueta}: ${valor!.trim()}`),
+  ].join("\n");
 }

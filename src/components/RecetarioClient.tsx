@@ -23,6 +23,10 @@ type RecetaConNombres = RecetaMedicamento & {
   medicamento_nombre: string | null;
   contacto_familiar: string | null;
   telefono_familiar: string | null;
+  residente_dni: string | null;
+  numero_afiliado: string | null;
+  obra_social_ficha: string | null;
+  medicamento_detalle: string | null;
 };
 
 type Props = {
@@ -209,7 +213,11 @@ function FilaReceta({
       sede: nombreSede,
       // "Pérez, Ana" -> "Ana Pérez"
       residente: receta.residente_nombre.split(", ").reverse().join(" "),
+      dni: receta.residente_dni,
+      obraSocial: receta.obra_social ?? receta.obra_social_ficha,
+      numeroAfiliado: receta.numero_afiliado,
       medicamento: receta.medicamento_nombre,
+      detalleMedicamento: receta.medicamento_detalle,
     });
     window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(texto)}`, "_blank", "noopener");
     if (receta.estado === "pendiente_pedir") {
