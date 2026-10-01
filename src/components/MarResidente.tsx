@@ -101,7 +101,9 @@ function CirculoToma({
         type="button"
         onClick={manejarClick}
         disabled={enviando}
-        title={`${ETIQUETA_ESTADO[toma.estado]}${toma.motivo ? ` · ${toma.motivo}` : ""}`}
+        title={`${ETIQUETA_ESTADO[toma.estado]}${toma.automatica ? " (automática: tocá si no se dio)" : ""}${
+          toma.motivo ? ` · ${toma.motivo}` : ""
+        }`}
         className={`h-6 w-6 rounded-full border-2 disabled:opacity-50 ${ESTILO_CIRCULO[toma.estado]}`}
         aria-label={`${toma.horario}: ${ETIQUETA_ESTADO[toma.estado]}`}
       />

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BotonExportarPdf } from "@/components/BotonExportarPdf";
+import { actualizarTomasAutomaticas } from "@/app/residentes/[id]/legajo/medicacion-actions";
 import type { EstadoDosis, MedicamentoResidente } from "@/lib/types";
 
 type Params = { id: string };
@@ -33,6 +34,7 @@ type DosisConDatos = {
   horario_previsto: string | null;
   administrado_por: string | null;
   fecha: string;
+  automatica: boolean;
   residentes: { nombre: string; apellido: string; dni: string | null; sucursal_id: string };
   medicamentos_residente: { nombre: string; dosis: string | null } | null;
 };
@@ -68,6 +70,7 @@ export default async function RegistroMedicacionPage({
   const hasta = esFecha(busqueda.hasta) ? busqueda.hasta : hoy;
 
   const supabase = await createClient();
+  await actualizarTomasAutomaticas();
 
   const [{ data: sucursal }, { data: listaResidentes }] = await Promise.all([
     supabase.from("sucursales").select("id, nombre").eq("id", id).single<{ id: string; nombre: string }>(),
@@ -113,7 +116,7 @@ export default async function RegistroMedicacionPage({
     const consultaDosis = supabase
       .from("dosis_administradas")
       .select(
-        "id, cantidad, estado, motivo, horario_previsto, administrado_por, fecha, residentes!inner(nombre, apellido, dni, sucursal_id), medicamentos_residente(nombre, dosis)",
+        "id, cantidad, estado, motivo, horario_previsto, administrado_por, fecha, automatica, residentes!inner(nombre, apellido, dni, sucursal_id), medicamentos_residente(nombre, dosis)",
       )
       .eq("residentes.sucursal_id", id)
       .gte("fecha", `${desde}T00:00:00-03:00`)
@@ -340,7 +343,8 @@ export default async function RegistroMedicacionPage({
                     {ETIQUETA_ESTADO[d.estado]}
                   </td>
                   <td className={`${CELDA} text-ink-soft print:text-neutral-700`}>
-                    {(d.administrado_por && nombrePorPerfil.get(d.administrado_por)) ?? "—"}
+                    {(d.administrado_por && nombrePorPerfil.get(d.administrado_por)) ??
+                      (d.automatica ? "Automática (horario)" : "—")}
                   </td>
                   <td className={`${CELDA} text-ink-soft print:text-neutral-700`}>{d.motivo ?? "—"}</td>
                 </tr>

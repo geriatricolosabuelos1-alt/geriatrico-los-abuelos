@@ -106,6 +106,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
     { data: documentos },
     { data: emergencias },
     entradasClinicas,
+    { data: tomas },
   ] = await Promise.all([
     supabase.from("residentes").select("*").eq("id", residenteId).single<Residente>(),
     supabase.from("ficha_administrativa").select("*").eq("residente_id", residenteId).maybeSingle<FichaAdministrativa>(),
@@ -182,7 +183,48 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
       .order("fecha")
       .returns<Emergencia[]>(),
     generarLibroFoliado(residenteId),
+    supabase
+      .from("dosis_administradas")
+      .select("fecha, estado, cantidad, motivo, horario_previsto, medicamentos_residente(nombre)")
+      .eq("residente_id", residenteId)
+      .order("fecha")
+      .limit(20000)
+      .returns<
+        {
+          fecha: string;
+          estado: string;
+          cantidad: number;
+          motivo: string | null;
+          horario_previsto: string | null;
+          medicamentos_residente: { nombre: string } | null;
+        }[]
+      >(),
   ]);
+
+  // Tomas resumidas por mes y medicamento (el detalle está en "Tomas por período (PDF)").
+  const resumenTomas = new Map<
+    string,
+    { mes: string; medicamento: string; dadas: number; unidades: number; noDadas: number; motivos: string[] }
+  >();
+  for (const t of tomas ?? []) {
+    const mes = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Mendoza" })
+      .format(new Date(t.fecha))
+      .slice(0, 7);
+    const medicamento = t.medicamentos_residente?.nombre ?? "—";
+    const clave = `${mes}|${medicamento}`;
+    const r = resumenTomas.get(clave) ?? { mes, medicamento, dadas: 0, unidades: 0, noDadas: 0, motivos: [] };
+    if (t.estado === "administrado") {
+      r.dadas += 1;
+      r.unidades += Number(t.cantidad) || 0;
+    } else {
+      r.noDadas += 1;
+      if (t.motivo) {
+        const dia = new Date(t.fecha).toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" });
+        r.motivos.push(`${dia}${t.horario_previsto ? ` ${t.horario_previsto}` : ""}: ${t.motivo}`);
+      }
+    }
+    resumenTomas.set(clave, r);
+  }
 
   if (!residente) return null;
 
@@ -261,6 +303,20 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
             [m.frecuencia, m.horarios?.length ? m.horarios.join(", ") : m.horario].filter(Boolean).join(" · "),
             m.via_administracion,
             m.instrucciones,
+          ])}
+        />
+      </Seccion>
+
+      <Seccion titulo="4.1 Tomas de medicación (resumen mensual)">
+        <Tabla
+          columnas={["Mes", "Medicamento", "Tomas dadas", "Unidades", "No dadas", "Motivos"]}
+          filas={[...resumenTomas.values()].map((r) => [
+            `${r.mes.slice(5, 7)}/${r.mes.slice(0, 4)}`,
+            r.medicamento,
+            r.dadas,
+            Math.round(r.unidades * 100) / 100,
+            r.noDadas,
+            r.motivos.join("; "),
           ])}
         />
       </Seccion>
