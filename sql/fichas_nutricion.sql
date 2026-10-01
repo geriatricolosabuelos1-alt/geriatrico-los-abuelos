@@ -79,3 +79,8 @@ create policy fichas_nutricion_escribir on public.fichas_nutricion
 drop trigger if exists zz_auditar on public.fichas_nutricion;
 create trigger zz_auditar after insert or update or delete on public.fichas_nutricion
   for each row execute function public.fn_auditar();
+
+-- La ficha es mensual: una por residente y por mes (AAAA-MM).
+alter table public.fichas_nutricion add column if not exists periodo text not null
+  default to_char((now() at time zone 'America/Argentina/Mendoza'), 'YYYY-MM') check (periodo ~ '^\d{4}-\d{2}$');
+create unique index if not exists fichas_nutricion_residente_periodo on public.fichas_nutricion(residente_id, periodo);

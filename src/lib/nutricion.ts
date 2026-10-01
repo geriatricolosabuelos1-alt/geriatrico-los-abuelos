@@ -39,6 +39,7 @@ export const OPCIONES_NUTRICION = {
 export type FichaNutricion = {
   id: string;
   residente_id: string;
+  periodo: string;
   fecha: string;
   diagnostico_principal: string | null;
   patologias_asociadas: string | null;
@@ -65,7 +66,7 @@ export type FichaNutricion = {
 };
 
 export const COLUMNAS_FICHA_NUTRICION =
-  "id, residente_id, fecha, diagnostico_principal, patologias_asociadas, consistencia, segun_patologia, patologia_otra, via_administracion, asistencia, ingesta, protesis_dental, disfagia, suplementacion, suplementacion_cantidad, peso_actual, peso_ideal, perdida_peso, perdida_peso_pct, talla, imc, evaluacion_nutricional, evaluacion_funcional, observaciones, created_at";
+  "id, residente_id, periodo, fecha, diagnostico_principal, patologias_asociadas, consistencia, segun_patologia, patologia_otra, via_administracion, asistencia, ingesta, protesis_dental, disfagia, suplementacion, suplementacion_cantidad, peso_actual, peso_ideal, perdida_peso, perdida_peso_pct, talla, imc, evaluacion_nutricional, evaluacion_funcional, observaciones, created_at";
 
 // Encabezado del formulario impreso.
 export const ENCABEZADO_NUTRICIONISTA = {
@@ -73,3 +74,16 @@ export const ENCABEZADO_NUTRICIONISTA = {
   cargo: "NUTRICIONISTA",
   matricula: "MAT. 1115",
 };
+
+// "2026-10" → "Octubre 2026".
+export function nombrePeriodo(periodo: string): string {
+  const [anio, mes] = periodo.split("-").map(Number);
+  const nombre = new Date(anio, mes - 1, 1).toLocaleDateString("es-AR", { month: "long" });
+  return `${nombre.charAt(0).toUpperCase()}${nombre.slice(1)} ${anio}`;
+}
+
+export function sumarMeses(periodo: string, meses: number): string {
+  const [anio, mes] = periodo.split("-").map(Number);
+  const d = new Date(Date.UTC(anio, mes - 1 + meses, 1));
+  return d.toISOString().slice(0, 7);
+}

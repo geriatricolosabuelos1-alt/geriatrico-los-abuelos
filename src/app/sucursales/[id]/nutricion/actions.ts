@@ -22,7 +22,7 @@ export async function listarFichasNutricion(residenteIds: string[]): Promise<Fic
     .from("fichas_nutricion")
     .select(COLUMNAS_FICHA_NUTRICION)
     .in("residente_id", residenteIds)
-    .order("fecha", { ascending: false })
+    .order("periodo", { ascending: false })
     .order("created_at", { ascending: false })
     .returns<FichaNutricion[]>();
   return data ?? [];
@@ -44,7 +44,7 @@ function siNo(formData: FormData, campo: string): boolean | null {
   return valor === "si" ? true : valor === "no" ? false : null;
 }
 
-// Guarda la ficha: sin ficha_id crea una nueva (queda el historial); con ficha_id corrige esa.
+// Guarda la ficha del mes: una por residente y por mes (si ya existe la de ese mes, se corrige).
 export async function guardarFichaNutricion(
   sucursalId: string,
   _estado: Estado,
@@ -52,9 +52,10 @@ export async function guardarFichaNutricion(
 ): Promise<Estado> {
   const supabase = await createClient();
   const residenteId = String(formData.get("residente_id") ?? "");
-  const fichaId = String(formData.get("ficha_id") ?? "");
+  const periodo = String(formData.get("periodo") ?? "");
   const fecha = String(formData.get("fecha") ?? "");
-  if (!residenteId || !/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return { error: "Falta la fecha." };
+  if (!residenteId || !/^\d{4}-\d{2}$/.test(periodo)) return { error: "Falta el mes de la ficha." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return { error: "Falta la fecha." };
 
   const talla = numero(formData, "talla");
   const pesoActual = numero(formData, "peso_actual");
@@ -70,6 +71,7 @@ export async function guardarFichaNutricion(
 
   const datos = {
     residente_id: residenteId,
+    periodo,
     fecha,
     diagnostico_principal: texto(formData, "diagnostico_principal"),
     patologias_asociadas: texto(formData, "patologias_asociadas"),
@@ -96,9 +98,10 @@ export async function guardarFichaNutricion(
     updated_at: new Date().toISOString(),
   };
 
-  const { data, error } = fichaId
-    ? await supabase.from("fichas_nutricion").update(datos).eq("id", fichaId).select("id")
-    : await supabase.from("fichas_nutricion").insert(datos).select("id");
+  const { data, error } = await supabase
+    .from("fichas_nutricion")
+    .upsert(datos, { onConflict: "residente_id,periodo" })
+    .select("id");
 
   if (error) return { error: error.message };
   if (!data || data.length === 0) return { error: "No tenés permiso para cargar la ficha nutricional." };
