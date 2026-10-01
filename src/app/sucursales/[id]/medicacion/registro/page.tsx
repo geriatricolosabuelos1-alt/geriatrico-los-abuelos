@@ -89,7 +89,6 @@ export default async function RegistroMedicacionPage({
 
   let residentes: ResidenteConMeds[] = [];
   let dosis: DosisConDatos[] = [];
-  const nombrePorPerfil = new Map<string, string>();
 
   if (tipo === "indicada") {
     const consulta = supabase
@@ -132,16 +131,6 @@ export default async function RegistroMedicacionPage({
           `${b.residentes.apellido} ${b.residentes.nombre}`,
         ) || a.fecha.localeCompare(b.fecha),
     );
-
-    const idsPerfiles = [...new Set(dosis.map((d) => d.administrado_por).filter((x): x is string => !!x))];
-    if (idsPerfiles.length > 0) {
-      const { data: perfiles } = await supabase
-        .from("perfiles")
-        .select("id, nombre_completo")
-        .in("id", idsPerfiles)
-        .returns<{ id: string; nombre_completo: string }[]>();
-      for (const p of perfiles ?? []) nombrePorPerfil.set(p.id, p.nombre_completo);
-    }
   }
 
   const totalAdministradas = dosis.filter((d) => d.estado === "administrado").length;
@@ -304,7 +293,6 @@ export default async function RegistroMedicacionPage({
                 <th className={CELDA}>Medicamento</th>
                 <th className={CELDA}>Cant.</th>
                 <th className={CELDA}>Estado</th>
-                <th className={CELDA}>Registró</th>
                 <th className={CELDA}>Motivo</th>
               </tr>
             </thead>
@@ -341,15 +329,12 @@ export default async function RegistroMedicacionPage({
                   >
                     {ETIQUETA_ESTADO[d.estado]}
                   </td>
-                  <td className={`${CELDA} text-ink-soft print:text-neutral-700`}>
-                    {(d.administrado_por && nombrePorPerfil.get(d.administrado_por)) ?? "—"}
-                  </td>
                   <td className={`${CELDA} text-ink-soft print:text-neutral-700`}>{d.motivo ?? "—"}</td>
                 </tr>
               ))}
               {dosis.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-6 text-center text-ink-soft">
+                  <td colSpan={6} className="py-6 text-center text-ink-soft">
                     No hay dosis registradas en ese período.
                   </td>
                 </tr>
