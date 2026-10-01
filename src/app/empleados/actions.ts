@@ -65,7 +65,6 @@ export async function actualizarEmpleado(
   const turno = String(formData.get("turno") ?? "") || null;
   const sueldoRaw = String(formData.get("sueldo") ?? "");
   const sueldo = sueldoRaw ? Number(sueldoRaw) : null;
-  const activo = formData.get("activo") === "on";
 
   if (!sucursal_id || !nombre_completo) {
     return { error: "Sucursal y nombre son obligatorios." };
@@ -83,7 +82,6 @@ export async function actualizarEmpleado(
       forma_pago,
       turno,
       sueldo,
-      activo,
     })
     .eq("id", id);
 
@@ -99,4 +97,43 @@ export async function eliminarEmpleado(id: string): Promise<void> {
   const supabase = await createClient();
   await supabase.from("empleados").delete().eq("id", id);
   revalidatePath("/empleados");
+}
+
+export async function darDeBajaEmpleado(
+  id: string,
+  datos: { fecha: string; motivo: string; detalle: string },
+): Promise<{ error: string | null }> {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(datos.fecha)) return { error: "Indicá la fecha de baja." };
+  if (!datos.motivo.trim()) return { error: "Elegí el motivo de la baja." };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("empleados")
+    .update({
+      activo: false,
+      fecha_baja: datos.fecha,
+      motivo_baja: datos.motivo.trim(),
+      detalle_baja: datos.detalle.trim() || null,
+    })
+    .eq("id", id)
+    .select("id");
+  if (error) return { error: error.message };
+  if (!data || data.length === 0) return { error: "No tenés permiso para dar de baja a este empleado." };
+
+  revalidatePath("/empleados");
+  return { error: null };
+}
+
+export async function reincorporarEmpleado(id: string): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("empleados")
+    .update({ activo: true, fecha_baja: null, motivo_baja: null, detalle_baja: null })
+    .eq("id", id)
+    .select("id");
+  if (error) return { error: error.message };
+  if (!data || data.length === 0) return { error: "No tenés permiso para reincorporar a este empleado." };
+
+  revalidatePath("/empleados");
+  return { error: null };
 }

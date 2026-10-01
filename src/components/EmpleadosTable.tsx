@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { actualizarEmpleado, eliminarEmpleado } from "@/app/empleados/actions";
 import { MarcacionEmpleado } from "@/components/MarcacionEmpleado";
+import { BotonBajaEmpleado, BotonReincorporarEmpleado } from "@/components/EgresoEmpleado";
 import type { Sucursal } from "@/lib/types";
 
 type FilaEmpleado = {
@@ -19,12 +20,16 @@ type FilaEmpleado = {
   activo: boolean;
   sucursal_id: string;
   sucursales: { nombre: string } | null;
+  fecha_baja: string | null;
+  motivo_baja: string | null;
+  detalle_baja: string | null;
 };
 
 type Props = {
   empleados: FilaEmpleado[];
   sucursales: Sucursal[];
   puedeBorrar: boolean;
+  vistaBajas: boolean;
 };
 
 const ETIQUETA_CONTRATACION: Record<string, string> = {
@@ -70,86 +75,98 @@ function FilaEdicion({
     }
   }
 
+  const form = `editar-${empleado.id}`;
+  const celda = "px-2 py-2 align-top";
+
   return (
     <tr className="border-b border-edge bg-panel-deep last:border-0">
-      <td colSpan={11} className="p-3">
-        <form onSubmit={manejarSubmit} className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-          <select name="sucursal_id" defaultValue={empleado.sucursal_id} required className={CAMPO}>
-            {sucursales.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.nombre}
-              </option>
-            ))}
-          </select>
-          <input
-            name="nombre_completo"
-            defaultValue={empleado.nombre_completo}
-            required
-            className={CAMPO}
-            placeholder="Nombre"
-          />
-          <input name="dni" defaultValue={empleado.dni ?? ""} className={CAMPO} placeholder="DNI" />
-          <input
-            type="date"
-            name="fecha_nacimiento"
-            defaultValue={empleado.fecha_nacimiento ?? ""}
-            className={CAMPO}
-          />
-          <input
-            name="direccion"
-            defaultValue={empleado.direccion ?? ""}
-            className={CAMPO}
-            placeholder="Domicilio"
-          />
-          <select name="tipo_contratacion" defaultValue={empleado.tipo_contratacion ?? ""} className={CAMPO}>
-            <option value="">Sin definir</option>
-            <option value="monotributo">Monotributo</option>
-            <option value="relacion_dependencia">Relación de dependencia</option>
-          </select>
-          <select name="forma_pago" defaultValue={empleado.forma_pago ?? ""} className={CAMPO}>
-            <option value="">Sin definir</option>
-            <option value="efectivo">Efectivo</option>
-            <option value="transferencia">Transferencia</option>
-          </select>
-          <input name="turno" defaultValue={empleado.turno ?? ""} className={CAMPO} placeholder="Turno" />
-          <input
-            type="number"
-            step="0.01"
-            name="sueldo"
-            defaultValue={empleado.sueldo ?? ""}
-            className={CAMPO}
-            placeholder="Sueldo"
-          />
-          <label className="flex items-center gap-1.5 text-xs text-ink-soft">
-            <input type="checkbox" name="activo" defaultChecked={empleado.activo} className="h-3.5 w-3.5" />
-            Activo
-          </label>
-
-          {error && <p className="col-span-full text-xs text-red-700">{error}</p>}
-
-          <div className="col-span-full flex gap-2">
-            <button
-              type="submit"
-              disabled={enviando}
-              className="rounded-md bg-brass px-3 py-1.5 text-xs font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
-            >
-              {enviando ? "Guardando..." : "Guardar"}
-            </button>
-            <button
-              type="button"
-              onClick={onCancelar}
-              className="rounded-md border border-edge px-3 py-1.5 text-xs text-ink-soft hover:text-ink"
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
+      <td className={celda}>
+        <form id={form} onSubmit={manejarSubmit} />
+        <input
+          form={form}
+          name="nombre_completo"
+          defaultValue={empleado.nombre_completo}
+          required
+          className={`${CAMPO} min-w-[140px]`}
+          placeholder="Nombre"
+        />
+        {error && <p className="mt-1 text-xs text-red-700">{error}</p>}
+      </td>
+      <td className={celda}>
+        <select form={form} name="sucursal_id" defaultValue={empleado.sucursal_id} required className={CAMPO}>
+          {sucursales.map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.nombre}
+            </option>
+          ))}
+        </select>
+      </td>
+      <td className={celda}>
+        <input form={form} name="dni" defaultValue={empleado.dni ?? ""} className={`${CAMPO} min-w-[90px]`} placeholder="DNI" />
+      </td>
+      <td className={celda}>
+        <input form={form} type="date" name="fecha_nacimiento" defaultValue={empleado.fecha_nacimiento ?? ""} className={CAMPO} />
+      </td>
+      <td className={celda}>
+        <input
+          form={form}
+          name="direccion"
+          defaultValue={empleado.direccion ?? ""}
+          className={`${CAMPO} min-w-[140px]`}
+          placeholder="Domicilio"
+        />
+      </td>
+      <td className={celda}>
+        <select form={form} name="tipo_contratacion" defaultValue={empleado.tipo_contratacion ?? ""} className={CAMPO}>
+          <option value="">Sin definir</option>
+          <option value="monotributo">Monotributo</option>
+          <option value="relacion_dependencia">Relación de dependencia</option>
+        </select>
+      </td>
+      <td className={celda}>
+        <select form={form} name="forma_pago" defaultValue={empleado.forma_pago ?? ""} className={CAMPO}>
+          <option value="">Sin definir</option>
+          <option value="efectivo">Efectivo</option>
+          <option value="transferencia">Transferencia</option>
+        </select>
+      </td>
+      <td className={celda}>
+        <input form={form} name="turno" defaultValue={empleado.turno ?? ""} className={`${CAMPO} min-w-[70px]`} placeholder="Turno" />
+      </td>
+      <td className={celda}>
+        <input
+          form={form}
+          type="number"
+          step="0.01"
+          name="sueldo"
+          defaultValue={empleado.sueldo ?? ""}
+          className={`${CAMPO} min-w-[90px]`}
+          placeholder="Sueldo"
+        />
+      </td>
+      <td className={celda} />
+      <td className={`${celda} text-right whitespace-nowrap`}>
+        <button
+          type="submit"
+          form={form}
+          disabled={enviando}
+          className="mr-2 rounded-md bg-brass px-3 py-1.5 text-xs font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
+        >
+          {enviando ? "Guardando..." : "Guardar"}
+        </button>
+        <button
+          type="button"
+          onClick={onCancelar}
+          className="rounded-md border border-edge px-3 py-1.5 text-xs text-ink-soft hover:text-ink"
+        >
+          Cancelar
+        </button>
       </td>
     </tr>
   );
 }
 
-export function EmpleadosTable({ empleados, sucursales, puedeBorrar }: Props) {
+export function EmpleadosTable({ empleados, sucursales, puedeBorrar, vistaBajas }: Props) {
   const [busqueda, setBusqueda] = useState("");
   const [sucursalFiltro, setSucursalFiltro] = useState("");
   const [editandoId, setEditandoId] = useState<string | null>(null);
@@ -208,7 +225,7 @@ export function EmpleadosTable({ empleados, sucursales, puedeBorrar }: Props) {
               <th className="px-4 py-3">Pago</th>
               <th className="px-4 py-3">Turno</th>
               <th className="px-4 py-3">Sueldo</th>
-              <th className="px-4 py-3">Marcación</th>
+              <th className="px-4 py-3">{vistaBajas ? "Baja" : "Marcación"}</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
@@ -250,7 +267,17 @@ export function EmpleadosTable({ empleados, sucursales, puedeBorrar }: Props) {
                     {e.sueldo != null ? `$${e.sueldo}` : "—"}
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <MarcacionEmpleado empleadoId={e.id} empleadoNombre={e.nombre_completo} />
+                    {vistaBajas ? (
+                      <div className="text-xs">
+                        <p className="font-semibold text-ink">
+                          {e.fecha_baja ? new Date(e.fecha_baja + "T00:00:00").toLocaleDateString("es-AR") : "—"}
+                        </p>
+                        {e.motivo_baja && <p className="text-ink">{e.motivo_baja}</p>}
+                        {e.detalle_baja && <p className="whitespace-normal text-ink-soft">{e.detalle_baja}</p>}
+                      </div>
+                    ) : (
+                      <MarcacionEmpleado empleadoId={e.id} empleadoNombre={e.nombre_completo} />
+                    )}
                   </td>
                   <td className="px-4 py-3 text-right whitespace-nowrap">
                     <Link
@@ -259,12 +286,19 @@ export function EmpleadosTable({ empleados, sucursales, puedeBorrar }: Props) {
                     >
                       Recibo
                     </Link>
-                    <button
-                      onClick={() => setEditandoId(e.id)}
-                      className="mr-3 text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
-                    >
-                      Editar
-                    </button>
+                    {vistaBajas ? (
+                      <BotonReincorporarEmpleado empleadoId={e.id} nombre={e.nombre_completo} />
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => setEditandoId(e.id)}
+                          className="mr-3 text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                        >
+                          Editar
+                        </button>
+                        <BotonBajaEmpleado empleadoId={e.id} nombre={e.nombre_completo} />
+                      </>
+                    )}
                     {puedeBorrar && (
                       <button
                         onClick={() => manejarBorrar(e.id, e.nombre_completo)}
@@ -280,7 +314,7 @@ export function EmpleadosTable({ empleados, sucursales, puedeBorrar }: Props) {
             {filtrados.length === 0 && (
               <tr>
                 <td colSpan={11} className="px-4 py-6 text-center text-ink-soft">
-                  Ningún empleado coincide con el filtro.
+                  {vistaBajas ? "No hay empleados dados de baja." : "Ningún empleado coincide con el filtro."}
                 </td>
               </tr>
             )}
