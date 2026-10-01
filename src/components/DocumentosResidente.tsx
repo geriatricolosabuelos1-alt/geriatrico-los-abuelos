@@ -21,6 +21,7 @@ const TIPOS: { valor: TipoDocumentoResidente; etiqueta: string }[] = [
   { valor: "cud", etiqueta: "Certificado Único de Discapacidad (CUD)" },
   { valor: "nota_derivacion", etiqueta: "Nota de derivación" },
   { valor: "contrato", etiqueta: "Contrato firmado" },
+  { valor: "indicacion_emergencia", etiqueta: "Recetas / indicaciones de emergencias" },
 ];
 
 export function DocumentosResidente({ residenteId, rolActual }: Props) {

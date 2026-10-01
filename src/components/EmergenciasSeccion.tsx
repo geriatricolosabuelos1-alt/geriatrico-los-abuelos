@@ -1,11 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { BotonEliminarEmergencia, FormularioEmergencia } from "@/components/EmergenciasClient";
+import { AdjuntarIndicacion, BotonEliminarEmergencia, FormularioEmergencia } from "@/components/EmergenciasClient";
+import { VisorDocumento } from "@/components/VisorDocumento";
 import type { Emergencia } from "@/lib/types";
 import { mesAnioArgentina } from "@/lib/fechas";
 
 type EmergenciaConResidente = Emergencia & {
   residentes: { nombre: string; apellido: string } | null;
+  documentos_residente: { id: string; nombre_archivo: string | null; url: string }[];
 };
 
 function formatearFechaCorta(fecha: string): string {
@@ -48,7 +50,7 @@ export async function EmergenciasSeccion({
       .returns<{ proveedor: string; tipo: string }[]>(),
     supabase
       .from("emergencias")
-      .select("*, residentes(nombre, apellido)")
+      .select("*, residentes(nombre, apellido), documentos_residente(id, nombre_archivo, url)")
       .eq("sucursal_id", id)
       .gte("fecha", `${anio}-01-01`)
       .lte("fecha", `${anio}-12-31`)
@@ -58,6 +60,17 @@ export async function EmergenciasSeccion({
   ]);
 
   const lista = emergencias ?? [];
+
+  // Links para ver las recetas / indicaciones adjuntas (vencen a los 10 minutos).
+  const urlIndicacion = new Map<string, string>();
+  await Promise.all(
+    lista.flatMap((e) =>
+      (e.documentos_residente ?? []).map(async (d) => {
+        const { data } = await supabase.storage.from("residentes-documentos").createSignedUrl(d.url, 600);
+        if (data?.signedUrl) urlIndicacion.set(d.id, data.signedUrl);
+      }),
+    ),
+  );
   const prestadoresContrato = [
     ...(contratos ?? []).filter((c) => c.tipo === "area_protegida").map((c) => c.proveedor),
     ...(contratos ?? []).filter((c) => c.tipo !== "area_protegida").map((c) => c.proveedor),
@@ -185,6 +198,7 @@ export async function EmergenciasSeccion({
               <th className={CELDA}>Traslado</th>
               <th className={CELDA}>Satisfactoria</th>
               <th className={CELDA}>Observaciones</th>
+              <th className={CELDA}>Indicación</th>
               <th className={CELDA}></th>
             </tr>
           </thead>
@@ -214,6 +228,25 @@ export async function EmergenciasSeccion({
                   {textoSatisfactoria(e.satisfactoria)}
                 </td>
                 <td className={`${CELDA} text-ink-soft`}>{e.observaciones ?? "—"}</td>
+                <td className={`${CELDA} whitespace-nowrap`}>
+                  <div className="flex flex-col items-start gap-1">
+                    {(e.documentos_residente ?? []).map((d) => {
+                      const url = urlIndicacion.get(d.id);
+                      return url ? (
+                        <VisorDocumento
+                          key={d.id}
+                          url={url}
+                          nombre={d.nombre_archivo ?? d.url}
+                          titulo={`Indicación · ${e.residentes ? `${e.residentes.apellido}, ${e.residentes.nombre}` : ""} · ${formatearFechaCorta(e.fecha)}`}
+                        />
+                      ) : null;
+                    })}
+                    {!imprimible && e.residente_id && <AdjuntarIndicacion sucursalId={id} emergenciaId={e.id} />}
+                    {(e.documentos_residente ?? []).length === 0 && (imprimible || !e.residente_id) && (
+                      <span className="text-ink-soft">—</span>
+                    )}
+                  </div>
+                </td>
                 <td className={`${CELDA} text-right`}>
                   {!imprimible && <BotonEliminarEmergencia sucursalId={id} id={e.id} />}
                 </td>
@@ -221,7 +254,7 @@ export async function EmergenciasSeccion({
             ))}
             {lista.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-3 py-6 text-center text-ink-soft">
+                <td colSpan={11} className="px-3 py-6 text-center text-ink-soft">
                   Sin llamadas registradas en {anio}.
                 </td>
               </tr>
