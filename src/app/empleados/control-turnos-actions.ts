@@ -1,7 +1,8 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import type { DiaSemana } from "@/lib/types";
+import { turnosEfectivos } from "@/lib/turnos";
+import type { CambioTurno, DiaSemana, TurnoProgramado } from "@/lib/types";
 
 export type EstadoTurno = "cubierto" | "incompleto" | "ausente";
 
@@ -37,7 +38,7 @@ export async function controlDeTurnos(sucursalId: string, fecha: string): Promis
   const supabase = await createClient();
   const diaSemana = calcularDiaSemana(fecha);
 
-  const [{ data: empleados }, { data: turnos }] = await Promise.all([
+  const [{ data: empleados }, { data: turnosSemana }, { data: cambios }] = await Promise.all([
     supabase
       .from("empleados")
       .select("id, nombre_completo")
@@ -46,14 +47,27 @@ export async function controlDeTurnos(sucursalId: string, fecha: string): Promis
       .returns<{ id: string; nombre_completo: string }[]>(),
     supabase
       .from("turnos_programados")
-      .select("id, empleado_id, hora_inicio, hora_fin")
+      .select("id, empleado_id, sucursal_id, dia_semana, hora_inicio, hora_fin, vigente_desde, vigente_hasta, activo, created_at")
       .eq("sucursal_id", sucursalId)
       .eq("dia_semana", diaSemana)
       .eq("activo", true)
       .lte("vigente_desde", fecha)
       .gte("vigente_hasta", fecha)
-      .returns<{ id: string; empleado_id: string; hora_inicio: string; hora_fin: string }[]>(),
+      .returns<TurnoProgramado[]>(),
+    supabase
+      .from("cambios_turno")
+      .select("*")
+      .eq("sucursal_id", sucursalId)
+      .eq("fecha", fecha)
+      .returns<CambioTurno[]>(),
   ]);
+
+  // Turnos del día ya con los cambios de turno y guardias aplicados.
+  const turnos = turnosEfectivos(turnosSemana ?? [], cambios ?? [], fecha, fecha).map((t) => ({
+    empleado_id: t.empleadoId,
+    hora_inicio: t.horaInicio,
+    hora_fin: t.horaFin,
+  }));
 
   const empleadosPorId = new Map((empleados ?? []).map((e) => [e.id, e.nombre_completo]));
   const empleadoIds = (empleados ?? []).map((e) => e.id);
