@@ -29,10 +29,12 @@ function horasEntre(inicio: string, fin: string): number {
 
 function FormularioEdicionTurno({
   turno,
+  empleadosPorId,
   onCancelar,
   onGuardado,
 }: {
   turno: TurnoProgramado;
+  empleadosPorId: Map<string, string>;
   onCancelar: () => void;
   onGuardado: () => void;
 }) {
@@ -68,8 +70,24 @@ function FormularioEdicionTurno({
   return (
     <form
       onSubmit={manejarSubmit}
-      className="w-36 space-y-1.5 rounded-lg border border-brass/50 bg-panel-deep p-2"
+      className="w-44 space-y-1.5 rounded-lg border border-brass/50 bg-panel-deep p-2"
     >
+      <select name="empleado_id" defaultValue={turno.empleado_id} title="Empleado" className={CAMPO_MINI}>
+        {[...empleadosPorId.entries()]
+          .sort((a, b) => a[1].localeCompare(b[1]))
+          .map(([id, nombre]) => (
+            <option key={id} value={id}>
+              {nombre}
+            </option>
+          ))}
+      </select>
+      <select name="dia_semana" defaultValue={turno.dia_semana} title="Día" className={CAMPO_MINI}>
+        {DIAS.map((d) => (
+          <option key={d.valor} value={d.valor}>
+            {d.etiqueta}
+          </option>
+        ))}
+      </select>
       <div className="flex gap-1">
         <input
           type="time"
@@ -86,6 +104,7 @@ function FormularioEdicionTurno({
           className={CAMPO_MINI}
         />
       </div>
+      <p className="text-[0.6rem] uppercase tracking-wide text-ink-soft">Vigencia</p>
       <input
         type="date"
         name="vigente_desde"
@@ -187,6 +206,7 @@ export function TablaTurnosSemanal({ turnos, empleadosPorId }: Props) {
                             <FormularioEdicionTurno
                               key={t.id}
                               turno={t}
+                              empleadosPorId={empleadosPorId}
                               onCancelar={() => setEditandoId(null)}
                               onGuardado={() => setEditandoId(null)}
                             />
@@ -195,10 +215,11 @@ export function TablaTurnosSemanal({ turnos, empleadosPorId }: Props) {
                               key={t.id}
                               type="button"
                               onClick={() => setEditandoId(t.id)}
-                              title="Editar"
-                              className="block whitespace-nowrap rounded-md bg-brass-soft px-2 py-1 text-left text-xs text-ink hover:bg-brass-soft/70"
+                              title="Tocá para editar el turno"
+                              className="flex items-center gap-1 whitespace-nowrap rounded-md bg-brass-soft px-2 py-1 text-left text-xs text-ink hover:bg-brass-soft/70"
                             >
                               {t.hora_inicio.slice(0, 5)}–{t.hora_fin.slice(0, 5)}
+                              <span className="text-[0.65rem] text-brass">✎</span>
                             </button>
                           ),
                         )}

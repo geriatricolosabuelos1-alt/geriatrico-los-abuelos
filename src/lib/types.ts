@@ -602,6 +602,21 @@ export interface TurnoProgramado {
   created_at: string;
 }
 
+export type TipoCambioTurno = "cambio" | "guardia";
+
+export interface CambioTurno {
+  id: string;
+  sucursal_id: string;
+  fecha: string;
+  tipo: TipoCambioTurno;
+  empleado_original_id: string | null;
+  empleado_reemplazo_id: string;
+  hora_inicio: string;
+  hora_fin: string;
+  motivo: string | null;
+  created_at: string;
+}
+
 export type TipoGasto = "fijo" | "variable";
 
 export interface Gasto {
