@@ -9,19 +9,27 @@ export async function listarRecetas(sucursalId: string): Promise<
   (RecetaMedicamento & {
     residente_nombre: string;
     medicamento_nombre: string | null;
+    contacto_familiar: string | null;
+    telefono_familiar: string | null;
   })[]
 > {
   const supabase = await createClient();
   const { data } = await supabase
     .from("recetas_medicamento")
     .select(
-      "id, residente_id, medicamento_id, medicamento_texto, obra_social, estado, fecha_pedido, fecha_recibido, fecha_vencimiento, notas, creado_por, created_at, residentes!inner(nombre, apellido, sucursal_id), medicamentos_residente(nombre)",
+      "id, residente_id, medicamento_id, medicamento_texto, obra_social, estado, fecha_pedido, fecha_recibido, fecha_vencimiento, notas, creado_por, created_at, residentes!inner(nombre, apellido, sucursal_id, contacto_familiar, telefono_familiar), medicamentos_residente(nombre)",
     )
     .eq("residentes.sucursal_id", sucursalId)
     .order("created_at", { ascending: false })
     .returns<
       (RecetaMedicamento & {
-        residentes: { nombre: string; apellido: string; sucursal_id: string };
+        residentes: {
+          nombre: string;
+          apellido: string;
+          sucursal_id: string;
+          contacto_familiar: string | null;
+          telefono_familiar: string | null;
+        };
         medicamentos_residente: { nombre: string } | null;
       })[]
     >();
@@ -30,6 +38,8 @@ export async function listarRecetas(sucursalId: string): Promise<
     ...r,
     residente_nombre: `${r.residentes.apellido}, ${r.residentes.nombre}`,
     medicamento_nombre: r.medicamentos_residente?.nombre ?? r.medicamento_texto ?? null,
+    contacto_familiar: r.residentes.contacto_familiar,
+    telefono_familiar: r.residentes.telefono_familiar,
   }));
 }
 
