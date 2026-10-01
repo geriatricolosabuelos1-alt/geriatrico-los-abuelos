@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { cerrarSesion } from "@/app/actions";
+import { inicioMedicina } from "@/lib/roles";
 import type { Perfil, RolUsuario, Sucursal } from "@/lib/types";
 
 const ROLES_ADMINISTRATIVA: RolUsuario[] = ["admin", "gerente_sede", "administrativo"];
@@ -113,7 +114,7 @@ export default async function SeleccionarAreaPage() {
           habilitada={puedeAdministrativa}
         />
         <Tarjeta
-          href={sucursalMedicina ? `/sucursales/${sucursalMedicina}/residentes` : "#"}
+          href={sucursalMedicina ? inicioMedicina(rol, sucursalMedicina) : "#"}
           titulo="Medicina"
           subtitulo="Residentes y evolución"
           icono="🩺"
