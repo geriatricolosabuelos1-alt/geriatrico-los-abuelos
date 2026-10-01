@@ -220,10 +220,10 @@ export function BotonPdfSignos({
           type="button"
           onClick={() => descargar("mes")}
           disabled={generando !== null}
-          title="Todos los días del mes, con lo ya cargado y el resto en blanco para completar a mano"
+          title="Todos los días del mes en blanco, para completar a mano"
           className="rounded-lg border border-brass px-4 py-2 text-sm font-semibold text-brass hover:bg-brass-soft disabled:opacity-60"
         >
-          {generando === "mes" ? "Armando PDF..." : "Planilla del mes (para completar a mano)"}
+          {generando === "mes" ? "Armando PDF..." : "Planilla del mes en blanco (para completar a mano)"}
         </button>
       </div>
       <div className="flex gap-3">

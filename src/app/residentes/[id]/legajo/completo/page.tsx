@@ -31,7 +31,7 @@ export default async function LegajoCompletoPage({ params }: { params: Promise<P
           >
             ← Volver al legajo
           </Link>
-          <BotonImprimir omitirVacios />
+          <BotonImprimir />
         </div>
         <LegajoCompleto residenteId={id} sede={sede} />
       </div>

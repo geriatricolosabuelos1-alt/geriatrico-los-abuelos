@@ -2,7 +2,7 @@
 
 import { imprimirSinVacios } from "@/lib/impresionHtml";
 
-// omitirVacios: regla de Medicina (lo vacío o en 0 no se imprime y se avisa antes).
+// omitirVacios: lo vacío o en 0 no se imprime y se avisa antes (solo se usa en Nutrición).
 export function BotonImprimir({ omitirVacios = false }: { omitirVacios?: boolean }) {
   return (
     <button

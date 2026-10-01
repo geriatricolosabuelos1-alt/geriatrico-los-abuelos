@@ -135,7 +135,7 @@ export default async function KinesiologiaResidentePage({
             >
               ← Todos los residentes
             </Link>
-            <BotonImprimir omitirVacios />
+            <BotonImprimir />
           </div>
         </div>
 
