@@ -77,7 +77,8 @@ export function generarSignosVitalesPdf(
       styles: {
         fontSize: 9,
         cellPadding: completo ? 2.5 : 3.5,
-        minCellHeight: completo ? 20 : undefined,
+        // No pasar minCellHeight: undefined: autotable lo toma como NaN y colapsa todos los renglones.
+        ...(completo ? { minCellHeight: 20 } : {}),
         valign: "middle",
         halign: "center",
         lineColor: [0, 0, 0],
