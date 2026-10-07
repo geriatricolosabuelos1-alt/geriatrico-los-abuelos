@@ -103,6 +103,12 @@ export function ListaAranceles({ items, sucursalNombre, sucursalId, resumenMes }
         </div>
         <GenerarPeriodoForm sucursalId={sucursalId} />
         <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/sucursales/${sucursalId}/cuotas/recibos`}
+            className="rounded-full border border-brass/40 px-4 py-1.5 text-xs font-semibold text-brass hover:bg-brass-soft"
+          >
+            Recibos emitidos
+          </Link>
           {cantidadDeben > 0 && (
             <Link
               href={`/sucursales/${sucursalId}/cuotas/informe-deudores`}

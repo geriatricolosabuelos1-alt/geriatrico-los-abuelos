@@ -192,6 +192,13 @@ function armarDestinos(
     );
     agregar(ROLES_CUOTAS, "Informe de deudores", adm, `${base}/cuotas/informe-deudores`, "deudores deuda morosos debe atrasados");
     agregar(
+      ROLES_CUOTAS,
+      "Recibos emitidos (residentes)",
+      adm,
+      `${base}/cuotas/recibos`,
+      "recibo recibos pago pagos cobro reimprimir listado emitidos residente abuelo",
+    );
+    agregar(
       ROLES_INVENTARIO,
       "Inventario",
       adm,
@@ -252,6 +259,13 @@ function armarDestinos(
     "Empleados",
     "/empleados/turnos",
     "turno turnos horario horarios guardia cambio de turno semanal franco",
+  );
+  agregar(
+    ["admin", "gerente_sede", "administrativo"],
+    "Recibos de sueldo (listado)",
+    "Empleados",
+    "/empleados/recibos",
+    "recibo recibos sueldo liquidacion sueldos listado generados reimprimir empleado",
   );
   agregar(ROLES_EMPLEADOS, "Control de turnos", "Empleados", "/empleados/control-turnos", "control turnos llegadas tarde faltas ausencias");
   agregar(

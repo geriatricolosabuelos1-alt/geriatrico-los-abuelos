@@ -73,12 +73,22 @@ export default async function EmpleadosPage({
               </p>
             )}
           </div>
-          <Link
-            href={vistaBajas ? "/empleados" : "/empleados?bajas=1"}
-            className="rounded-full border border-edge px-4 py-2 text-sm font-semibold text-ink-soft hover:border-brass hover:text-ink"
-          >
-            {vistaBajas ? "← Volver a empleados activos" : "Empleados dados de baja"}
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            {perfil && ["admin", "gerente_sede", "administrativo"].includes(perfil.rol) && (
+              <Link
+                href="/empleados/recibos"
+                className="rounded-full border border-edge px-4 py-2 text-sm font-semibold text-ink-soft hover:border-brass hover:text-ink"
+              >
+                Recibos de sueldo
+              </Link>
+            )}
+            <Link
+              href={vistaBajas ? "/empleados" : "/empleados?bajas=1"}
+              className="rounded-full border border-edge px-4 py-2 text-sm font-semibold text-ink-soft hover:border-brass hover:text-ink"
+            >
+              {vistaBajas ? "← Volver a empleados activos" : "Empleados dados de baja"}
+            </Link>
+          </div>
         </div>
 
         {!vistaBajas && <PanelAccionesEmpleados sucursales={sucursales ?? []} />}
