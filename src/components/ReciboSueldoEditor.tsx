@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { guardarReciboSueldo, type ItemRecibo } from "@/app/empleados/[id]/recibo/actions";
+import { BotonEliminarReciboSueldo } from "@/components/BotonEliminarReciboSueldo";
 import { montoEnLetras } from "@/lib/numeroALetras";
 
 type Props = {
@@ -32,18 +34,25 @@ function formatearMonto(n: number): string {
   return new Intl.NumberFormat("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 }
 
+function etiquetaPeriodo(periodo: string): string {
+  const [anio, mes] = periodo.split("-").map(Number);
+  return MESES[mes - 1] ? `${MESES[mes - 1]} ${anio}` : periodo;
+}
+
 function Copia({
   titulo,
   props,
+  periodo,
   items,
   fechaPago,
 }: {
   titulo: string;
   props: Props;
+  periodo: string;
   items: ItemRecibo[];
   fechaPago: string;
 }) {
-  const [anio, mes] = props.periodo.split("-").map(Number);
+  const [anio, mes] = periodo.split("-").map(Number);
   const haberes = items.filter((i) => i.tipo === "haber");
   const descuentos = items.filter((i) => i.tipo === "descuento");
   const totalHaberes = haberes.reduce((a, i) => a + i.monto, 0);
@@ -134,29 +143,52 @@ function Copia({
 }
 
 export function ReciboSueldoEditor(props: Props) {
+  const router = useRouter();
   const [items, setItems] = useState<ItemRecibo[]>(props.itemsIniciales);
   const [fechaPago, setFechaPago] = useState(props.fechaPagoInicial);
   const [preguntando, setPreguntando] = useState(false);
+  const [conflicto, setConflicto] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [guardado, setGuardado] = useState(props.guardadoPreviamente);
+  // Período con el que está guardado hoy el recibo (null si todavía no se emitió).
+  const [periodoGuardado, setPeriodoGuardado] = useState<string | null>(
+    props.guardadoPreviamente ? props.periodo : null,
+  );
+  const [periodo, setPeriodo] = useState(props.periodo);
 
   function actualizar(idx: number, cambios: Partial<ItemRecibo>) {
     setItems((prev) => prev.map((it, i) => (i === idx ? { ...it, ...cambios } : it)));
   }
 
-  async function confirmarEImprimir() {
+  async function guardarEImprimir(reemplazar: boolean) {
     setPreguntando(false);
+    setConflicto(false);
+    if (!/^\d{4}-\d{2}$/.test(periodo)) {
+      setError("Elegí el período del recibo.");
+      return;
+    }
     setGuardando(true);
     setError(null);
-    const r = await guardarReciboSueldo(props.empleadoId, props.periodo, fechaPago, items);
+    const r = await guardarReciboSueldo(props.empleadoId, periodo, fechaPago, items, {
+      periodoAnterior: periodoGuardado,
+      reemplazar,
+    });
     setGuardando(false);
+    if (r.conflicto) {
+      setConflicto(true);
+      return;
+    }
     if (r.error) {
       setError(r.error);
       return;
     }
+    const cambioDePeriodo = periodo !== props.periodo;
     setGuardado(true);
+    setPeriodoGuardado(periodo);
     window.print();
+    // El recibo quedó fijo en el período nuevo: se abre la pantalla de ese período.
+    if (cambioDePeriodo) router.replace(`/empleados/${props.empleadoId}/recibo?periodo=${periodo}`);
   }
 
   const totalHaberes = items.filter((i) => i.tipo === "haber").reduce((a, i) => a + (i.monto || 0), 0);
@@ -170,15 +202,30 @@ export function ReciboSueldoEditor(props: Props) {
             <h2 className="font-display text-base font-semibold text-ink">Conceptos del recibo</h2>
             <p className="text-xs text-ink-soft">
               {guardado
-                ? "Este recibo ya fue generado; podés corregirlo y volver a imprimir."
+                ? "Este recibo ya fue emitido: podés corregir el período o los conceptos y volver a imprimir. Al imprimir, queda guardado así."
                 : "Se armó automáticamente con el sueldo cargado. Revisalo, agregá lo que haga falta y se guarda al imprimir."}
             </p>
           </div>
-          <div>
-            <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
-              Fecha de pago
-            </label>
-            <input type="date" value={fechaPago} onChange={(e) => setFechaPago(e.target.value)} className={CAMPO} />
+          <div className="flex flex-wrap items-end gap-3">
+            {guardado && (
+              <div>
+                <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+                  Período del recibo
+                </label>
+                <input
+                  type="month"
+                  value={periodo}
+                  onChange={(e) => setPeriodo(e.target.value)}
+                  className={CAMPO}
+                />
+              </div>
+            )}
+            <div>
+              <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+                Fecha de pago
+              </label>
+              <input type="date" value={fechaPago} onChange={(e) => setFechaPago(e.target.value)} className={CAMPO} />
+            </div>
           </div>
         </div>
 
@@ -264,8 +311,16 @@ export function ReciboSueldoEditor(props: Props) {
             disabled={guardando}
             className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
           >
-            {guardando ? "Guardando..." : "Imprimir recibo"}
+            {guardando ? "Guardando..." : guardado ? "Guardar e imprimir" : "Imprimir recibo"}
           </button>
+          {guardado && periodoGuardado && (
+            <BotonEliminarReciboSueldo
+              empleadoId={props.empleadoId}
+              periodo={periodoGuardado}
+              etiqueta={`${props.empleado.nombre} · ${etiquetaPeriodo(periodoGuardado)}`}
+              redirigirA="/empleados/recibos"
+            />
+          )}
           {error && <p className="text-xs text-red-700">{error}</p>}
         </div>
       </section>
@@ -288,7 +343,7 @@ export function ReciboSueldoEditor(props: Props) {
               </button>
               <button
                 type="button"
-                onClick={confirmarEImprimir}
+                onClick={() => guardarEImprimir(false)}
                 className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90"
               >
                 No, imprimir
@@ -298,11 +353,41 @@ export function ReciboSueldoEditor(props: Props) {
         </div>
       )}
 
+      {conflicto && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 print:hidden">
+          <div className="w-full max-w-sm space-y-4 rounded-2xl border border-edge bg-card p-6 shadow-2xl">
+            <p className="font-display text-lg font-semibold text-ink">
+              Ya hay un recibo de {etiquetaPeriodo(periodo)}
+            </p>
+            <p className="text-sm text-ink-soft">
+              {props.empleado.nombre} ya tiene un recibo guardado en ese período. Si continuás, se reemplaza por este
+              y el de {periodoGuardado ? etiquetaPeriodo(periodoGuardado) : "el período anterior"} se elimina.
+            </p>
+            <div className="flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConflicto(false)}
+                className="rounded-lg border border-edge px-4 py-2 text-sm font-semibold text-ink hover:border-brass"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => guardarEImprimir(true)}
+                className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90"
+              >
+                Reemplazar e imprimir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mt-6 space-y-6 print:mt-0">
         <p className="text-xs font-bold uppercase tracking-wide text-ink-soft print:hidden">Vista previa</p>
         <div className="space-y-6 bg-white p-4 print:p-0">
-          <Copia titulo="Original" props={props} items={items} fechaPago={fechaPago} />
-          <Copia titulo="Duplicado" props={props} items={items} fechaPago={fechaPago} />
+          <Copia titulo="Original" props={props} periodo={periodo} items={items} fechaPago={fechaPago} />
+          <Copia titulo="Duplicado" props={props} periodo={periodo} items={items} fechaPago={fechaPago} />
         </div>
       </div>
     </>

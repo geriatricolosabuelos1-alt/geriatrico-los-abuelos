@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
+import { BotonEliminarReciboSueldo } from "@/components/BotonEliminarReciboSueldo";
 import { formatearMonto } from "@/lib/finanzas";
 import type { Perfil } from "@/lib/types";
 
@@ -167,10 +168,15 @@ export default async function RecibosSueldoPage({
                   <td className="px-4 py-3 text-right whitespace-nowrap">
                     <Link
                       href={`/empleados/${r.empleado_id}/recibo?periodo=${r.periodo}`}
-                      className="text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                      className="mr-3 text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
                     >
-                      Ver / imprimir
+                      Ver / editar
                     </Link>
+                    <BotonEliminarReciboSueldo
+                      empleadoId={r.empleado_id}
+                      periodo={r.periodo}
+                      etiqueta={`${r.nombre} · ${etiquetaPeriodo(r.periodo)}`}
+                    />
                   </td>
                 </tr>
               ))}
