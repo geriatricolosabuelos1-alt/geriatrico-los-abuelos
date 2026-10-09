@@ -32,7 +32,7 @@ export default async function ImprimirMenuEspecialPage({
   return (
     <div className="flex min-h-screen w-full justify-center bg-panel px-4 py-10 print:block print:min-h-0 print:bg-white print:px-0 print:py-0">
       <style>{`@page { size: A4; margin: 12mm; } .hoja-menu-especial:last-child { break-after: auto; }`}</style>
-      <div className="w-full max-w-[900px] rounded-2xl border border-edge bg-white p-8 shadow-2xl print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
+      <div className="w-full max-w-[900px] rounded-2xl border border-edge bg-card p-8 shadow-2xl print:bg-white print:max-w-none print:rounded-none print:border-0 print:p-0 print:shadow-none">
         <div className="mb-6 flex items-center justify-between gap-3 print:hidden">
           <Link
             href={`/sucursales/${id}/nutricion/menu-especial`}

@@ -78,7 +78,7 @@ export function TarjetaMenuEspecial({
           onCerrar={() => setEditando(false)}
         />
       ) : (
-        <div className="rounded-xl border border-edge bg-white p-5">{children}</div>
+        <div>{children}</div>
       )}
     </section>
   );

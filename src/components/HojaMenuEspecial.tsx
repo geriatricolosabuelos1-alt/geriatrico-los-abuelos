@@ -11,7 +11,10 @@ function nombreSede(nombre: string): string {
   return nombre.toLowerCase().replace(/(^|\s)\p{L}/gu, (l) => l.toUpperCase());
 }
 
-const CELDA = "border border-neutral-500 px-2 py-1 align-top";
+// En pantalla con los colores del sistema; al imprimir, blanco y negro.
+const CELDA = "border border-edge px-2 py-1.5 align-top print:border-neutral-500";
+const ENCABEZADO_TABLA = "bg-panel-deep text-[0.65rem] uppercase tracking-wide text-ink-soft print:bg-neutral-100 print:text-black";
+const TITULO = "mt-5 mb-1.5 text-xs font-bold uppercase tracking-wide text-brass print:text-black";
 
 // Ficha de menú especial tal cual el papel de la nutricionista (pantalla e impresión).
 export function HojaMenuEspecial({
@@ -27,24 +30,30 @@ export function HojaMenuEspecial({
 }) {
   const c = menu.contenido;
   return (
-    <article className="hoja-menu-especial break-after-page text-[0.78rem] leading-snug text-black">
-      <header className="mb-3 border-b-2 border-black pb-2">
-        <p className="font-bold">{nombreSede(sedeNombre)} - Residencia de Adultos Mayores</p>
-        {sedeDireccion && <p className="text-neutral-700">Domicilio: {sedeDireccion}</p>}
+    <article className="hoja-menu-especial break-after-page text-sm leading-snug text-ink print:text-[0.78rem] print:text-black">
+      <header className="mb-3 border-b border-edge pb-2 print:border-b-2 print:border-black">
+        <p className="font-semibold">{nombreSede(sedeNombre)} - Residencia de Adultos Mayores</p>
+        {sedeDireccion && <p className="text-xs text-ink-soft print:text-neutral-700">Domicilio: {sedeDireccion}</p>}
       </header>
 
-      <h2 className="mb-2 text-center text-base font-bold uppercase">{c.titulo}</h2>
+      <h2 className="mb-2 font-display text-base font-semibold uppercase print:text-center print:font-sans print:font-bold">
+        {c.titulo}
+      </h2>
       {c.descripcion.split("\n").map((p, i) => (
-        <p key={i} className="mb-1.5">
+        <p key={i} className="mb-1.5 text-ink-soft print:text-black">
           {p}
         </p>
       ))}
-      {c.nota && <p className="mb-2 font-semibold">{c.nota}</p>}
+      {c.nota && (
+        <p className="mb-2 rounded-lg bg-brass-soft px-3 py-2 font-semibold print:rounded-none print:bg-transparent print:p-0">
+          {c.nota}
+        </p>
+      )}
 
-      <h3 className="mt-3 font-bold uppercase">Indicaciones nutricionales:</h3>
-      <table className="mt-1 w-full border-collapse">
+      <h3 className={TITULO}>Indicaciones nutricionales</h3>
+      <table className="w-full border-collapse text-xs print:text-[0.75rem]">
         <thead>
-          <tr className="bg-neutral-100">
+          <tr className={ENCABEZADO_TABLA}>
             <th className={`${CELDA} text-left`}>Pacientes</th>
             <th className={`${CELDA} w-40 text-left`}>Fecha indicación</th>
           </tr>
@@ -65,10 +74,10 @@ export function HojaMenuEspecial({
         </tbody>
       </table>
 
-      <h3 className="mt-4 font-bold uppercase">Desayunos y meriendas</h3>
-      <table className="mt-1 w-full table-fixed border-collapse text-[0.7rem]">
+      <h3 className={TITULO}>Desayunos y meriendas</h3>
+      <table className="w-full table-fixed border-collapse text-xs print:text-[0.7rem]">
         <thead>
-          <tr className="bg-neutral-100">
+          <tr className={ENCABEZADO_TABLA}>
             <th className={`${CELDA} w-24`} />
             {DIAS_MENU.map((d) => (
               <th key={d.valor} className={`${CELDA} uppercase`}>
@@ -96,8 +105,8 @@ export function HojaMenuEspecial({
         </tbody>
       </table>
 
-      <h3 className="mt-4 font-bold uppercase">Colaciones</h3>
-      <ul className="mt-1 list-disc pl-6">
+      <h3 className={TITULO}>Colaciones</h3>
+      <ul className="list-disc pl-6 text-xs print:text-[0.75rem]">
         {c.colaciones.map((x, i) => (
           <li key={i} className="uppercase">
             {x}
@@ -105,10 +114,10 @@ export function HojaMenuEspecial({
         ))}
       </ul>
 
-      <h3 className="mt-4 break-after-avoid font-bold uppercase">Almuerzos y cenas</h3>
-      <table className="mt-1 w-full border-collapse">
+      <h3 className={`${TITULO} break-after-avoid`}>Almuerzos y cenas</h3>
+      <table className="w-full border-collapse text-xs print:text-[0.75rem]">
         <thead>
-          <tr className="bg-neutral-100">
+          <tr className={ENCABEZADO_TABLA}>
             <th className={`${CELDA} w-48 text-left`}>Si el menú general contiene…</th>
             <th className={`${CELDA} text-left`}>{ETIQUETA_INDICACIONES[menu.tipo]}</th>
           </tr>
@@ -129,7 +138,7 @@ export function HojaMenuEspecial({
         </tbody>
       </table>
 
-      <div className="mt-12 flex justify-end break-inside-avoid">
+      <div className="mt-12 hidden justify-end break-inside-avoid print:flex">
         <div className="w-60 text-center">
           <div className="mb-1 border-t border-black" />
           <p className="text-[0.65rem]">
