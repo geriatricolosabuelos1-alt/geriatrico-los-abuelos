@@ -23,7 +23,7 @@ type Seccion =
 
 type SubseccionLegales = "habilitacion" | "libro-foliado" | "certificaciones" | "libretas";
 type SubseccionMedicacion = "recetario" | "vacunacion";
-type SubseccionNutricion = "menu-semanal";
+type SubseccionNutricion = "menu-semanal" | "menu-especial";
 
 type Props = {
   perfil: Perfil;
@@ -183,6 +183,13 @@ function armarDestinos(
       "nutricion nutricionista ficha alimentacion comida dieta peso talla imc consistencia disfagia suplemento desnutricion celiaco diabetico sin tacc",
     );
     agregar(ROLES_NUTRICION_CLINICO, "Menú semanal", med, `${base}/nutricion/menu-semanal`, "menu semanal comida almuerzo cena");
+    agregar(
+      ROLES_NUTRICION_CLINICO,
+      "Menú especial (diabéticos / obesidad)",
+      med,
+      `${base}/nutricion/menu-especial`,
+      "menu especial diabetes diabetico obesidad sobrepeso dieta azucar colaciones",
+    );
     agregar(
       ROLES_CUOTAS,
       "Aranceles",
@@ -575,6 +582,13 @@ export async function Sidebar({ perfil, activo }: Props) {
                       href={`/sucursales/${s.id}/nutricion/menu-semanal`}
                       label="Menú semanal"
                       activo={activo.subseccion === "menu-semanal"}
+                    />
+                  )}
+                  {ROLES_NUTRICION_CLINICO.includes(perfil.rol) && (
+                    <SubSubTab
+                      href={`/sucursales/${s.id}/nutricion/menu-especial`}
+                      label="Menú especial"
+                      activo={activo.subseccion === "menu-especial"}
                     />
                   )}
                 </GrupoConSub>
