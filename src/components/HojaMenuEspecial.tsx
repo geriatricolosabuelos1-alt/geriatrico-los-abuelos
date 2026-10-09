@@ -51,7 +51,7 @@ export function HojaMenuEspecial({
       )}
 
       <h3 className={TITULO}>Indicaciones nutricionales</h3>
-      <table className="mt-1 w-full border-collapse">
+      <table className="w-full border-collapse text-xs print:text-[0.75rem]">
         <thead>
           <tr className={ENCABEZADO_TABLA}>
             <th className={`${CELDA} text-left`}>Pacientes</th>
