@@ -189,8 +189,73 @@ export async function guardarMenuSemanal(
   if (error) return { error: error.message };
   if (!data || data.length === 0) return { error: "No tenés permiso para modificar esta planilla." };
 
+  // Un menú nuevo se copia a las otras sedes (si esa semana no tienen uno); allá se edita aparte.
+  if (!menuId) await replicarMenuEnOtrasSedes(supabase, sucursalId, datos);
+
   revalidatePath(rutaNutricion(sucursalId, "menu-semanal"));
   return { error: null, guardado: true };
+}
+
+type DatosMenu = {
+  semana_desde: string;
+  semana_hasta: string;
+  contenido: MenuSemanalContenido;
+  matricula: string | null;
+  nutricionista_id: string | null;
+};
+
+async function replicarMenuEnOtrasSedes(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  sucursalId: string,
+  menu: DatosMenu,
+): Promise<number> {
+  const { data: sedes } = await supabase.from("sucursales").select("id").neq("id", sucursalId).returns<{ id: string }[]>();
+  let copiadas = 0;
+  for (const sede of sedes ?? []) {
+    const { data: existente } = await supabase
+      .from("menu_semanal")
+      .select("id")
+      .eq("sucursal_id", sede.id)
+      .eq("semana_desde", menu.semana_desde)
+      .limit(1);
+    if (existente && existente.length > 0) continue;
+    // Pacientes con dietas especiales y observaciones son de cada sede: la copia los deja en blanco.
+    const { error } = await supabase.from("menu_semanal").insert({
+      sucursal_id: sede.id,
+      semana_desde: menu.semana_desde,
+      semana_hasta: menu.semana_hasta,
+      contenido: menu.contenido,
+      pacientes_sng: 0,
+      pacientes_vegetarianos: 0,
+      pacientes_celiacos: 0,
+      pacientes_diabeticos: 0,
+      observaciones: null,
+      matricula: menu.matricula,
+      nutricionista_id: menu.nutricionista_id,
+      firmado_at: new Date().toISOString(),
+    });
+    if (!error) {
+      copiadas++;
+      revalidatePath(rutaNutricion(sede.id, "menu-semanal"));
+    }
+  }
+  return copiadas;
+}
+
+// Para planillas ya guardadas: copiarla a las otras sedes que no tengan menú esa semana.
+export async function copiarMenuAOtrasSedes(
+  sucursalId: string,
+  menuId: string,
+): Promise<{ error: string | null; copiadas: number }> {
+  const supabase = await createClient();
+  const { data: menu } = await supabase
+    .from("menu_semanal")
+    .select("semana_desde, semana_hasta, contenido, matricula, nutricionista_id")
+    .eq("id", menuId)
+    .maybeSingle<DatosMenu>();
+  if (!menu) return { error: "No se encontró la planilla.", copiadas: 0 };
+  const copiadas = await replicarMenuEnOtrasSedes(supabase, sucursalId, menu);
+  return { error: null, copiadas };
 }
 
 export async function eliminarMenuSemanal(sucursalId: string, menuId: string): Promise<void> {
