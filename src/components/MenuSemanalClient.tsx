@@ -1,7 +1,11 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { eliminarMenuSemanal, guardarMenuSemanal } from "@/app/sucursales/[id]/nutricion/actions";
+import {
+  copiarMenuAOtrasSedes,
+  eliminarMenuSemanal,
+  guardarMenuSemanal,
+} from "@/app/sucursales/[id]/nutricion/actions";
 import { ExportarPdfMenuSemanal } from "@/components/ExportarPdfMenuSemanal";
 import type { MenuSemanal } from "@/lib/types";
 
@@ -114,7 +118,8 @@ function FormularioMenu({
       {!menu && anterior && (
         <p className="rounded-lg bg-brass-soft px-3 py-2 text-xs text-ink">
           Desayunos, meriendas y postres vienen de la semana anterior: cambiá solo lo que sea distinto. Cargá
-          almuerzos, colaciones y cenas de esta semana.
+          almuerzos, colaciones y cenas de esta semana. Al guardar se copia también a la otra sede, donde se
+          puede editar aparte.
         </p>
       )}
 
@@ -312,6 +317,16 @@ export function MenuSemanalClient({ sucursalId, sucursalNombre, sucursalDireccio
   const [expandido, setExpandido] = useState<string | null>(menus[0]?.id ?? null);
   const [editando, setEditando] = useState<string | null>(null);
 
+  async function copiar(id: string) {
+    const r = await copiarMenuAOtrasSedes(sucursalId, id);
+    window.alert(
+      r.error ??
+        (r.copiadas > 0
+          ? "Copiado a la otra sede. Allá se puede editar aparte."
+          : "La otra sede ya tiene menú cargado para esa semana (o no tenés permiso para cargarlo allá)."),
+    );
+  }
+
   async function borrar(id: string) {
     if (!window.confirm("¿Eliminar esta planilla?")) return;
     await eliminarMenuSemanal(sucursalId, id);
@@ -345,6 +360,13 @@ export function MenuSemanalClient({ sucursalId, sucursalNombre, sucursalDireccio
               </button>
               <div className="flex items-center gap-3">
                 {expandido === m.id && <ExportarPdfMenuSemanal menu={m} sucursalNombre={sucursalNombre} sucursalDireccion={sucursalDireccion} />}
+                <button
+                  type="button"
+                  onClick={() => copiar(m.id)}
+                  className="text-xs font-medium text-ink-soft hover:text-ink"
+                >
+                  Copiar a la otra sede
+                </button>
                 <button
                   type="button"
                   onClick={() => {
