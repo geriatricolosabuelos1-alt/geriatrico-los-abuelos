@@ -23,9 +23,9 @@ export default async function MenuSemanalPage({ params }: { params: Promise<Para
       .single<Perfil>(),
     supabase
       .from("sucursales")
-      .select("id, nombre")
+      .select("id, nombre, direccion")
       .eq("id", id)
-      .single<{ id: string; nombre: string }>(),
+      .single<{ id: string; nombre: string; direccion: string | null }>(),
     listarMenusSemanales(id),
   ]);
 
@@ -56,6 +56,7 @@ export default async function MenuSemanalPage({ params }: { params: Promise<Para
         <MenuSemanalClient
           sucursalId={id}
           sucursalNombre={sucursal!.nombre}
+          sucursalDireccion={sucursal!.direccion}
           menus={menus}
           puedeEliminar={perfil!.rol !== "medico"}
         />

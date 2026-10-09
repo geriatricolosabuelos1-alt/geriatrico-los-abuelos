@@ -17,9 +17,14 @@ function seccionDesde(titulo: string, bloque: Record<string, string>): [string, 
   return [[titulo, ...DIAS.map((d) => bloque?.[d.valor] || "—")]];
 }
 
-type Props = { menu: MenuSemanal; sucursalNombre: string };
+type Props = { menu: MenuSemanal; sucursalNombre: string; sucursalDireccion?: string | null };
 
-export function ExportarPdfMenuSemanal({ menu, sucursalNombre }: Props) {
+// "EDITH 1" → "Edith 1"
+function nombreSede(nombre: string): string {
+  return nombre.toLowerCase().replace(/(^|\s)\p{L}/gu, (l) => l.toUpperCase());
+}
+
+export function ExportarPdfMenuSemanal({ menu, sucursalNombre, sucursalDireccion }: Props) {
   function exportar() {
     const columnas = ["", ...DIAS.map((d) => d.label)];
     const filas: (string | number)[][] = [
@@ -53,7 +58,8 @@ export function ExportarPdfMenuSemanal({ menu, sucursalNombre }: Props) {
       `menu-semanal-${menu.semana_desde}-al-${menu.semana_hasta}.pdf`,
       {
         titulo: "Menú semanal",
-        subtitulo: sucursalNombre,
+        subtitulo: `${nombreSede(sucursalNombre)} - Residencia de Adultos Mayores`,
+        detalle: sucursalDireccion ? `Domicilio: ${sucursalDireccion}` : undefined,
         fecha: `Semana desde ${new Date(menu.semana_desde + "T00:00:00").toLocaleDateString("es-AR")} al ${new Date(menu.semana_hasta + "T00:00:00").toLocaleDateString("es-AR")}`,
       },
       secciones,

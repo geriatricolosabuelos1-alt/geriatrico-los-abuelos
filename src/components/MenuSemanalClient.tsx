@@ -11,6 +11,7 @@ const INICIAL: Estado = { error: null };
 type Props = {
   sucursalId: string;
   sucursalNombre: string;
+  sucursalDireccion?: string | null;
   menus: MenuSemanal[];
   puedeEliminar: boolean;
 };
@@ -306,7 +307,7 @@ function VistaMenu({ menu }: { menu: MenuSemanal }) {
   );
 }
 
-export function MenuSemanalClient({ sucursalId, sucursalNombre, menus, puedeEliminar }: Props) {
+export function MenuSemanalClient({ sucursalId, sucursalNombre, sucursalDireccion, menus, puedeEliminar }: Props) {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [expandido, setExpandido] = useState<string | null>(menus[0]?.id ?? null);
   const [editando, setEditando] = useState<string | null>(null);
@@ -343,7 +344,7 @@ export function MenuSemanalClient({ sucursalId, sucursalNombre, menus, puedeElim
                 {new Date(m.semana_hasta + "T00:00:00").toLocaleDateString("es-AR")}
               </button>
               <div className="flex items-center gap-3">
-                {expandido === m.id && <ExportarPdfMenuSemanal menu={m} sucursalNombre={sucursalNombre} />}
+                {expandido === m.id && <ExportarPdfMenuSemanal menu={m} sucursalNombre={sucursalNombre} sucursalDireccion={sucursalDireccion} />}
                 <button
                   type="button"
                   onClick={() => {
