@@ -11,6 +11,8 @@ export type SeccionPdf = {
 export type EncabezadoPdf = {
   titulo: string;
   subtitulo?: string;
+  // Renglón extra debajo del subtítulo (ej. domicilio de la sede).
+  detalle?: string;
   fecha?: string;
 };
 
@@ -27,6 +29,10 @@ export function crearPdfTablas(encabezado: EncabezadoPdf, secciones: SeccionPdf[
   doc.setTextColor(110);
   if (encabezado.subtitulo) {
     doc.text(encabezado.subtitulo, 40, y);
+    y += 14;
+  }
+  if (encabezado.detalle) {
+    doc.text(encabezado.detalle, 40, y);
     y += 14;
   }
   if (encabezado.fecha) {
