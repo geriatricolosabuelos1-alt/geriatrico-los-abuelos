@@ -6,7 +6,6 @@ import type { MenuSemanal, MenuSemanalContenido } from "@/lib/types";
 import { COLUMNAS_FICHA_NUTRICION, type FichaNutricion } from "@/lib/nutricion";
 
 type Estado = { error: string | null; guardado?: boolean };
-const OK: Estado = { error: null };
 
 function rutaNutricion(sucursalId: string, sub?: string): string {
   return `/sucursales/${sucursalId}/nutricion${sub ? `/${sub}` : ""}`;
@@ -166,7 +165,8 @@ export async function guardarMenuSemanal(
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { error } = await supabase.from("menu_semanal").insert({
+  const menuId = String(formData.get("menu_id") ?? "");
+  const datos = {
     sucursal_id: sucursalId,
     semana_desde,
     semana_hasta,
@@ -179,12 +179,18 @@ export async function guardarMenuSemanal(
     matricula: String(formData.get("matricula") ?? "").trim() || null,
     nutricionista_id: user?.id ?? null,
     firmado_at: new Date().toISOString(),
-  });
+  };
+
+  // Con menu_id se corrige o completa la planilla ya guardada; sin él se crea una nueva.
+  const { data, error } = menuId
+    ? await supabase.from("menu_semanal").update(datos).eq("id", menuId).select("id")
+    : await supabase.from("menu_semanal").insert(datos).select("id");
 
   if (error) return { error: error.message };
+  if (!data || data.length === 0) return { error: "No tenés permiso para modificar esta planilla." };
 
   revalidatePath(rutaNutricion(sucursalId, "menu-semanal"));
-  return OK;
+  return { error: null, guardado: true };
 }
 
 export async function eliminarMenuSemanal(sucursalId: string, menuId: string): Promise<void> {
