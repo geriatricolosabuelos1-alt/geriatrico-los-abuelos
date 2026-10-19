@@ -72,7 +72,7 @@ export default async function KinesiologiaSedePage({ params }: { params: Promise
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <TarjetaAccesoKinesio
             titulo="Evaluación"
             subtitulo="Evaluación kinésica inicial o reevaluación de un residente."
@@ -86,6 +86,13 @@ export default async function KinesiologiaSedePage({ params }: { params: Promise
             residentes={residentes ?? []}
             tipo="evolucion"
             color="ambar"
+          />
+          <TarjetaAccesoKinesio
+            titulo="Programa mensual"
+            subtitulo="Planilla de actividades por semana, con objetivos y firma."
+            residentes={residentes ?? []}
+            tipo="programa"
+            color="verde"
           />
         </div>
 

@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import {
   eliminarRegistroKinesio,
   guardarEvaluacionKinesio,
+  guardarProgramaKinesio,
   registrarSesionKinesio,
 } from "@/app/residentes/[id]/kinesiologia/actions";
 
@@ -201,13 +202,95 @@ export function FormularioSesionKinesio({ residenteId }: { residenteId: string }
   );
 }
 
+export function FormularioProgramaKinesio({ residenteId }: { residenteId: string }) {
+  const [abierto, setAbierto] = useState(false);
+  const accion = guardarProgramaKinesio.bind(null, residenteId);
+  const [estado, formAction, enviando] = useActionState(async (prev: Estado, fd: FormData) => {
+    const r = await accion(prev, fd);
+    if (!r.error) setAbierto(false);
+    return r;
+  }, INICIAL);
+
+  if (!abierto) {
+    return (
+      <button
+        type="button"
+        onClick={() => setAbierto(true)}
+        className="rounded-lg border border-brass px-4 py-2 text-sm font-semibold text-brass hover:bg-brass/10 print:hidden"
+      >
+        + Nuevo programa mensual
+      </button>
+    );
+  }
+
+  return (
+    <form
+      action={formAction}
+      className="grid grid-cols-1 gap-3 rounded-2xl border border-edge bg-card p-5 sm:grid-cols-2 print:hidden"
+    >
+      <h3 className="font-display text-base font-semibold text-ink sm:col-span-2">
+        Programa de actividades
+      </h3>
+      <div>
+        <label className={ETIQUETA_MIN}>Período (mes/es)</label>
+        <input name="periodo" required placeholder="Ej: Oct-Nov-Dic" className={CAMPO} />
+      </div>
+      <div className="sm:col-span-2">
+        <label className={ETIQUETA_MIN}>Objetivos</label>
+        <textarea
+          name="objetivos"
+          rows={3}
+          placeholder="Ej: Mantener calidad de vida. Mejorar movilidad."
+          className={CAMPO}
+        />
+      </div>
+      {[1, 2, 3, 4].map((n) => (
+        <div key={n}>
+          <label className={ETIQUETA_MIN}>Semana {n} — actividades (una por renglón)</label>
+          <textarea
+            name={`semana_${n}`}
+            rows={4}
+            placeholder={"Ej:\nPedalera 5 minutos\nCon un palo levanto los brazos al techo"}
+            className={CAMPO}
+          />
+        </div>
+      ))}
+      <div className="sm:col-span-2">
+        <label className={ETIQUETA_MIN}>Observaciones</label>
+        <textarea name="observaciones" rows={2} className={CAMPO} />
+      </div>
+      <div>
+        <label className={ETIQUETA_MIN}>Matrícula</label>
+        <input name="matricula" className={CAMPO} />
+      </div>
+      <div className="flex items-end gap-3 sm:col-span-2">
+        <button
+          type="submit"
+          disabled={enviando}
+          className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
+        >
+          {enviando ? "Guardando..." : "Guardar programa"}
+        </button>
+        <button
+          type="button"
+          onClick={() => setAbierto(false)}
+          className="text-sm text-ink-soft hover:text-ink"
+        >
+          Cancelar
+        </button>
+        {estado.error && <p className="text-xs text-red-700">{estado.error}</p>}
+      </div>
+    </form>
+  );
+}
+
 export function BotonEliminarKinesio({
   residenteId,
   tabla,
   id,
 }: {
   residenteId: string;
-  tabla: "evaluacion" | "sesion";
+  tabla: "evaluacion" | "sesion" | "programa";
   id: string;
 }) {
   return (

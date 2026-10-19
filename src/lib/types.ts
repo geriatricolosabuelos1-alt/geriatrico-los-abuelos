@@ -378,6 +378,21 @@ export interface SesionKinesiologia {
   created_at: string;
 }
 
+export interface ProgramaKinesiologia {
+  id: string;
+  residente_id: string;
+  periodo: string;
+  objetivos: string | null;
+  semana_1: string | null;
+  semana_2: string | null;
+  semana_3: string | null;
+  semana_4: string | null;
+  observaciones: string | null;
+  profesional_id: string | null;
+  matricula: string | null;
+  created_at: string;
+}
+
 export interface RetiroResiduoPatogenico {
   id: string;
   sucursal_id: string;

@@ -92,15 +92,54 @@ export async function registrarSesionKinesio(
   return { error: null };
 }
 
+export async function guardarProgramaKinesio(
+  residenteId: string,
+  _estado: Estado,
+  formData: FormData,
+): Promise<Estado> {
+  const supabase = await createClient();
+  const periodo = texto(formData, "periodo");
+  if (!periodo) return { error: "Indicá el período del programa (ej: Oct-Nov-Dic)." };
+
+  const semanas = [1, 2, 3, 4].map((n) => texto(formData, `semana_${n}`));
+  if (semanas.every((s) => s === null)) {
+    return { error: "Cargá las actividades de al menos una semana." };
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { error } = await supabase.from("kinesiologia_programas").insert({
+    residente_id: residenteId,
+    periodo,
+    objetivos: texto(formData, "objetivos"),
+    semana_1: semanas[0],
+    semana_2: semanas[1],
+    semana_3: semanas[2],
+    semana_4: semanas[3],
+    observaciones: texto(formData, "observaciones"),
+    matricula: texto(formData, "matricula"),
+    profesional_id: user?.id ?? null,
+  });
+
+  if (error) return { error: error.message };
+  revalidar(residenteId);
+  return { error: null };
+}
+
+const TABLA_KINESIO = {
+  evaluacion: "kinesiologia_evaluaciones",
+  sesion: "kinesiologia_sesiones",
+  programa: "kinesiologia_programas",
+} as const;
+
 export async function eliminarRegistroKinesio(
   residenteId: string,
-  tabla: "evaluacion" | "sesion",
+  tabla: keyof typeof TABLA_KINESIO,
   registroId: string,
 ): Promise<void> {
   const supabase = await createClient();
-  await supabase
-    .from(tabla === "evaluacion" ? "kinesiologia_evaluaciones" : "kinesiologia_sesiones")
-    .delete()
-    .eq("id", registroId);
+  await supabase.from(TABLA_KINESIO[tabla]).delete().eq("id", registroId);
   revalidar(residenteId);
 }

@@ -9,8 +9,8 @@ type Props = {
   titulo: string;
   subtitulo: string;
   residentes: ResidenteOpcion[];
-  tipo: "evaluacion" | "evolucion";
-  color: "azul" | "ambar";
+  tipo: "evaluacion" | "evolucion" | "programa";
+  color: "azul" | "ambar" | "verde";
 };
 
 const ESTILOS = {
@@ -24,6 +24,11 @@ const ESTILOS = {
     titulo: "text-amber-900",
     boton: "bg-amber-700 hover:bg-amber-600",
   },
+  verde: {
+    tarjeta: "border-emerald-300 bg-emerald-50",
+    titulo: "text-emerald-900",
+    boton: "bg-emerald-700 hover:bg-emerald-600",
+  },
 } as const;
 
 export function TarjetaAccesoKinesio({ titulo, subtitulo, residentes, tipo, color }: Props) {
@@ -33,10 +38,12 @@ export function TarjetaAccesoKinesio({ titulo, subtitulo, residentes, tipo, colo
 
   function ir() {
     if (!seleccionado) return;
-    const destino =
-      tipo === "evaluacion"
-        ? `/residentes/${seleccionado}/kinesiologia?foco=evaluacion#evaluaciones`
-        : `/residentes/${seleccionado}/kinesiologia#sesiones`;
+    const destinos = {
+      evaluacion: `/residentes/${seleccionado}/kinesiologia?foco=evaluacion#evaluaciones`,
+      evolucion: `/residentes/${seleccionado}/kinesiologia#sesiones`,
+      programa: `/residentes/${seleccionado}/kinesiologia#programas`,
+    };
+    const destino = destinos[tipo];
     router.push(destino);
   }
 

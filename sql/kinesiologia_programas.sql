@@ -1,0 +1,27 @@
+-- Kinesiologia: programa mensual de actividades (planilla "Evoluciones Kinesiologia":
+-- objetivos del periodo, actividades por semana, observaciones y firma).
+-- Ejecutar en el SQL Editor de Supabase (proyecto ltgvplcrmmhgyfstrwpn)
+
+create table if not exists public.kinesiologia_programas (
+  id uuid primary key default gen_random_uuid(),
+  residente_id uuid not null references public.residentes(id) on delete cascade,
+  periodo text not null,
+  objetivos text,
+  semana_1 text,
+  semana_2 text,
+  semana_3 text,
+  semana_4 text,
+  observaciones text,
+  profesional_id uuid references public.perfiles(id) on delete set null,
+  matricula text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists idx_kinesio_programas_residente
+  on public.kinesiologia_programas(residente_id, created_at desc);
+
+alter table public.kinesiologia_programas enable row level security;
+
+drop policy if exists "kinesio_programas_all_autenticados" on public.kinesiologia_programas;
+create policy "kinesio_programas_all_autenticados" on public.kinesiologia_programas
+  for all to authenticated using (true) with check (true);

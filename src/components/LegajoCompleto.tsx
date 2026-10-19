@@ -11,6 +11,7 @@ import type {
   FichaMedica,
   InterconsultaCompleta,
   MedicamentoResidente,
+  ProgramaKinesiologia,
   Residente,
   SesionKinesiologia,
   VacunacionResidente,
@@ -45,6 +46,10 @@ function Seccion({ titulo, children }: { titulo: string; children: React.ReactNo
       {children}
     </section>
   );
+}
+
+function enRenglon(texto: string): string {
+  return texto.split("\n").join("; ");
 }
 
 function Campo({ etiqueta, valor }: { etiqueta: string; valor: string | number | null | undefined }) {
@@ -98,6 +103,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
     { data: interconsultas },
     { data: evalKinesio },
     { data: sesionesKinesio },
+    { data: programasKinesio },
     { data: signosVitales },
     { data: movimientosInsumos },
     { data: fichasNutricion },
@@ -140,6 +146,12 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
       .eq("residente_id", residenteId)
       .order("fecha")
       .returns<SesionKinesiologia[]>(),
+    supabase
+      .from("kinesiologia_programas")
+      .select("*")
+      .eq("residente_id", residenteId)
+      .order("created_at")
+      .returns<ProgramaKinesiologia[]>(),
     supabase
       .from("signos_vitales")
       .select("*")
@@ -408,6 +420,23 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
               ]
                 .filter(Boolean)
                 .join(" · ")}
+            </p>
+          </div>
+        ))}
+        {(programasKinesio ?? []).map((p) => (
+          <div key={p.id} className="mb-2 break-inside-avoid">
+            <p className="font-semibold">Programa mensual — {p.periodo}</p>
+            <p className="whitespace-pre-wrap">
+              {[
+                p.objetivos && `Objetivos: ${p.objetivos}`,
+                p.semana_1 && `Semana 1: ${enRenglon(p.semana_1)}`,
+                p.semana_2 && `Semana 2: ${enRenglon(p.semana_2)}`,
+                p.semana_3 && `Semana 3: ${enRenglon(p.semana_3)}`,
+                p.semana_4 && `Semana 4: ${enRenglon(p.semana_4)}`,
+                p.observaciones && `Observaciones: ${p.observaciones}`,
+              ]
+                .filter(Boolean)
+                .join("\n")}
             </p>
           </div>
         ))}

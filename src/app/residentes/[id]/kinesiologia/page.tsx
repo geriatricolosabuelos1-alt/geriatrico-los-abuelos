@@ -6,11 +6,18 @@ import { BotonImprimir } from "@/components/BotonImprimir";
 import {
   BotonEliminarKinesio,
   FormularioEvaluacionKinesio,
+  FormularioProgramaKinesio,
   FormularioSesionKinesio,
 } from "@/components/KinesiologiaClient";
+import { HojaProgramaKinesio } from "@/components/HojaProgramaKinesio";
 import { SubirPdfUnico } from "@/components/SubirPdfUnico";
 import { calcularEdad } from "@/lib/residentes";
-import type { EvaluacionKinesiologia, Perfil, SesionKinesiologia } from "@/lib/types";
+import type {
+  EvaluacionKinesiologia,
+  Perfil,
+  ProgramaKinesiologia,
+  SesionKinesiologia,
+} from "@/lib/types";
 
 type Params = { id: string };
 type SearchParams = { foco?: string };
@@ -46,7 +53,14 @@ export default async function KinesiologiaResidentePage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: perfil }, { data: residente }, { data: evaluaciones }, { data: sesiones }] = await Promise.all([
+  const [
+    { data: perfil },
+    { data: residente },
+    { data: evaluaciones },
+    { data: sesiones },
+    { data: programas },
+    { data: fichaAdm },
+  ] = await Promise.all([
     supabase
       .from("perfiles")
       .select("id, nombre_completo, rol, sucursal_id, activo")
@@ -78,13 +92,30 @@ export default async function KinesiologiaResidentePage({
       .order("fecha", { ascending: false })
       .order("created_at", { ascending: false })
       .returns<SesionKinesiologia[]>(),
+    supabase
+      .from("kinesiologia_programas")
+      .select("*")
+      .eq("residente_id", id)
+      .order("created_at", { ascending: false })
+      .returns<ProgramaKinesiologia[]>(),
+    supabase
+      .from("ficha_administrativa")
+      .select("obra_social")
+      .eq("residente_id", id)
+      .maybeSingle<{ obra_social: string | null }>(),
   ]);
 
   if (!residente || !perfil) notFound();
 
+  const { data: sucursal } = await supabase
+    .from("sucursales")
+    .select("nombre")
+    .eq("id", residente.sucursal_id)
+    .single<{ nombre: string }>();
+
   const idsProfesionales = [
     ...new Set(
-      [...(evaluaciones ?? []), ...(sesiones ?? [])]
+      [...(evaluaciones ?? []), ...(sesiones ?? []), ...(programas ?? [])]
         .map((r) => r.profesional_id)
         .filter((x): x is string => !!x),
     ),
@@ -193,6 +224,29 @@ export default async function KinesiologiaResidentePage({
           ))}
           {(evaluaciones ?? []).length === 0 && (
             <p className="text-sm text-ink-soft">Todavía no tiene evaluación kinésica.</p>
+          )}
+        </section>
+
+<section id="programas" className="scroll-mt-6 space-y-3">
+          <h2 className="font-display text-lg font-semibold text-ink print:text-black">
+            Programas mensuales ({(programas ?? []).length})
+          </h2>
+          <FormularioProgramaKinesio residenteId={id} />
+          {(programas ?? []).map((p) => (
+            <HojaProgramaKinesio
+              key={p.id}
+              programa={p}
+              paciente={`${residente.apellido}, ${residente.nombre}`}
+              edad={edad}
+              dni={residente.dni}
+              obraSocial={fichaAdm?.obra_social ?? null}
+              sede={sucursal?.nombre ?? ""}
+              profesional={p.profesional_id ? nombreProfesional.get(p.profesional_id) ?? null : null}
+              acciones={<BotonEliminarKinesio residenteId={id} tabla="programa" id={p.id} />}
+            />
+          ))}
+          {(programas ?? []).length === 0 && (
+            <p className="text-sm text-ink-soft">Todavía no tiene programa mensual de actividades.</p>
           )}
         </section>
 
