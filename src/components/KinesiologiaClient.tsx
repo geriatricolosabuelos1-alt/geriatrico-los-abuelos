@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState, type FormEvent } from "react";
 import {
   eliminarRegistroKinesio,
   guardarEvaluacionKinesio,
@@ -9,7 +9,36 @@ import {
 } from "@/app/residentes/[id]/kinesiologia/actions";
 
 type Estado = { error: string | null };
-const INICIAL: Estado = { error: null };
+const SIN_ERROR: Estado = { error: null };
+
+// Envío manual en lugar de <form action={...}>: React 19 vacía todos los campos al terminar
+// una acción de formulario, aunque haya dado error, y se perdía lo que la kinesióloga había
+// escrito. Acá los campos solo se limpian cuando el guardado salió bien.
+function useEnvio(
+  guardar: (datos: FormData) => Promise<Estado>,
+  alGuardar: (formulario: HTMLFormElement) => void,
+) {
+  const [error, setError] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+
+  async function enviar(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formulario = e.currentTarget;
+    setEnviando(true);
+    setError(null);
+    try {
+      const resultado = await guardar(new FormData(formulario));
+      if (resultado.error) setError(resultado.error);
+      else alGuardar(formulario);
+    } catch {
+      setError("No se pudo guardar. Revisá la conexión y probá de nuevo: lo que escribiste sigue acá.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return { error, enviando, enviar };
+}
 
 const ETIQUETA_MIN = "mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft";
 const CAMPO =
@@ -53,12 +82,10 @@ export function FormularioEvaluacionKinesio({
   abrirInicial?: boolean;
 }) {
   const [abierto, setAbierto] = useState(abrirInicial);
-  const accion = guardarEvaluacionKinesio.bind(null, residenteId);
-  const [estado, formAction, enviando] = useActionState(async (prev: Estado, fd: FormData) => {
-    const r = await accion(prev, fd);
-    if (!r.error) setAbierto(false);
-    return r;
-  }, INICIAL);
+  const { error, enviando, enviar } = useEnvio(
+    (datos) => guardarEvaluacionKinesio(residenteId, SIN_ERROR, datos),
+    () => setAbierto(false),
+  );
 
   if (!abierto) {
     return (
@@ -74,7 +101,7 @@ export function FormularioEvaluacionKinesio({
 
   return (
     <form
-      action={formAction}
+      onSubmit={enviar}
       className="grid grid-cols-1 gap-3 rounded-2xl border border-edge bg-card p-5 sm:grid-cols-2 lg:grid-cols-4 print:hidden"
     >
       <h3 className="font-display text-base font-semibold text-ink sm:col-span-2 lg:col-span-4">
@@ -151,19 +178,24 @@ export function FormularioEvaluacionKinesio({
         <button type="button" onClick={() => setAbierto(false)} className="text-xs text-ink-soft hover:text-ink">
           Cancelar
         </button>
-        {estado.error && <p className="text-xs text-red-700">{estado.error}</p>}
+        {error && <p className="text-xs text-red-700">{error}</p>}
       </div>
     </form>
   );
 }
 
 export function FormularioSesionKinesio({ residenteId }: { residenteId: string }) {
-  const accion = registrarSesionKinesio.bind(null, residenteId);
-  const [estado, formAction, enviando] = useActionState(accion, INICIAL);
+  const { error, enviando, enviar } = useEnvio(
+    (datos) => registrarSesionKinesio(residenteId, SIN_ERROR, datos),
+    (formulario) => {
+      // Se limpia el texto, pero la fecha y la duración vuelven a sus valores de partida.
+      formulario.reset();
+    },
+  );
 
   return (
     <form
-      action={formAction}
+      onSubmit={enviar}
       className="grid grid-cols-1 gap-3 rounded-lg border border-edge bg-panel-deep p-3 sm:grid-cols-4 print:hidden"
     >
       <div>
@@ -196,7 +228,7 @@ export function FormularioSesionKinesio({ residenteId }: { residenteId: string }
         >
           {enviando ? "Guardando..." : "+ Registrar sesión"}
         </button>
-        {estado.error && <p className="mt-1 text-xs text-red-700">{estado.error}</p>}
+        {error && <p className="mt-1 text-xs text-red-700">{error}</p>}
       </div>
     </form>
   );
@@ -204,12 +236,10 @@ export function FormularioSesionKinesio({ residenteId }: { residenteId: string }
 
 export function FormularioProgramaKinesio({ residenteId }: { residenteId: string }) {
   const [abierto, setAbierto] = useState(false);
-  const accion = guardarProgramaKinesio.bind(null, residenteId);
-  const [estado, formAction, enviando] = useActionState(async (prev: Estado, fd: FormData) => {
-    const r = await accion(prev, fd);
-    if (!r.error) setAbierto(false);
-    return r;
-  }, INICIAL);
+  const { error, enviando, enviar } = useEnvio(
+    (datos) => guardarProgramaKinesio(residenteId, SIN_ERROR, datos),
+    () => setAbierto(false),
+  );
 
   if (!abierto) {
     return (
@@ -225,7 +255,7 @@ export function FormularioProgramaKinesio({ residenteId }: { residenteId: string
 
   return (
     <form
-      action={formAction}
+      onSubmit={enviar}
       className="grid grid-cols-1 gap-3 rounded-2xl border border-edge bg-card p-5 sm:grid-cols-2 print:hidden"
     >
       <h3 className="font-display text-base font-semibold text-ink sm:col-span-2">
@@ -278,7 +308,7 @@ export function FormularioProgramaKinesio({ residenteId }: { residenteId: string
         >
           Cancelar
         </button>
-        {estado.error && <p className="text-xs text-red-700">{estado.error}</p>}
+        {error && <p className="text-xs text-red-700">{error}</p>}
       </div>
     </form>
   );
