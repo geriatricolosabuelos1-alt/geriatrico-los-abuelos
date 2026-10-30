@@ -234,7 +234,13 @@ export function FormularioSesionKinesio({ residenteId }: { residenteId: string }
   );
 }
 
-export function FormularioProgramaKinesio({ residenteId }: { residenteId: string }) {
+export function FormularioProgramaKinesio({
+  residenteId,
+  pinConfigurado,
+}: {
+  residenteId: string;
+  pinConfigurado: boolean;
+}) {
   const [abierto, setAbierto] = useState(false);
   const { error, enviando, enviar } = useEnvio(
     (datos) => guardarProgramaKinesio(residenteId, SIN_ERROR, datos),
@@ -293,13 +299,31 @@ export function FormularioProgramaKinesio({ residenteId }: { residenteId: string
         <label className={ETIQUETA_MIN}>Matrícula</label>
         <input name="matricula" className={CAMPO} />
       </div>
+      <div>
+        <label
+          className={ETIQUETA_MIN}
+          title={pinConfigurado ? "Ingresá tu PIN para firmar" : "Primera vez: elegí un PIN de 4 a 6 dígitos"}
+        >
+          {pinConfigurado ? "PIN de seguridad" : "Configurá tu PIN (primera vez)"}
+        </label>
+        <input
+          type="password"
+          inputMode="numeric"
+          name="pin"
+          required
+          minLength={4}
+          maxLength={6}
+          autoComplete="off"
+          className={CAMPO}
+        />
+      </div>
       <div className="flex items-end gap-3 sm:col-span-2">
         <button
           type="submit"
           disabled={enviando}
           className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
         >
-          {enviando ? "Guardando..." : "Guardar programa"}
+          {enviando ? "Guardando..." : "Firmar y guardar programa"}
         </button>
         <button
           type="button"

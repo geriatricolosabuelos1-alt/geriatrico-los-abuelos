@@ -91,6 +91,9 @@ export function HojaProgramaKinesio({
         <div className="print:hidden">{acciones}</div>
         <div className="ml-auto min-w-[14rem] border-t border-ink-soft/60 pt-1 text-center text-xs text-ink print:border-neutral-500 print:text-black">
           <p className="font-semibold">{profesional ?? "Licenciado/a en Kinesiología"}</p>
+          <p className="text-[0.65rem] text-ink-soft print:text-neutral-600">
+            Firmado con PIN el {new Date(programa.created_at).toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}
+          </p>
           <p>Licenciado/a en Kinesiología{programa.matricula ? ` · Matrícula N° ${programa.matricula}` : ""}</p>
         </div>
       </footer>

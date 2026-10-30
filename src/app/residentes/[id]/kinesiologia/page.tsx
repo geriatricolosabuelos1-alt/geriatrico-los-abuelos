@@ -12,6 +12,7 @@ import {
 import { HojaProgramaKinesio } from "@/components/HojaProgramaKinesio";
 import { SubirPdfUnico } from "@/components/SubirPdfUnico";
 import { calcularEdad } from "@/lib/residentes";
+import { tienePinConfigurado } from "@/app/residentes/[id]/accion-medica/actions";
 import type {
   EvaluacionKinesiologia,
   Perfil,
@@ -60,6 +61,7 @@ export default async function KinesiologiaResidentePage({
     { data: sesiones },
     { data: programas },
     { data: fichaAdm },
+    pinConfigurado,
   ] = await Promise.all([
     supabase
       .from("perfiles")
@@ -103,6 +105,7 @@ export default async function KinesiologiaResidentePage({
       .select("obra_social")
       .eq("residente_id", id)
       .maybeSingle<{ obra_social: string | null }>(),
+    tienePinConfigurado(),
   ]);
 
   if (!residente || !perfil) notFound();
@@ -231,7 +234,7 @@ export default async function KinesiologiaResidentePage({
           <h2 className="font-display text-lg font-semibold text-ink print:text-black">
             Programas mensuales ({(programas ?? []).length})
           </h2>
-          <FormularioProgramaKinesio residenteId={id} />
+          <FormularioProgramaKinesio residenteId={id} pinConfigurado={pinConfigurado} />
           {(programas ?? []).map((p) => (
             <HojaProgramaKinesio
               key={p.id}

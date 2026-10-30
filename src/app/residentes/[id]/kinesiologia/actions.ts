@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { validarOConfigurarPin } from "@/app/residentes/[id]/accion-medica/actions";
 
 type Estado = { error: string | null };
 
@@ -105,6 +106,11 @@ export async function guardarProgramaKinesio(
   if (semanas.every((s) => s === null)) {
     return { error: "Cargá las actividades de al menos una semana." };
   }
+
+  // Firma con PIN, igual que los médicos: se valida al final de los controles del formulario
+  // para no gastar un intento de PIN si falta algún dato.
+  const validacionPin = await validarOConfigurarPin(String(formData.get("pin") ?? ""));
+  if (validacionPin.error) return { error: validacionPin.error };
 
   const {
     data: { user },
