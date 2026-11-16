@@ -159,8 +159,8 @@ export default async function FacturacionPage({
                       <td className="py-2 pr-3 whitespace-nowrap text-xs text-ink-soft">
                         {formatearFecha(f.periodo_desde)} al {formatearFecha(f.periodo_hasta)}
                       </td>
-                      <td className="py-2 pr-3 text-xs text-ink-soft">
-                        {f.detalle.map((l) => l.descripcion).join(" · ")}
+                      <td className="max-w-xs py-2 pr-3 text-xs text-ink-soft">
+                        <p className="line-clamp-3">{f.detalle.map((l) => l.descripcion).join(" · ")}</p>
                       </td>
                       <td className="py-2 pr-3 whitespace-nowrap text-right font-medium text-ink">
                         {formatearImporte(f.importe)}

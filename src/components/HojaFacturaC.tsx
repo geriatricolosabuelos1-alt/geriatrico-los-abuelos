@@ -98,8 +98,8 @@ export function HojaFacturaC({ f, volver }: { f: DatosHojaFacturaC; volver?: Rea
             <tbody>
               {f.lineas.map((linea, indice) => (
                 <tr key={indice}>
-                  <td className="py-3 text-ink print:text-black">{linea.descripcion}</td>
-                  <td className="py-3 text-right font-medium text-ink print:text-black">
+                  <td className="whitespace-pre-line py-3 text-ink print:text-black">{linea.descripcion}</td>
+                  <td className="py-3 pl-4 text-right align-top font-medium whitespace-nowrap text-ink print:text-black">
                     {formatearImporte(linea.importe)}
                   </td>
                 </tr>
