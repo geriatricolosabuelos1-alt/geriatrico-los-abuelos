@@ -15,6 +15,8 @@ export type FacturaCInput = {
   concepto?: number;
   servDesde?: string;
   servHasta?: string;
+  // Fecha del comprobante (AAAAMMDD); por defecto, hoy. ARCA admite hasta 10 días antes o después para servicios.
+  fecha?: string;
 };
 
 export type FacturaCResultado = {
@@ -87,7 +89,7 @@ export async function solicitarCAE(
   const cbteTipo = 11; // Factura C
   const ultimo = await obtenerUltimoAutorizado(auth, input.ptoVta, cbteTipo);
   const nuevoNro = ultimo + 1;
-  const fecha = todayArca();
+  const fecha = input.fecha ?? todayArca();
   const concepto = input.concepto ?? 2; // 2 = Servicios
   const importeRedondeado = Math.round(input.importe * 100) / 100;
   const servDesde = input.servDesde ?? fecha;
