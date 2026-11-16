@@ -9,7 +9,7 @@ import { documentoReceptor, numeroFacturaC, type FacturaExterna } from "@/lib/fa
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
-type SearchParams = { mes?: string };
+type SearchParams = { mes?: string; q?: string; tipo?: string; desde?: string; hasta?: string };
 
 const NOMBRES_MES = [
   "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
@@ -51,6 +51,32 @@ type FilaRegistro = {
   href: string;
 };
 
+const FECHA_ISO = /^\d{4}-\d{2}-\d{2}$/;
+
+// Minúsculas y sin acentos, para buscar sin importar cómo se escribió.
+function normalizar(texto: string): string {
+  return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function soloDigitos(texto: string): string {
+  return texto.replace(/\D/g, "");
+}
+
+// Todas las palabras buscadas tienen que aparecer (nombre, documento, número de factura o detalle).
+// Los números se comparan sin guiones ni espacios: "20-1234" encuentra "20123456789".
+function coincide(fila: FilaRegistro, busqueda: string): boolean {
+  const numero = numeroFacturaC(fila.ptoVta, fila.cbteNro);
+  const texto = normalizar([fila.nombre, fila.documento, numero, fila.detalle].join(" "));
+  const numeros = [fila.documento, numero].map(soloDigitos).join(" ");
+  return normalizar(busqueda)
+    .split(/\s+/)
+    .filter(Boolean)
+    .every((p) => texto.includes(p) || (soloDigitos(p).length >= 3 && numeros.includes(soloDigitos(p))));
+}
+
+const CAMPO_FILTRO =
+  "rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none";
+
 function formatearFecha(fecha: string): string {
   const [a, m, d] = fecha.split("-");
   return `${d}/${m}/${a}`;
@@ -69,11 +95,31 @@ export default async function FacturacionPage({
   searchParams: Promise<SearchParams>;
 }) {
   const { id } = await params;
-  const { mes } = await searchParams;
+  const sp = await searchParams;
   const hoy = hoyArgentina();
-  const periodo = mes && /^\d{4}-\d{2}$/.test(mes) ? mes : hoy.slice(0, 7);
-  const desde = `${periodo}-01`;
-  const hasta = `${sumarMes(periodo, 1)}-01`;
+  const periodo = sp.mes && /^\d{4}-\d{2}$/.test(sp.mes) ? sp.mes : hoy.slice(0, 7);
+  const busqueda = (sp.q ?? "").trim();
+  const tipo = sp.tipo === "residente" || sp.tipo === "externa" ? sp.tipo : "todos";
+  const filtroDesde = sp.desde && FECHA_ISO.test(sp.desde) ? sp.desde : "";
+  const filtroHasta = sp.hasta && FECHA_ISO.test(sp.hasta) ? sp.hasta : "";
+  // Con fechas elegidas se usa ese rango; si solo se busca texto, se busca en todas las fechas;
+  // sin filtros se ve el mes.
+  const porRango = !!(filtroDesde || filtroHasta);
+  const porMes = !porRango && !busqueda;
+  const desde = porMes ? `${periodo}-01` : filtroDesde || null;
+  const hastaExclusivo = porMes ? `${sumarMes(periodo, 1)}-01` : null;
+  const hastaInclusivo = porMes ? null : filtroHasta || null;
+  const hayFiltros = !porMes || tipo !== "todos";
+
+  function enRango<T extends { gte: (c: string, v: string) => T; lt: (c: string, v: string) => T; lte: (c: string, v: string) => T }>(
+    consulta: T,
+  ): T {
+    let q = consulta;
+    if (desde) q = q.gte("fecha_emision", desde);
+    if (hastaExclusivo) q = q.lt("fecha_emision", hastaExclusivo);
+    if (hastaInclusivo) q = q.lte("fecha_emision", hastaInclusivo);
+    return q;
+  }
 
   const supabase = await createClient();
   const {
@@ -87,15 +133,9 @@ export default async function FacturacionPage({
       .eq("id", user!.id)
       .single<Perfil>(),
     supabase.from("sucursales").select("id, nombre").eq("id", id).single<{ id: string; nombre: string }>(),
-    supabase
-      .from("facturas_externas")
-      .select("*")
-      .eq("sucursal_id", id)
-      .gte("fecha_emision", desde)
-      .lt("fecha_emision", hasta)
-      .order("fecha_emision", { ascending: false })
-      .order("cbte_nro", { ascending: false })
-      .returns<FacturaExterna[]>(),
+    tipo === "residente"
+      ? Promise.resolve({ data: [] as FacturaExterna[] })
+      : enRango(supabase.from("facturas_externas").select("*").eq("sucursal_id", id)).returns<FacturaExterna[]>(),
     // Solo el CUIT público de la sede, sin certificado ni clave.
     clienteArca().then((arca) =>
       arca
@@ -104,14 +144,14 @@ export default async function FacturacionPage({
         .eq("sucursal_id", id)
         .maybeSingle<{ cuit: string; activo: boolean }>(),
     ),
-    supabase
+    tipo === "externa"
+      ? Promise.resolve({ data: [] as FacturaResidente[] })
+      : enRango(supabase
       .from("facturas_arca")
       .select(
         "id, pto_vta, cbte_nro, importe, fecha_emision, doc_tipo, doc_nro, periodo_desde, periodo_hasta, detalle, residentes(nombre, apellido)",
       )
-      .eq("sucursal_id", id)
-      .gte("fecha_emision", desde)
-      .lt("fecha_emision", hasta)
+      .eq("sucursal_id", id))
       .returns<FacturaResidente[]>(),
   ]);
 
@@ -151,7 +191,9 @@ export default async function FacturacionPage({
         href: `/sucursales/${id}/facturacion/residente/${f.id}`,
       }),
     ),
-  ].sort((a, b) => b.fecha.localeCompare(a.fecha) || b.cbteNro - a.cbteNro);
+  ]
+    .filter((f) => !busqueda || coincide(f, busqueda))
+    .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.cbteNro - a.cbteNro);
   const total = lista.reduce((acc, f) => acc + f.importe, 0);
   const totalResidentes = lista.filter((f) => f.tipo === "residente").reduce((acc, f) => acc + f.importe, 0);
   const totalExternas = total - totalResidentes;
@@ -180,11 +222,55 @@ export default async function FacturacionPage({
           </p>
         )}
 
-        <section className="space-y-3 rounded-2xl border border-edge bg-card p-6">
+        <section className="space-y-4 rounded-2xl border border-edge bg-card p-6">
+          <form className="flex flex-wrap items-end gap-3 border-b border-edge pb-4">
+            {porMes && <input type="hidden" name="mes" value={periodo} />}
+            <label className="min-w-56 flex-1 text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+              Buscar
+              <input
+                name="q"
+                defaultValue={busqueda}
+                placeholder="Nombre, CUIT/CUIL/DNI, Nº de factura o detalle"
+                className={`${CAMPO_FILTRO} mt-1 w-full font-normal normal-case tracking-normal`}
+              />
+            </label>
+            <label className="text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+              Tipo
+              <select name="tipo" defaultValue={tipo} className={`${CAMPO_FILTRO} mt-1 block font-normal normal-case`}>
+                <option value="todos">Todas</option>
+                <option value="residente">Residentes</option>
+                <option value="externa">Servicios externos</option>
+              </select>
+            </label>
+            <label className="text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+              Desde
+              <input type="date" name="desde" defaultValue={filtroDesde} className={`${CAMPO_FILTRO} mt-1 block font-normal`} />
+            </label>
+            <label className="text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+              Hasta
+              <input type="date" name="hasta" defaultValue={filtroHasta} className={`${CAMPO_FILTRO} mt-1 block font-normal`} />
+            </label>
+            <button
+              type="submit"
+              className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90"
+            >
+              Filtrar
+            </button>
+            {hayFiltros && (
+              <Link
+                href={`/sucursales/${id}/facturacion`}
+                className="py-2 text-sm text-ink-soft underline underline-offset-2 hover:text-ink"
+              >
+                Limpiar
+              </Link>
+            )}
+          </form>
+
           <div className="flex flex-wrap items-center justify-between gap-3">
+            {porMes ? (
             <div className="flex items-center gap-3">
               <Link
-                href={`/sucursales/${id}/facturacion?mes=${sumarMes(periodo, -1)}`}
+                href={`/sucursales/${id}/facturacion?mes=${sumarMes(periodo, -1)}${tipo !== "todos" ? `&tipo=${tipo}` : ""}`}
                 className="rounded-lg border border-edge px-3 py-1.5 text-sm text-ink-soft hover:text-ink"
               >
                 ←
@@ -193,12 +279,22 @@ export default async function FacturacionPage({
                 {NOMBRES_MES[numMes - 1]} {anio}
               </h2>
               <Link
-                href={`/sucursales/${id}/facturacion?mes=${sumarMes(periodo, 1)}`}
+                href={`/sucursales/${id}/facturacion?mes=${sumarMes(periodo, 1)}${tipo !== "todos" ? `&tipo=${tipo}` : ""}`}
                 className="rounded-lg border border-edge px-3 py-1.5 text-sm text-ink-soft hover:text-ink"
               >
                 →
               </Link>
             </div>
+            ) : (
+              <h2 className="font-display text-lg font-semibold text-ink">
+                Resultados
+                <span className="ml-2 text-sm font-normal text-ink-soft">
+                  {filtroDesde || filtroHasta
+                    ? `${filtroDesde ? `desde ${formatearFecha(filtroDesde)}` : ""} ${filtroHasta ? `hasta ${formatearFecha(filtroHasta)}` : ""}`
+                    : "todas las fechas"}
+                </span>
+              </h2>
+            )}
             <div className="text-right text-sm text-ink-soft">
               <p>
                 {lista.length} factura{lista.length === 1 ? "" : "s"} ·{" "}
@@ -211,7 +307,7 @@ export default async function FacturacionPage({
           </div>
 
           {lista.length === 0 ? (
-            <p className="py-6 text-center text-sm text-ink-soft">No hay facturas emitidas en este mes.</p>
+            <p className="py-6 text-center text-sm text-ink-soft">{porMes ? "No hay facturas emitidas en este mes." : "No hay facturas que coincidan con la búsqueda."}</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
