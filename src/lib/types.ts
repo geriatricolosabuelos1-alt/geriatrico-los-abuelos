@@ -290,6 +290,8 @@ export interface RecetaMedicamento {
   residente_id: string;
   medicamento_id: string | null;
   medicamento_texto?: string | null;
+  // Cuánto se pide (ej: "2 cajas", "60 comprimidos").
+  cantidad?: string | null;
   obra_social: string | null;
   estado: EstadoReceta;
   fecha_pedido: string | null;

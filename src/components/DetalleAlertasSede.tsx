@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { hrefPedirReceta } from "@/lib/recetas";
 import type { AlertaMedicacionResumen, ResumenSucursalDashboard } from "@/lib/dashboard";
 
 const ESTILO_NIVEL: Record<string, string> = {
@@ -64,7 +65,15 @@ export function DetalleAlertasSede({
                 <li key={a.id} className="flex items-center justify-between gap-2 text-sm">
                   <div>
                     <p className="font-medium text-ink">{a.medicamentoNombre}</p>
-                    <p className="text-xs text-ink-soft">{a.residenteNombre}</p>
+                    <p className="text-xs text-ink-soft">
+                      {a.residenteNombre} ·{" "}
+                      <Link
+                        href={hrefPedirReceta(sucursalId, a.residenteId, a.medicamentoNombre)}
+                        className="font-semibold text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                      >
+                        Pedir receta →
+                      </Link>
+                    </p>
                   </div>
                   <span
                     className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold ${ESTILO_NIVEL[a.nivel]} ${

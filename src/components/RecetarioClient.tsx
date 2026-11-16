@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   actualizarEstadoReceta,
   crearReceta,
@@ -35,6 +36,8 @@ type Props = {
   residentes: ResidenteConMeds[];
   recetas: RecetaConNombres[];
   puedeEliminar: boolean;
+  // Viene de una alerta de stock: residente y medicamento ya elegidos, falta la cantidad.
+  pedidoDesdeAlerta?: { residenteId: string; medicamento: string } | null;
 };
 
 const ESTADO_INICIAL: RecetaEstado = { error: null };
@@ -72,14 +75,22 @@ function FormularioNuevaReceta({
   sucursalId,
   residentes,
   nombresPedidos,
+  inicial,
 }: {
   sucursalId: string;
   residentes: ResidenteConMeds[];
   nombresPedidos: string[];
+  inicial?: { residenteId: string; medicamento: string } | null;
 }) {
-  const accionConId = crearReceta.bind(null, sucursalId);
-  const [estado, formAction, enviando] = useActionState(accionConId, ESTADO_INICIAL);
-  const [residenteId, setResidenteId] = useState("");
+  const router = useRouter();
+  // Si vino desde una alerta, después de agregarla se vuelve al recetario sin el pedido precargado.
+  const accion = async (previo: RecetaEstado, datos: FormData) => {
+    const resultado = await crearReceta(sucursalId, previo, datos);
+    if (!resultado.error && inicial) router.replace(`/sucursales/${sucursalId}/medicacion/recetario`);
+    return resultado;
+  };
+  const [estado, formAction, enviando] = useActionState(accion, ESTADO_INICIAL);
+  const [residenteId, setResidenteId] = useState(inicial?.residenteId ?? "");
 
   const medicamentosDelResidente =
     residentes.find((r) => r.id === residenteId)?.medicamentos_residente.filter((m) => m.activo) ?? [];
@@ -96,8 +107,15 @@ function FormularioNuevaReceta({
   return (
     <form
       action={formAction}
-      className="flex flex-wrap items-end gap-3 rounded-2xl border border-edge bg-card p-4"
+      className={`flex flex-wrap items-end gap-3 rounded-2xl border bg-card p-4 ${
+        inicial ? "border-brass ring-2 ring-brass/30" : "border-edge"
+      }`}
     >
+      {inicial && (
+        <p className="w-full text-sm font-semibold text-brass">
+          Pedido desde la alerta de stock: completá la cantidad y agregá la receta.
+        </p>
+      )}
       <div>
         <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
           Residente
@@ -123,6 +141,7 @@ function FormularioNuevaReceta({
         </label>
         <input
           name="medicamento"
+          defaultValue={inicial?.medicamento ?? ""}
           list="medicamentos-receta"
           autoComplete="off"
           placeholder="Escribí o elegí..."
@@ -133,6 +152,18 @@ function FormularioNuevaReceta({
             <option key={nombre} value={nombre} />
           ))}
         </datalist>
+      </div>
+      <div>
+        <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+          Cantidad
+        </label>
+        <input
+          name="cantidad"
+          required={!!inicial}
+          autoFocus={!!inicial}
+          placeholder="Ej: 2 cajas"
+          className="w-28 rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink placeholder:text-ink-soft/60 focus:border-brass focus:outline-none"
+        />
       </div>
       <div>
         <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
@@ -218,6 +249,7 @@ function FilaReceta({
       numeroAfiliado: receta.numero_afiliado,
       medicamento: receta.medicamento_nombre,
       detalleMedicamento: receta.medicamento_detalle,
+      cantidad: receta.cantidad,
     });
     window.open(`https://wa.me/${telefono}?text=${encodeURIComponent(texto)}`, "_blank", "noopener");
     if (receta.estado === "pendiente_pedir") {
@@ -231,6 +263,7 @@ function FilaReceta({
     <tr className="border-t border-edge">
       <td className="px-3 py-2 text-sm text-ink">{receta.residente_nombre}</td>
       <td className="px-3 py-2 text-sm text-ink-soft">{receta.medicamento_nombre ?? "General"}</td>
+      <td className="px-3 py-2 text-sm text-ink">{receta.cantidad ?? "—"}</td>
       <td className="px-3 py-2 text-sm text-ink-soft">{receta.obra_social ?? "—"}</td>
       <td className="px-3 py-2">
         <div className="flex flex-wrap gap-1">
@@ -297,13 +330,21 @@ function FilaReceta({
   );
 }
 
-export function RecetarioClient({ sucursalId, nombreSede, residentes, recetas, puedeEliminar }: Props) {
+export function RecetarioClient({
+  sucursalId,
+  nombreSede,
+  residentes,
+  recetas,
+  puedeEliminar,
+  pedidoDesdeAlerta,
+}: Props) {
   return (
     <div className="space-y-4">
       <FormularioNuevaReceta
         sucursalId={sucursalId}
         residentes={residentes}
         nombresPedidos={recetas.map((r) => r.medicamento_nombre).filter((n): n is string => !!n)}
+        inicial={pedidoDesdeAlerta}
       />
 
       <div className="overflow-x-auto rounded-2xl border border-edge bg-card">
@@ -312,6 +353,7 @@ export function RecetarioClient({ sucursalId, nombreSede, residentes, recetas, p
             <tr className="text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
               <th className="px-3 py-2">Residente</th>
               <th className="px-3 py-2">Medicamento</th>
+              <th className="px-3 py-2">Cantidad</th>
               <th className="px-3 py-2">Obra social</th>
               <th className="px-3 py-2">Estado</th>
               <th className="px-3 py-2">Notas</th>
@@ -330,7 +372,7 @@ export function RecetarioClient({ sucursalId, nombreSede, residentes, recetas, p
             ))}
             {recetas.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-sm text-ink-soft">
+                <td colSpan={7} className="px-3 py-6 text-center text-sm text-ink-soft">
                   Sin recetas registradas.
                 </td>
               </tr>

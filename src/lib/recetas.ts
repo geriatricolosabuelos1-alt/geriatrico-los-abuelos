@@ -76,6 +76,7 @@ export function mensajePedidoReceta(datos: {
   numeroAfiliado: string | null;
   medicamento: string | null;
   detalleMedicamento: string | null;
+  cantidad?: string | null;
 }): string {
   const saludo = datos.contacto ? `Hola ${datos.contacto.trim()}` : "Hola";
   const que = datos.medicamento ? `la receta de ${datos.medicamento}` : "una receta";
@@ -86,6 +87,7 @@ export function mensajePedidoReceta(datos: {
     ["N° de afiliado", datos.numeroAfiliado],
     ["Medicamento", datos.medicamento],
     ["Detalle", datos.detalleMedicamento],
+    ["Cantidad", datos.cantidad ?? null],
   ];
   return [
     `${saludo}, te escribimos de la residencia ${nombreSede(datos.sede)}. Necesitamos que nos hagas llegar ${que} para ${datos.residente}. Muchas gracias`,
@@ -93,4 +95,9 @@ export function mensajePedidoReceta(datos: {
     "*Datos para la receta:*",
     ...datosReceta.filter(([, valor]) => valor && valor.trim()).map(([etiqueta, valor]) => `• ${etiqueta}: ${valor!.trim()}`),
   ].join("\n");
+}
+
+// Lleva al recetario con el residente y el medicamento ya cargados; solo falta la cantidad.
+export function hrefPedirReceta(sucursalId: string, residenteId: string, medicamento: string): string {
+  return `/sucursales/${sucursalId}/medicacion/recetario?residente=${residenteId}&medicamento=${encodeURIComponent(medicamento)}`;
 }
