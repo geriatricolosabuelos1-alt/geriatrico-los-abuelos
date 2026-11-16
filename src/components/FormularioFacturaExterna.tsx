@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { emitirFacturaExterna } from "@/app/sucursales/[id]/facturacion/actions";
+import { buscarContribuyente, emitirFacturaExterna } from "@/app/sucursales/[id]/facturacion/actions";
 import type {
   CondicionIva,
   CondicionVenta,
   MedioPagoFactura,
 } from "@/app/sucursales/[id]/cuotas/arca-actions";
-import type { TipoDocExterno } from "@/lib/facturacion";
+import { cuitValido, type TipoDocExterno } from "@/lib/facturacion";
 
 type LineaForm = { descripcion: string; importe: string };
 
@@ -56,6 +56,28 @@ export function FormularioFacturaExterna({
   const [condicionVenta, setCondicionVenta] = useState<CondicionVenta>("contado");
   const [medioPago, setMedioPago] = useState<MedioPagoFactura | "">("");
   const [lineas, setLineas] = useState<LineaForm[]>([{ descripcion: "", importe: "" }]);
+  const [buscando, setBuscando] = useState(false);
+  const [avisoPadron, setAvisoPadron] = useState<string | null>(null);
+  const [ultimoBuscado, setUltimoBuscado] = useState("");
+  const [nombreDeArca, setNombreDeArca] = useState("");
+
+  // Con el CUIT/CUIL completo, trae de ARCA el nombre o la razón social.
+  async function buscarEnArca(valor: string, tipo: TipoDocExterno) {
+    const limpio = valor.replace(/\D/g, "");
+    if (tipo === "dni" || !cuitValido(limpio) || limpio === ultimoBuscado) return;
+    setUltimoBuscado(limpio);
+    setBuscando(true);
+    setAvisoPadron(null);
+    const r = await buscarContribuyente(sucursalId, limpio);
+    setBuscando(false);
+    if (r.nombre) {
+      // No pisa un nombre escrito a mano; sí reemplaza uno traído antes de ARCA.
+      if (!receptorNombre.trim() || receptorNombre === nombreDeArca) setReceptorNombre(r.nombre);
+      setNombreDeArca(r.nombre);
+    } else {
+      setAvisoPadron(r.error);
+    }
+  }
 
   const total = lineas.reduce((acc, l) => acc + (Number(l.importe) || 0), 0);
 
@@ -132,15 +154,6 @@ export function FormularioFacturaExterna({
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="sm:col-span-3">
-          <label className={ETIQUETA}>A nombre de (persona o empresa)</label>
-          <input
-            value={receptorNombre}
-            onChange={(e) => setReceptorNombre(e.target.value)}
-            placeholder="Apellido y nombre / Razón social"
-            className={CAMPO}
-          />
-        </div>
         <div>
           <label className={ETIQUETA}>Tipo de documento</label>
           <select
@@ -161,7 +174,11 @@ export function FormularioFacturaExterna({
           <label className={ETIQUETA}>{tipoDoc.toUpperCase()}</label>
           <input
             value={docNro}
-            onChange={(e) => setDocNro(e.target.value)}
+            onChange={(e) => {
+              setDocNro(e.target.value);
+              if (e.target.value.replace(/\D/g, "").length === 11) buscarEnArca(e.target.value, tipoDoc);
+            }}
+            onBlur={(e) => buscarEnArca(e.target.value, tipoDoc)}
             placeholder={tipoDoc === "dni" ? "12345678" : "20-12345678-9"}
             inputMode="numeric"
             className={CAMPO}
@@ -179,6 +196,19 @@ export function FormularioFacturaExterna({
             <option value="exento">Exento</option>
             <option value="consumidor_final">Consumidor Final</option>
           </select>
+        </div>
+        <div className="sm:col-span-3">
+          <label className={ETIQUETA}>A nombre de (persona o empresa)</label>
+          <input
+            value={receptorNombre}
+            onChange={(e) => setReceptorNombre(e.target.value)}
+            placeholder={
+              tipoDoc === "dni" ? "Apellido y nombre" : "Se completa solo al poner el CUIT/CUIL, o escribilo"
+            }
+            className={CAMPO}
+          />
+          {buscando && <p className="mt-1 text-xs text-ink-soft">Buscando en ARCA...</p>}
+          {!buscando && avisoPadron && <p className="mt-1 text-xs text-amber-700">{avisoPadron}</p>}
         </div>
       </div>
 
