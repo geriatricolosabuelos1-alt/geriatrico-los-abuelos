@@ -53,3 +53,8 @@ create table if not exists public.arca_tokens_padron (
 alter table public.arca_tokens_padron enable row level security;
 create policy arca_tokens_padron_admin_only on public.arca_tokens_padron for all to authenticated
   using (mi_rol() = 'admin') with check (mi_rol() = 'admin');
+
+-- Las facturas de residentes se conservan aunque se borre el pago (antes se borraban en cascada).
+alter table public.facturas_arca alter column pago_id drop not null;
+alter table public.facturas_arca drop constraint facturas_arca_pago_id_fkey,
+  add constraint facturas_arca_pago_id_fkey foreign key (pago_id) references public.pagos(id) on delete set null;
