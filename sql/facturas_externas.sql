@@ -40,3 +40,16 @@ create policy facturas_externas_escribir on public.facturas_externas for insert 
 
 create trigger zz_auditar after insert or delete or update on public.facturas_externas
   for each row execute function fn_auditar();
+
+-- Token de ARCA para la consulta de padrón A13 (nombre / razón social por CUIT o CUIL).
+-- Igual que arca_tokens: lo maneja el servidor con la llave de servicio.
+create table if not exists public.arca_tokens_padron (
+  sucursal_id uuid primary key references public.sucursales(id) on delete cascade,
+  token text not null,
+  sign text not null,
+  expiration timestamptz not null,
+  updated_at timestamptz not null default now()
+);
+alter table public.arca_tokens_padron enable row level security;
+create policy arca_tokens_padron_admin_only on public.arca_tokens_padron for all to authenticated
+  using (mi_rol() = 'admin') with check (mi_rol() = 'admin');

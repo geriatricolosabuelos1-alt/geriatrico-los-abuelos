@@ -36,9 +36,18 @@ function signTRA(tra: string, cert: string, key: string): string {
   return forge.util.encode64(der);
 }
 
+// Servicios de ARCA: facturación electrónica y consulta de padrón (nombre / razón social por CUIT o CUIL).
+export type ServicioArca = "wsfe" | "ws_sr_padron_a13";
+
+const TABLA_TOKENS: Record<ServicioArca, string> = {
+  wsfe: "arca_tokens",
+  ws_sr_padron_a13: "arca_tokens_padron",
+};
+
 async function loginWSAA(
   cert: string,
   key: string,
+  servicio: ServicioArca,
 ): Promise<{ token: string; sign: string; expiration: Date }> {
   const now = new Date();
   const gen = new Date(now.getTime() - 10 * 60 * 1000);
@@ -52,7 +61,7 @@ async function loginWSAA(
     <generationTime>${formatArgDate(gen)}</generationTime>
     <expirationTime>${formatArgDate(exp)}</expirationTime>
   </header>
-  <service>wsfe</service>
+  <service>${servicio}</service>
 </loginTicketRequest>`;
 
   const cms = signTRA(tra, cert, key);
@@ -95,11 +104,13 @@ export async function obtenerCredencialesArca(
   sucursalId: string,
   cert: string,
   key: string,
+  servicio: ServicioArca = "wsfe",
 ): Promise<{ token: string; sign: string }> {
   const supabase = await clienteArca();
+  const tabla = TABLA_TOKENS[servicio];
 
   const { data: cached } = await supabase
-    .from("arca_tokens")
+    .from(tabla)
     .select("token, sign, expiration")
     .eq("sucursal_id", sucursalId)
     .maybeSingle<{ token: string; sign: string; expiration: string }>();
@@ -109,9 +120,9 @@ export async function obtenerCredencialesArca(
     return { token: cached.token, sign: cached.sign };
   }
 
-  const { token, sign, expiration } = await loginWSAA(cert, key);
+  const { token, sign, expiration } = await loginWSAA(cert, key, servicio);
 
-  await supabase.from("arca_tokens").upsert(
+  await supabase.from(tabla).upsert(
     {
       sucursal_id: sucursalId,
       token,
