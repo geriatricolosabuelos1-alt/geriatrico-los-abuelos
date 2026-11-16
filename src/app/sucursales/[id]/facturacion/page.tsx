@@ -22,6 +22,35 @@ function sumarMes(periodo: string, delta: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
+type FacturaResidente = {
+  id: string;
+  pto_vta: number;
+  cbte_nro: number;
+  importe: number;
+  fecha_emision: string;
+  doc_tipo: number;
+  doc_nro: string;
+  periodo_desde: string | null;
+  periodo_hasta: string | null;
+  detalle: { descripcion: string; importe: number }[] | null;
+  residentes: { nombre: string; apellido: string } | null;
+};
+
+// Una fila del registro: factura de arancel de un residente o de un servicio externo.
+type FilaRegistro = {
+  clave: string;
+  tipo: "residente" | "externa";
+  fecha: string;
+  ptoVta: number;
+  cbteNro: number;
+  nombre: string;
+  documento: string;
+  periodo: string;
+  detalle: string;
+  importe: number;
+  href: string;
+};
+
 function formatearFecha(fecha: string): string {
   const [a, m, d] = fecha.split("-");
   return `${d}/${m}/${a}`;
@@ -51,7 +80,7 @@ export default async function FacturacionPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: perfil }, { data: sucursal }, { data: facturas }, { data: config }] = await Promise.all([
+  const [{ data: perfil }, { data: sucursal }, { data: facturas }, { data: config }, { data: deResidentes }] = await Promise.all([
     supabase
       .from("perfiles")
       .select("id, nombre_completo, rol, sucursal_id, activo")
@@ -75,12 +104,57 @@ export default async function FacturacionPage({
         .eq("sucursal_id", id)
         .maybeSingle<{ cuit: string; activo: boolean }>(),
     ),
+    supabase
+      .from("facturas_arca")
+      .select(
+        "id, pto_vta, cbte_nro, importe, fecha_emision, doc_tipo, doc_nro, periodo_desde, periodo_hasta, detalle, residentes(nombre, apellido)",
+      )
+      .eq("sucursal_id", id)
+      .gte("fecha_emision", desde)
+      .lt("fecha_emision", hasta)
+      .returns<FacturaResidente[]>(),
   ]);
 
   if (!sucursal || !perfil) notFound();
 
-  const lista = facturas ?? [];
-  const total = lista.reduce((acc, f) => acc + Number(f.importe), 0);
+  const lista: FilaRegistro[] = [
+    ...(facturas ?? []).map(
+      (f): FilaRegistro => ({
+        clave: `e-${f.id}`,
+        tipo: "externa",
+        fecha: f.fecha_emision,
+        ptoVta: f.pto_vta,
+        cbteNro: f.cbte_nro,
+        nombre: f.receptor_nombre,
+        documento: documentoReceptor(f.doc_tipo, f.doc_nro),
+        periodo: `${formatearFecha(f.periodo_desde)} al ${formatearFecha(f.periodo_hasta)}`,
+        detalle: f.detalle.map((l) => l.descripcion).join(" · "),
+        importe: Number(f.importe),
+        href: `/sucursales/${id}/facturacion/${f.id}`,
+      }),
+    ),
+    ...(deResidentes ?? []).map(
+      (f): FilaRegistro => ({
+        clave: `r-${f.id}`,
+        tipo: "residente",
+        fecha: f.fecha_emision,
+        ptoVta: f.pto_vta,
+        cbteNro: f.cbte_nro,
+        nombre: f.residentes ? `${f.residentes.apellido}, ${f.residentes.nombre}` : "Residente",
+        documento: documentoReceptor(f.doc_tipo, f.doc_nro),
+        periodo:
+          f.periodo_desde && f.periodo_hasta
+            ? `${formatearFecha(f.periodo_desde)} al ${formatearFecha(f.periodo_hasta)}`
+            : "—",
+        detalle: (f.detalle ?? []).map((l) => l.descripcion).join(" · ") || "Servicios de residencia geriátrica",
+        importe: Number(f.importe),
+        href: `/sucursales/${id}/facturacion/residente/${f.id}`,
+      }),
+    ),
+  ].sort((a, b) => b.fecha.localeCompare(a.fecha) || b.cbteNro - a.cbteNro);
+  const total = lista.reduce((acc, f) => acc + f.importe, 0);
+  const totalResidentes = lista.filter((f) => f.tipo === "residente").reduce((acc, f) => acc + f.importe, 0);
+  const totalExternas = total - totalResidentes;
   const [anio, numMes] = periodo.split("-").map(Number);
   const cuitSede = config?.activo ? config.cuit : null;
 
@@ -94,7 +168,7 @@ export default async function FacturacionPage({
             <p className="text-xs font-semibold uppercase tracking-widest text-brass">{sucursal.nombre}</p>
             <h1 className="font-display text-[32px] font-semibold text-ink">Facturación</h1>
             <p className="text-sm text-ink-soft">
-              Servicios externos facturados con el CUIT de la sede (no son aranceles de residentes).
+              Registro de todas las facturas de la sede: aranceles de residentes y servicios externos.
             </p>
           </div>
           <FormularioFacturaExterna sucursalId={id} sedeNombre={sucursal.nombre} cuitSede={cuitSede} hoy={hoy} />
@@ -125,10 +199,15 @@ export default async function FacturacionPage({
                 →
               </Link>
             </div>
-            <p className="text-sm text-ink-soft">
-              {lista.length} factura{lista.length === 1 ? "" : "s"} ·{" "}
-              <span className="font-semibold text-ink">{formatearImporte(total)}</span>
-            </p>
+            <div className="text-right text-sm text-ink-soft">
+              <p>
+                {lista.length} factura{lista.length === 1 ? "" : "s"} ·{" "}
+                <span className="font-semibold text-ink">{formatearImporte(total)}</span>
+              </p>
+              <p className="text-xs">
+                Residentes {formatearImporte(totalResidentes)} · Servicios externos {formatearImporte(totalExternas)}
+              </p>
+            </div>
           </div>
 
           {lista.length === 0 ? (
@@ -140,6 +219,7 @@ export default async function FacturacionPage({
                   <tr className="border-b border-edge text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
                     <th className="py-2 pr-3">Fecha</th>
                     <th className="py-2 pr-3">Número</th>
+                    <th className="py-2 pr-3">Tipo</th>
                     <th className="py-2 pr-3">A nombre de</th>
                     <th className="py-2 pr-3">Período</th>
                     <th className="py-2 pr-3">Detalle</th>
@@ -149,26 +229,33 @@ export default async function FacturacionPage({
                 </thead>
                 <tbody>
                   {lista.map((f) => (
-                    <tr key={f.id} className="border-b border-edge/60 align-top">
-                      <td className="py-2 pr-3 whitespace-nowrap text-ink">{formatearFecha(f.fecha_emision)}</td>
-                      <td className="py-2 pr-3 whitespace-nowrap text-ink">{numeroFacturaC(f.pto_vta, f.cbte_nro)}</td>
+                    <tr key={f.clave} className="border-b border-edge/60 align-top">
+                      <td className="py-2 pr-3 whitespace-nowrap text-ink">{formatearFecha(f.fecha)}</td>
+                      <td className="py-2 pr-3 whitespace-nowrap text-ink">{numeroFacturaC(f.ptoVta, f.cbteNro)}</td>
+                      <td className="py-2 pr-3 whitespace-nowrap">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[0.65rem] font-semibold ${
+                            f.tipo === "residente" ? "bg-brass-soft text-brass" : "bg-panel-deep text-ink-soft"
+                          }`}
+                        >
+                          {f.tipo === "residente" ? "Residente" : "Servicio externo"}
+                        </span>
+                      </td>
                       <td className="py-2 pr-3">
-                        <p className="font-medium text-ink">{f.receptor_nombre}</p>
-                        <p className="text-xs text-ink-soft">{documentoReceptor(f.doc_tipo, f.doc_nro)}</p>
+                        <p className="font-medium text-ink">{f.nombre}</p>
+                        <p className="text-xs text-ink-soft">{f.documento}</p>
                       </td>
-                      <td className="py-2 pr-3 whitespace-nowrap text-xs text-ink-soft">
-                        {formatearFecha(f.periodo_desde)} al {formatearFecha(f.periodo_hasta)}
-                      </td>
+                      <td className="py-2 pr-3 whitespace-nowrap text-xs text-ink-soft">{f.periodo}</td>
                       <td className="max-w-xs py-2 pr-3 text-xs text-ink-soft">
-                        <p className="line-clamp-3">{f.detalle.map((l) => l.descripcion).join(" · ")}</p>
+                        <p className="line-clamp-3">{f.detalle}</p>
                       </td>
                       <td className="py-2 pr-3 whitespace-nowrap text-right font-medium text-ink">
                         {formatearImporte(f.importe)}
                       </td>
                       <td className="py-2 text-right">
                         <Link
-                          href={`/sucursales/${id}/facturacion/${f.id}`}
-                          className="text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                          href={f.href}
+                          className="text-xs whitespace-nowrap text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
                         >
                           Ver / imprimir
                         </Link>
