@@ -114,6 +114,7 @@ export function FormularioFacturaExterna({
       setError(r.error ?? "No se pudo emitir la factura.");
       return;
     }
+    if (r.aviso) window.alert(r.aviso);
     router.push(`/sucursales/${sucursalId}/facturacion/${r.facturaId}`);
   }
 

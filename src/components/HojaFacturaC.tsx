@@ -1,5 +1,7 @@
 import { BotonImprimir } from "@/components/BotonImprimir";
 import { BotonWhatsappFactura } from "@/components/BotonWhatsappFactura";
+import { BotonMailFactura } from "@/components/BotonMailFactura";
+import type { TipoFactura } from "@/lib/facturaDatos";
 
 export type DatosHojaFacturaC = {
   sedeNombre: string;
@@ -31,7 +33,15 @@ export function formatearFechaFactura(fecha: string): string {
 }
 
 // Factura C electrónica lista para imprimir (residentes y servicios externos).
-export function HojaFacturaC({ f, volver }: { f: DatosHojaFacturaC; volver?: React.ReactNode }) {
+export function HojaFacturaC({
+  f,
+  volver,
+  envio,
+}: {
+  f: DatosHojaFacturaC;
+  volver?: React.ReactNode;
+  envio?: { tipo: TipoFactura; facturaId: string };
+}) {
   return (
     <div className="flex min-h-screen w-full justify-center bg-panel px-4 py-10 print:block print:min-h-0 print:bg-white print:px-0 print:py-0">
       <style>{`@page { size: A4; margin: 16mm; }`}</style>
@@ -137,6 +147,7 @@ export function HojaFacturaC({ f, volver }: { f: DatosHojaFacturaC; volver?: Rea
         <div className="flex items-center justify-between gap-3 border-t border-edge px-8 py-4 print:hidden">
           {volver}
           <div className="flex items-start gap-3">
+            {envio && <BotonMailFactura tipo={envio.tipo} facturaId={envio.facturaId} />}
             <BotonWhatsappFactura f={f} />
             <BotonImprimir />
           </div>

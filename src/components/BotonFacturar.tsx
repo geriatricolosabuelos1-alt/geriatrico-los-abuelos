@@ -146,6 +146,7 @@ export function BotonFacturar({
       setError(resultado.error);
       return;
     }
+    if (resultado.aviso) window.alert(resultado.aviso);
     setAbierto(false);
     router.refresh();
   }
