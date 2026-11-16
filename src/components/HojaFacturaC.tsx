@@ -1,4 +1,5 @@
 import { BotonImprimir } from "@/components/BotonImprimir";
+import { BotonWhatsappFactura } from "@/components/BotonWhatsappFactura";
 
 export type DatosHojaFacturaC = {
   sedeNombre: string;
@@ -135,7 +136,10 @@ export function HojaFacturaC({ f, volver }: { f: DatosHojaFacturaC; volver?: Rea
 
         <div className="flex items-center justify-between gap-3 border-t border-edge px-8 py-4 print:hidden">
           {volver}
-          <BotonImprimir />
+          <div className="flex items-start gap-3">
+            <BotonWhatsappFactura f={f} />
+            <BotonImprimir />
+          </div>
         </div>
       </div>
     </div>
