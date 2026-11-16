@@ -58,7 +58,7 @@ export default async function PedidoRecetasPage({ params }: { params: Promise<Pa
   const lista = (recetas ?? []).sort((a, b) =>
     `${a.residentes.apellido} ${a.residentes.nombre}`.localeCompare(
       `${b.residentes.apellido} ${b.residentes.nombre}`,
-    ),
+    ) || a.residentes.id.localeCompare(b.residentes.id),
   );
   const idsPendientes = lista.filter((r) => r.estado === "pendiente_pedir").map((r) => r.id);
   const CELDA = "py-2 pr-3 align-top";
@@ -107,18 +107,27 @@ export default async function PedidoRecetasPage({ params }: { params: Promise<Pa
             </tr>
           </thead>
           <tbody>
-            {lista.map((r) => {
+            {lista.map((r, i) => {
               const ficha = r.residentes.ficha_administrativa;
               const obraSocial = r.obra_social ?? ficha?.obra_social ?? "—";
+              // Todos los medicamentos de un mismo residente juntos: sus datos van una sola vez.
+              const primera = i === 0 || lista[i - 1].residentes.id !== r.residentes.id;
               return (
-                <tr key={r.id} className="border-b border-edge print:border-neutral-300">
+                <tr
+                  key={r.id}
+                  className={`${primera ? "border-t-2 border-edge print:border-neutral-500" : ""} border-b border-edge/40 print:border-neutral-200`}
+                >
                   <td className={`${CELDA} font-medium text-ink print:text-black`}>
-                    {r.residentes.apellido}, {r.residentes.nombre}
+                    {primera && `${r.residentes.apellido}, ${r.residentes.nombre}`}
                   </td>
-                  <td className={`${CELDA} text-ink-soft print:text-neutral-700`}>{r.residentes.dni ?? "—"}</td>
+                  <td className={`${CELDA} text-ink-soft print:text-neutral-700`}>{primera && (r.residentes.dni ?? "—")}</td>
                   <td className={`${CELDA} text-ink-soft print:text-neutral-700`}>
-                    {obraSocial}
-                    {ficha?.numero_afiliado && <span className="block">N° {ficha.numero_afiliado}</span>}
+                    {primera && (
+                      <>
+                        {obraSocial}
+                        {ficha?.numero_afiliado && <span className="block">N° {ficha.numero_afiliado}</span>}
+                      </>
+                    )}
                   </td>
                   <td className={`${CELDA} text-ink print:text-black`}>
                     {r.medicamentos_residente?.nombre ?? r.medicamento_texto ?? "General"}

@@ -67,6 +67,9 @@ function nombreSede(sede: string): string {
   return sede.toLowerCase().replace(/(^|\s)\p{L}/gu, (l) => l.toUpperCase());
 }
 
+export type MedicamentoPedido = { nombre: string | null; detalle: string | null; cantidad: string | null };
+
+// Un solo mensaje por residente con todos los medicamentos que se piden.
 export function mensajePedidoReceta(datos: {
   contacto: string | null;
   sede: string;
@@ -74,30 +77,35 @@ export function mensajePedidoReceta(datos: {
   dni: string | null;
   obraSocial: string | null;
   numeroAfiliado: string | null;
-  medicamento: string | null;
-  detalleMedicamento: string | null;
-  cantidad?: string | null;
+  medicamentos: MedicamentoPedido[];
 }): string {
   const saludo = datos.contacto ? `Hola ${datos.contacto.trim()}` : "Hola";
-  const que = datos.medicamento ? `la receta de ${datos.medicamento}` : "una receta";
-  const datosReceta: [string, string | null][] = [
+  const nombres = datos.medicamentos.map((m) => m.nombre).filter((n): n is string => !!n);
+  const que =
+    nombres.length === 0 ? "una receta" : nombres.length === 1 ? `la receta de ${nombres[0]}` : "las siguientes recetas";
+  const datosPaciente: [string, string | null][] = [
     ["Paciente", datos.residente],
     ["DNI", datos.dni],
     ["Obra social", datos.obraSocial],
     ["N° de afiliado", datos.numeroAfiliado],
-    ["Medicamento", datos.medicamento],
-    ["Detalle", datos.detalleMedicamento],
-    ["Cantidad", datos.cantidad ?? null],
   ];
+  const lineasMedicamentos = datos.medicamentos.map((m) => {
+    const extra = [m.detalle, m.cantidad ? `Cantidad: ${m.cantidad}` : null].filter(Boolean).join(" · ");
+    return `• ${m.nombre ?? "Receta general"}${extra ? ` (${extra})` : ""}`;
+  });
   return [
     `${saludo}, te escribimos de la residencia ${nombreSede(datos.sede)}. Necesitamos que nos hagas llegar ${que} para ${datos.residente}. Muchas gracias`,
     "",
-    "*Datos para la receta:*",
-    ...datosReceta.filter(([, valor]) => valor && valor.trim()).map(([etiqueta, valor]) => `• ${etiqueta}: ${valor!.trim()}`),
+    "*Datos del paciente:*",
+    ...datosPaciente.filter(([, valor]) => valor && valor.trim()).map(([etiqueta, valor]) => `• ${etiqueta}: ${valor!.trim()}`),
+    "",
+    nombres.length > 1 ? "*Medicamentos:*" : "*Medicamento:*",
+    ...lineasMedicamentos,
   ].join("\n");
 }
 
-// Lleva al recetario con el residente y el medicamento ya cargados; solo falta la cantidad.
-export function hrefPedirReceta(sucursalId: string, residenteId: string, medicamento: string): string {
-  return `/sucursales/${sucursalId}/medicacion/recetario?residente=${residenteId}&medicamento=${encodeURIComponent(medicamento)}`;
+// Lleva al recetario con el residente y sus medicamentos ya cargados; solo falta la cantidad de cada uno.
+export function hrefPedirReceta(sucursalId: string, residenteId: string, medicamentos: string[]): string {
+  const meds = medicamentos.map((m) => `&medicamento=${encodeURIComponent(m)}`).join("");
+  return `/sucursales/${sucursalId}/medicacion/recetario?residente=${residenteId}${meds}`;
 }

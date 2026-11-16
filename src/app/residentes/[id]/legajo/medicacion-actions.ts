@@ -10,7 +10,6 @@ import type {
   EstadoToma,
   IngresoMedicamento,
   MedicamentoResidente,
-  NivelAlertaMedicacion,
   TomaMar,
 } from "@/lib/types";
 import { finDiaArgentina, hoyArgentina, inicioDiaArgentina } from "@/lib/fechas";
@@ -214,53 +213,6 @@ export async function registrarDosisSos(
   revalidatePath(`/sucursales/${sucursalId}/medicacion`);
   revalidatePath(`/residentes/${residenteId}/legajo`);
   return { error: null };
-}
-
-async function recalcularAlertas(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  medicamentoId: string,
-  residenteId: string,
-  stockActual: number,
-): Promise<void> {
-  const { data: medicamento } = await supabase
-    .from("medicamentos_residente")
-    .select("dosis_diaria")
-    .eq("id", medicamentoId)
-    .single<{ dosis_diaria: number | null }>();
-
-  const dosisDiaria = medicamento?.dosis_diaria ?? null;
-  if (!dosisDiaria || dosisDiaria <= 0) return;
-
-  const diasRestantes = Math.round((stockActual / dosisDiaria) * 10) / 10;
-  let nivel: NivelAlertaMedicacion | null = null;
-  if (stockActual <= 0) nivel = "sin_stock";
-  else if (diasRestantes <= 5) nivel = "aviso_5";
-  else if (diasRestantes <= 10) nivel = "aviso_7";
-
-  if (nivel) {
-    const { data: existente } = await supabase
-      .from("alertas_medicacion")
-      .select("id")
-      .eq("medicamento_id", medicamentoId)
-      .eq("nivel", nivel)
-      .eq("resuelta", false)
-      .maybeSingle();
-
-    if (!existente) {
-      await supabase.from("alertas_medicacion").insert({
-        medicamento_id: medicamentoId,
-        residente_id: residenteId,
-        dias_restantes: diasRestantes,
-        nivel,
-      });
-    }
-  } else {
-    await supabase
-      .from("alertas_medicacion")
-      .update({ resuelta: true })
-      .eq("medicamento_id", medicamentoId)
-      .eq("resuelta", false);
-  }
 }
 
 export async function listarCatalogoMedicamentos(): Promise<CatalogoMedicamento[]> {
@@ -482,7 +434,7 @@ export async function ajustarStock(
     return { error: error.message };
   }
 
-  await recalcularAlertas(supabase, medicamentoId, residenteId, cantidad_stock);
+  // La alerta de stock la recalcula la base al cambiar el stock (recalcular_alerta_medicamento).
 
   revalidatePath(`/residentes/${residenteId}/legajo`);
   return { error: null };
@@ -572,8 +524,7 @@ async function ajustarStockPorDelta(
     .from("medicamentos_residente")
     .update({ cantidad_stock: nuevoStock, updated_at: new Date().toISOString() })
     .eq("id", medicamentoId);
-
-  await recalcularAlertas(supabase, medicamentoId, residenteId, nuevoStock);
+  // La alerta de stock la recalcula la base al cambiar el stock (recalcular_alerta_medicamento).
 }
 
 export async function actualizarIngreso(
