@@ -74,3 +74,6 @@ export function cuitValido(valor: string): boolean {
   const verificador = resto === 11 ? 0 : resto === 10 ? 9 : resto;
   return verificador === Number(n[10]);
 }
+
+// Toda factura emitida (residentes y servicios externos) se manda en PDF a este mail.
+export const MAIL_FACTURAS = "jeremias2503.oz@gmail.com";

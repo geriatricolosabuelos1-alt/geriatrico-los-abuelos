@@ -5,8 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 import { clienteArca } from "@/lib/arca/cliente";
 import { obtenerCredencialesArca } from "@/lib/arca/wsaa";
 import { solicitarCAE } from "@/lib/arca/wsfe";
+import { enviarFacturaPorMail } from "@/app/sucursales/[id]/facturacion/mail-actions";
 
-export type EmitirFacturaEstado = { error: string | null; ok: boolean };
+// aviso: la factura se emitió pero hubo un problema secundario (ej. no salió el mail).
+export type EmitirFacturaEstado = { error: string | null; ok: boolean; aviso?: string | null };
 
 export type TipoDocReceptor = "dni" | "cuit" | "consumidor_final";
 
@@ -159,7 +161,7 @@ export async function emitirFactura(
       },
     );
 
-    const { error: errorInsert } = await supabase.from("facturas_arca").insert({
+    const { data: insertada, error: errorInsert } = await supabase.from("facturas_arca").insert({
       pago_id: pago.id,
       residente_id: pago.residente_id,
       sucursal_id: pago.sucursal_id,
@@ -180,17 +182,25 @@ export async function emitirFactura(
       detalle,
       periodo_desde: datos.periodoDesde,
       periodo_hasta: datos.periodoHasta,
-    });
+    })
+      .select("id")
+      .single<{ id: string }>();
 
-    if (errorInsert) {
+    if (errorInsert || !insertada) {
       return {
-        error: `ARCA aprobó la factura (CAE ${resultado.cae}) pero no se pudo guardar en el sistema: ${errorInsert.message}. Anotá este CAE manualmente.`,
+        error: `ARCA aprobó la factura (CAE ${resultado.cae}) pero no se pudo guardar en el sistema: ${errorInsert?.message ?? "sin respuesta"}. Anotá este CAE manualmente.`,
         ok: false,
       };
     }
 
     revalidatePath(`/residentes/${pago.residente_id}/cuenta-corriente`);
-    return { error: null, ok: true };
+    // Copia automática al mail de facturación; si falla, la factura igual quedó emitida.
+    const mail = await enviarFacturaPorMail("residente", insertada.id);
+    return {
+      error: null,
+      ok: true,
+      aviso: mail.error ? `La factura se emitió, pero no se pudo enviar por mail: ${mail.error}` : null,
+    };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Error desconocido al facturar.";
     return { error: message, ok: false };

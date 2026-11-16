@@ -6,6 +6,7 @@ import { clienteArca } from "@/lib/arca/cliente";
 import { obtenerCredencialesArca } from "@/lib/arca/wsaa";
 import { solicitarCAE } from "@/lib/arca/wsfe";
 import { consultarPadron } from "@/lib/arca/padron";
+import { enviarFacturaPorMail } from "@/app/sucursales/[id]/facturacion/mail-actions";
 import { hoyArgentina } from "@/lib/fechas";
 import { DOC_TIPO_ARCA, cuitValido, type TipoDocExterno } from "@/lib/facturacion";
 import type {
@@ -28,7 +29,7 @@ export type DatosFacturaExterna = {
   detalle: LineaDetalle[];
 };
 
-export type EmitirFacturaExternaEstado = { error: string | null; facturaId: string | null };
+export type EmitirFacturaExternaEstado = { error: string | null; facturaId: string | null; aviso?: string | null };
 
 const FECHA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -218,7 +219,13 @@ export async function emitirFacturaExterna(
     }
 
     revalidatePath(`/sucursales/${sucursalId}/facturacion`);
-    return { error: null, facturaId: factura.id };
+    // Copia automática al mail de facturación; si falla, la factura igual quedó emitida.
+    const mail = await enviarFacturaPorMail("externa", factura.id);
+    return {
+      error: null,
+      facturaId: factura.id,
+      aviso: mail.error ? `La factura se emitió, pero no se pudo enviar por mail: ${mail.error}` : null,
+    };
   } catch (err) {
     return fallo(err instanceof Error ? err.message : "Error desconocido al facturar.");
   }

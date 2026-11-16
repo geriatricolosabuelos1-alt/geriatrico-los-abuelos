@@ -20,6 +20,7 @@ type Pago = {
 };
 
 type Factura = {
+  id: string;
   tipo_cbte: number;
   pto_vta: number;
   cbte_nro: number;
@@ -76,7 +77,7 @@ export default async function FacturaPage({
       supabase
         .from("facturas_arca")
         .select(
-          "tipo_cbte, pto_vta, cbte_nro, cae, cae_vencimiento, importe, fecha_emision, doc_tipo, doc_nro, condicion_venta, medio_pago, condicion_iva_receptor_id, detalle, periodo_desde, periodo_hasta",
+          "id, tipo_cbte, pto_vta, cbte_nro, cae, cae_vencimiento, importe, fecha_emision, doc_tipo, doc_nro, condicion_venta, medio_pago, condicion_iva_receptor_id, detalle, periodo_desde, periodo_hasta",
         )
         .eq("pago_id", pagoId)
         .single<Factura>(),
@@ -123,6 +124,7 @@ export default async function FacturaPage({
 
   return (
     <HojaFacturaC
+      envio={{ tipo: "residente", facturaId: factura.id }}
       f={{
         sedeNombre: sucursal?.nombre ?? "",
         razonSocial: config.razon_social,
