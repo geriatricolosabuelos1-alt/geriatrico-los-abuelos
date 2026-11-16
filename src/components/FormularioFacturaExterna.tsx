@@ -14,6 +14,8 @@ type LineaForm = { descripcion: string; importe: string };
 
 const CAMPO =
   "w-full rounded-lg border border-edge bg-panel-deep px-3 py-2 text-sm text-ink focus:border-brass focus:outline-none";
+// Sin ancho fijo: en cada línea del detalle el texto ocupa todo y el monto queda angosto.
+const CAMPO_LINEA = CAMPO.replace("w-full ", "");
 const ETIQUETA = "mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft";
 
 function formatearTotal(total: number): string {
@@ -129,7 +131,7 @@ export function FormularioFacturaExterna({
   }
 
   return (
-    <section className="space-y-5 rounded-2xl border border-edge bg-card p-6">
+    <section className="w-full basis-full space-y-5 rounded-2xl border border-edge bg-card p-6">
       <div>
         <h2 className="font-display text-lg font-semibold text-ink">Nueva factura de servicio externo</h2>
         <p className="text-xs text-ink-soft">
@@ -223,7 +225,7 @@ export function FormularioFacturaExterna({
                 onChange={(e) => actualizarLinea(indice, { descripcion: e.target.value })}
                 placeholder="Descripción del servicio (podés escribir varios renglones)"
                 aria-label={`Descripción de la línea ${indice + 1}`}
-                className={`${CAMPO} min-w-0 flex-1 resize-y`}
+                className={`${CAMPO_LINEA} min-w-0 flex-1 resize-y`}
               />
               <input
                 type="number"
@@ -234,7 +236,7 @@ export function FormularioFacturaExterna({
                 onWheel={(e) => e.currentTarget.blur()}
                 placeholder="Monto"
                 aria-label={`Monto de la línea ${indice + 1}`}
-                className={`${CAMPO} w-36 shrink-0`}
+                className={`${CAMPO_LINEA} w-36 shrink-0`}
               />
               <button
                 type="button"
