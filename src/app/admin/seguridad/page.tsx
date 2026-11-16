@@ -29,6 +29,7 @@ const MODULO: Record<string, string> = {
   evoluciones_medicas: "Evoluciones médicas",
   evoluciones_medicas_addendas: "Addendas de evolución",
   facturas_arca: "Facturas ARCA",
+  facturas_externas: "Facturación (servicios externos)",
   ficha_administrativa: "Ficha administrativa",
   ficha_medica: "Ficha médica",
   ficha_nutricional: "Ficha nutricional",

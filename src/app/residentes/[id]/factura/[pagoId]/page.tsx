@@ -1,8 +1,15 @@
 import { notFound } from "next/navigation";
-import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/server";
-import { BotonImprimir } from "@/components/BotonImprimir";
+import { HojaFacturaC, formatearFechaFactura } from "@/components/HojaFacturaC";
 import { clienteArca } from "@/lib/arca/cliente";
+import { qrFacturaArca } from "@/lib/arca/qr";
+import {
+  CONDICION_IVA_RECEPTOR,
+  ETIQUETA_CONDICION_VENTA,
+  ETIQUETA_MEDIO_PAGO,
+  documentoReceptor,
+  numeroFacturaC,
+} from "@/lib/facturacion";
 
 type Params = { id: string; pagoId: string };
 
@@ -30,47 +37,10 @@ type Factura = {
   periodo_hasta: string | null;
 };
 
-// Códigos de ARCA para la condición frente al IVA del receptor.
-const CONDICION_IVA_RECEPTOR: Record<number, string> = {
-  1: "Responsable Inscripto",
-  4: "Exento",
-  5: "Consumidor Final",
-  6: "Monotributo",
-};
-
-function documentoReceptor(docTipo: number, docNro: string): string {
-  if (docTipo === 96) return `DNI ${docNro}`;
-  if (docTipo === 80) {
-    const n = docNro.replace(/\D/g, "");
-    return n.length === 11 ? `CUIT ${n.slice(0, 2)}-${n.slice(2, 10)}-${n.slice(10)}` : `CUIT ${docNro}`;
-  }
-  return "Consumidor Final";
-}
-
-const ETIQUETA_CONDICION_VENTA: Record<string, string> = {
-  contado: "Contado",
-  cuenta_corriente: "Cuenta corriente",
-};
-
-const ETIQUETA_MEDIO_PAGO: Record<string, string> = {
-  efectivo: "Efectivo",
-  transferencia: "Transferencia",
-  mercado_pago: "Mercado Pago",
-};
-
 const MESES = [
   "", "enero", "febrero", "marzo", "abril", "mayo", "junio",
   "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
 ];
-
-function formatearImporte(monto: number): string {
-  return `$${monto.toLocaleString("es-AR", { minimumFractionDigits: 2 })}`;
-}
-
-function formatearFecha(fecha: string): string {
-  const d = new Date(fecha + "T00:00:00");
-  return d.toLocaleDateString("es-AR");
-}
 
 export default async function FacturaPage({
   params,
@@ -124,25 +94,17 @@ export default async function FacturaPage({
     notFound();
   }
 
-  const qrPayload = {
-    ver: 1,
+  const qrDataUri = await qrFacturaArca({
     fecha: factura.fecha_emision,
-    cuit: Number(config.cuit),
+    cuit: config.cuit,
     ptoVta: factura.pto_vta,
     tipoCmp: factura.tipo_cbte,
     nroCmp: factura.cbte_nro,
     importe: factura.importe,
-    moneda: "PES",
-    ctz: 1,
     tipoDocRec: factura.doc_tipo,
-    nroDocRec: Number(factura.doc_nro),
-    tipoCodAut: "E",
-    codAut: Number(factura.cae),
-  };
-  const qrUrl =
-    "https://www.afip.gob.ar/fe/qr/?p=" +
-    Buffer.from(JSON.stringify(qrPayload)).toString("base64");
-  const qrDataUri = await QRCode.toDataURL(qrUrl, { margin: 1, width: 160 });
+    nroDocRec: factura.doc_nro,
+    cae: factura.cae,
+  });
 
   const nombreMes = MESES[pago.mes].charAt(0).toUpperCase() + MESES[pago.mes].slice(1);
   const lineasDetalle =
@@ -156,138 +118,33 @@ export default async function FacturaPage({
         ];
   const textoPeriodo =
     factura.periodo_desde && factura.periodo_hasta
-      ? `Período del ${formatearFecha(factura.periodo_desde)} al ${formatearFecha(factura.periodo_hasta)}`
+      ? `Período del ${formatearFechaFactura(factura.periodo_desde)} al ${formatearFechaFactura(factura.periodo_hasta)}`
       : `Período ${MESES[pago.mes]} de ${pago.anio}`;
 
-  const numeroFactura = `C ${String(factura.pto_vta).padStart(5, "0")}-${String(factura.cbte_nro).padStart(8, "0")}`;
-
   return (
-    <div className="flex min-h-screen w-full justify-center bg-panel px-4 py-10 print:block print:min-h-0 print:bg-white print:px-0 print:py-0">
-      <style>{`@page { size: A4; margin: 16mm; }`}</style>
-
-      <div className="w-full max-w-[720px] overflow-hidden rounded-2xl border border-edge bg-card shadow-2xl print:max-w-none print:rounded-none print:border-0 print:bg-white print:shadow-none print:text-black">
-        <div className="flex items-start justify-between border-b-4 border-double border-ink/60 px-8 py-6 print:border-black print:px-0 print:pb-4">
-          <div>
-            <p className="font-display text-2xl font-semibold tracking-tight text-ink print:text-black">
-              {sucursal?.nombre}
-            </p>
-            <p className="mt-0.5 text-xs text-ink-soft print:text-neutral-600">
-              {config.razon_social}
-            </p>
-            <p className="text-xs text-ink-soft print:text-neutral-600">
-              CUIT {config.cuit.slice(0, 2)}-{config.cuit.slice(2, 10)}-{config.cuit.slice(10)}
-            </p>
-            <p className="text-xs text-ink-soft print:text-neutral-600">
-              {sucursal?.direccion}
-            </p>
-            <p className="mt-1 text-xs text-ink-soft print:text-neutral-600">
-              Monotributista
-            </p>
-          </div>
-          <div className="rounded-xl border-2 border-ink/60 px-5 py-3 text-center print:border-black">
-            <p className="font-display text-2xl font-bold text-ink print:text-black">C</p>
-            <p className="text-[0.6rem] text-ink-soft print:text-neutral-600">
-              COD. 011
-            </p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-bold uppercase tracking-widest text-ink print:text-black">
-              Factura
-            </p>
-            <p className="mt-1 text-sm text-ink print:text-black">Nº {numeroFactura}</p>
-            <p className="text-xs text-ink-soft print:text-neutral-600">
-              Fecha de emisión: {formatearFecha(factura.fecha_emision)}
-            </p>
-          </div>
-        </div>
-
-        <div className="space-y-6 px-8 py-6 print:px-0">
-          <div className="grid grid-cols-2 gap-6 border-b border-edge pb-6 print:border-neutral-300">
-            <div>
-              <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft print:text-neutral-500">
-                Cliente
-              </p>
-              <p className="mt-1 text-base font-semibold text-ink print:text-black">
-                {residente.apellido}, {residente.nombre}
-              </p>
-              <p className="text-xs text-ink-soft print:text-neutral-600">
-                {documentoReceptor(factura.doc_tipo, factura.doc_nro)}
-              </p>
-              <p className="text-xs text-ink-soft print:text-neutral-600">
-                Condición frente al IVA:{" "}
-                {CONDICION_IVA_RECEPTOR[factura.condicion_iva_receptor_id ?? 5] ?? "Consumidor Final"}
-              </p>
-            </div>
-            <div>
-              <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft print:text-neutral-500">
-                En concepto de
-              </p>
-              <p className="mt-1 text-base font-semibold text-ink print:text-black">
-                Servicios de residencia geriátrica
-              </p>
-              <p className="text-xs text-ink-soft print:text-neutral-600">
-                {textoPeriodo}
-              </p>
-              {factura.condicion_venta && (
-                <p className="text-xs text-ink-soft print:text-neutral-600">
-                  Condición de venta: {ETIQUETA_CONDICION_VENTA[factura.condicion_venta] ?? factura.condicion_venta}
-                  {factura.medio_pago && ` – ${ETIQUETA_MEDIO_PAGO[factura.medio_pago] ?? factura.medio_pago}`}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <table className="w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-edge text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft print:border-neutral-300 print:text-neutral-500">
-                <th className="pb-2">Descripción</th>
-                <th className="pb-2 text-right">Importe</th>
-              </tr>
-            </thead>
-            <tbody>
-              {lineasDetalle.map((linea, indice) => (
-                <tr key={indice}>
-                  <td className="py-3 text-ink print:text-black">{linea.descripcion}</td>
-                  <td className="py-3 text-right font-medium text-ink print:text-black">
-                    {formatearImporte(linea.importe)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className="flex items-center justify-between rounded-xl border border-brass/30 bg-brass-soft px-6 py-4 print:rounded-none print:border-2 print:border-black print:bg-white">
-            <p className="text-xs font-semibold uppercase tracking-widest text-ink print:text-black">
-              Importe total
-            </p>
-            <p className="font-display text-3xl font-semibold text-brass print:text-black">
-              {formatearImporte(factura.importe)}
-            </p>
-          </div>
-
-          <div className="flex items-end justify-between gap-8 border-t border-edge pt-6 print:border-neutral-300">
-            <div className="flex items-center gap-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={qrDataUri} alt="Código QR de ARCA" width={110} height={110} />
-              <div>
-                <p className="text-xs text-ink-soft print:text-neutral-600">
-                  CAE: <span className="font-medium text-ink print:text-black">{factura.cae}</span>
-                </p>
-                <p className="text-xs text-ink-soft print:text-neutral-600">
-                  Vto. CAE: {formatearFecha(factura.cae_vencimiento)}
-                </p>
-                <p className="mt-1 max-w-[14rem] text-[0.6rem] leading-relaxed text-ink-soft print:text-neutral-500">
-                  Comprobante Autorizado por AFIP/ARCA
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="border-t border-edge px-8 py-4 print:hidden">
-          <BotonImprimir />
-        </div>
-      </div>
-    </div>
+    <HojaFacturaC
+      f={{
+        sedeNombre: sucursal?.nombre ?? "",
+        razonSocial: config.razon_social,
+        cuit: config.cuit,
+        direccion: sucursal?.direccion ?? null,
+        numero: numeroFacturaC(factura.pto_vta, factura.cbte_nro),
+        fechaEmision: factura.fecha_emision,
+        clienteNombre: `${residente.apellido}, ${residente.nombre}`,
+        clienteDocumento: documentoReceptor(factura.doc_tipo, factura.doc_nro),
+        clienteCondicionIva: CONDICION_IVA_RECEPTOR[factura.condicion_iva_receptor_id ?? 5] ?? "Consumidor Final",
+        concepto: "Servicios de residencia geriátrica",
+        textoPeriodo,
+        condicionVenta: factura.condicion_venta
+          ? (ETIQUETA_CONDICION_VENTA[factura.condicion_venta] ?? factura.condicion_venta)
+          : null,
+        medioPago: factura.medio_pago ? (ETIQUETA_MEDIO_PAGO[factura.medio_pago] ?? factura.medio_pago) : null,
+        lineas: lineasDetalle,
+        importe: factura.importe,
+        cae: factura.cae,
+        caeVencimiento: factura.cae_vencimiento,
+        qrDataUri,
+      }}
+    />
   );
 }

@@ -11,6 +11,7 @@ type Seccion =
   | "dashboard"
   | "residentes"
   | "cuotas"
+  | "facturacion"
   | "inventario"
   | "gastos"
   | "reportes"
@@ -204,6 +205,13 @@ function armarDestinos(
       adm,
       `${base}/cuotas/recibos`,
       "recibo recibos pago pagos cobro reimprimir listado emitidos residente abuelo",
+    );
+    agregar(
+      ROLES_CUOTAS,
+      "Facturación (servicios externos)",
+      adm,
+      `${base}/facturacion`,
+      "facturacion facturar factura facturas arca afip cuit cuil servicio servicios externos terceros",
     );
     agregar(
       ROLES_INVENTARIO,
@@ -603,6 +611,18 @@ export async function Sidebar({ perfil, activo }: Props) {
                 activo?.tipo === "sucursal" &&
                 activo.sucursalId === s.id &&
                 activo.seccion === "cuotas"
+              }
+            />
+          )}
+          {ROLES_CUOTAS.includes(perfil.rol) && areaActual === "administrativa" && (
+            <SubTab
+              href={`/sucursales/${s.id}/facturacion`}
+              label="Facturación"
+              icono="receipt"
+              activo={
+                activo?.tipo === "sucursal" &&
+                activo.sucursalId === s.id &&
+                activo.seccion === "facturacion"
               }
             />
           )}
