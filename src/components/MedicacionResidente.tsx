@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { hrefPedirReceta } from "@/lib/recetas";
 import {
   actualizarDosisAdministrada,
   actualizarIngreso,
@@ -643,8 +644,16 @@ function FilaMedicamento({
         <td className="px-3 py-2">
           <EditorStock residenteId={residenteId} medicamento={medicamento} />
           {alerta && (
-            <div className="mt-1">
+            <div className="mt-1 flex flex-wrap items-center gap-2">
               <BadgeAlerta alerta={alerta} />
+              {sucursalId && (
+                <a
+                  href={hrefPedirReceta(sucursalId, residenteId, medicamento.nombre)}
+                  className="text-[0.7rem] font-semibold text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                >
+                  Pedir receta →
+                </a>
+              )}
             </div>
           )}
         </td>

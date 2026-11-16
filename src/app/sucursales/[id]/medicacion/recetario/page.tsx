@@ -9,6 +9,7 @@ import { calcularAlertasRecetas, DIAS_AVISO_PEDIDA, DIAS_AVISO_VENCIMIENTO } fro
 import type { MedicamentoResidente, Perfil } from "@/lib/types";
 
 type Params = { id: string };
+type SearchParams = { residente?: string; medicamento?: string };
 
 type ResidenteConMeds = {
   id: string;
@@ -18,8 +19,15 @@ type ResidenteConMeds = {
   ficha_administrativa: { obra_social: string | null } | null;
 };
 
-export default async function RecetarioPage({ params }: { params: Promise<Params> }) {
+export default async function RecetarioPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<Params>;
+  searchParams: Promise<SearchParams>;
+}) {
   const { id } = await params;
+  const { residente: residenteAlerta, medicamento: medicamentoAlerta } = await searchParams;
   const supabase = await createClient();
 
   const {
@@ -54,6 +62,11 @@ export default async function RecetarioPage({ params }: { params: Promise<Params
   }
 
   const alertas = calcularAlertasRecetas(recetas);
+  // Desde una alerta de stock: residente y medicamento precargados en el formulario.
+  const pedidoDesdeAlerta =
+    residenteAlerta && (residentes ?? []).some((r) => r.id === residenteAlerta)
+      ? { residenteId: residenteAlerta, medicamento: medicamentoAlerta ?? "" }
+      : null;
 
   return (
     <div className="flex min-h-screen w-full">
@@ -118,6 +131,7 @@ export default async function RecetarioPage({ params }: { params: Promise<Params
           residentes={residentes ?? []}
           recetas={recetas}
           puedeEliminar={perfil!.rol !== "medico"}
+          pedidoDesdeAlerta={pedidoDesdeAlerta}
         />
       </main>
     </div>

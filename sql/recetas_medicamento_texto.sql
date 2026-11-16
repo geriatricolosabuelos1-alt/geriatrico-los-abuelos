@@ -3,3 +3,6 @@
 
 alter table public.recetas_medicamento
   add column if not exists medicamento_texto text;
+
+-- Cantidad pedida en la receta (ej: "2 cajas"); se completa al pedir desde una alerta de stock.
+alter table public.recetas_medicamento add column if not exists cantidad text;

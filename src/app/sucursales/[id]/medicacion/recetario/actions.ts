@@ -21,7 +21,7 @@ export async function listarRecetas(sucursalId: string): Promise<
   const { data } = await supabase
     .from("recetas_medicamento")
     .select(
-      "id, residente_id, medicamento_id, medicamento_texto, obra_social, estado, fecha_pedido, fecha_recibido, fecha_vencimiento, notas, creado_por, created_at, residentes!inner(nombre, apellido, dni, sucursal_id, contacto_familiar, telefono_familiar, ficha_administrativa(obra_social, numero_afiliado)), medicamentos_residente(nombre, dosis, frecuencia, horario, via_administracion)",
+      "id, residente_id, medicamento_id, medicamento_texto, cantidad, obra_social, estado, fecha_pedido, fecha_recibido, fecha_vencimiento, notas, creado_por, created_at, residentes!inner(nombre, apellido, dni, sucursal_id, contacto_familiar, telefono_familiar, ficha_administrativa(obra_social, numero_afiliado)), medicamentos_residente(nombre, dosis, frecuencia, horario, via_administracion)",
     )
     .eq("residentes.sucursal_id", sucursalId)
     .order("created_at", { ascending: false })
@@ -79,6 +79,7 @@ export async function crearReceta(
 
   const residente_id = String(formData.get("residente_id") ?? "");
   const medicamentoEscrito = String(formData.get("medicamento") ?? "").trim();
+  const cantidad = String(formData.get("cantidad") ?? "").trim() || null;
   const obra_social = String(formData.get("obra_social") ?? "").trim() || null;
   const fecha_vencimiento = String(formData.get("fecha_vencimiento") ?? "").trim() || null;
   const notas = String(formData.get("notas") ?? "").trim() || null;
@@ -112,6 +113,7 @@ export async function crearReceta(
     residente_id,
     medicamento_id,
     medicamento_texto,
+    cantidad,
     obra_social,
     fecha_vencimiento,
     notas,
