@@ -216,13 +216,14 @@ export function FormularioFacturaExterna({
         <label className={ETIQUETA}>Detalle</label>
         <div className="space-y-2">
           {lineas.map((linea, indice) => (
-            <div key={indice} className="flex items-center gap-2">
-              <input
+            <div key={indice} className="flex items-start gap-2">
+              <textarea
+                rows={3}
                 value={linea.descripcion}
                 onChange={(e) => actualizarLinea(indice, { descripcion: e.target.value })}
-                placeholder="Descripción del servicio"
+                placeholder="Descripción del servicio (podés escribir varios renglones)"
                 aria-label={`Descripción de la línea ${indice + 1}`}
-                className={`${CAMPO} min-w-0 flex-1`}
+                className={`${CAMPO} min-w-0 flex-1 resize-y`}
               />
               <input
                 type="number"
