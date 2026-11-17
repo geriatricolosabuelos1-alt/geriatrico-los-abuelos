@@ -99,6 +99,10 @@ export default async function GastosSucursalPage({
   const variables = (gastosDelMes ?? []).filter((g) => g.tipo === "variable");
 
   const opcionesAnio = [anio - 1, anio, anio + 1];
+  const totalFijos = fijos.reduce((acc, g) => acc + Number(g.monto), 0);
+  const totalVariables = variables.reduce((acc, g) => acc + Number(g.monto), 0);
+  const totalSueldos = listaRecibos.reduce((acc, r) => acc + Number(r.total_haberes), 0);
+  const totalMes = totalFijos + totalVariables + totalSueldos;
 
   return (
     <div className="flex min-h-screen w-full">
@@ -148,6 +152,31 @@ export default async function GastosSucursalPage({
           </form>
         </div>
 
+        <section className="rounded-2xl border border-brass/40 bg-brass-soft p-6">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-ink-soft">
+                Total del mes · {NOMBRES_MES[mes - 1]} {anio}
+              </p>
+              <p className="font-display text-4xl font-semibold text-brass">{formatearMonto(totalMes)}</p>
+            </div>
+            <dl className="grid grid-cols-3 gap-6 text-sm">
+              {(
+                [
+                  ["Gastos fijos", totalFijos],
+                  ["Gastos variables", totalVariables],
+                  ["Sueldos", totalSueldos],
+                ] as const
+              ).map(([etiqueta, monto]) => (
+                <div key={etiqueta}>
+                  <dt className="text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">{etiqueta}</dt>
+                  <dd className="font-semibold text-ink">{formatearMonto(monto)}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </section>
+
         <GastosFijos
           sucursalId={id}
           mes={mes}
@@ -174,7 +203,7 @@ export default async function GastosSucursalPage({
             <p className="text-sm text-ink-soft">
               Total:{" "}
               <span className="font-display text-lg font-semibold text-ink">
-                {formatearMonto(listaRecibos.reduce((acc, r) => acc + Number(r.total_haberes), 0))}
+                {formatearMonto(totalSueldos)}
               </span>
             </p>
           </div>
