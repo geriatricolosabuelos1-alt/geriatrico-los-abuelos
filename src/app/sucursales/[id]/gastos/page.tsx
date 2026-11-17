@@ -5,6 +5,8 @@ import { GastosFijos } from "@/components/GastosFijos";
 import { GastosVariables } from "@/components/GastosVariables";
 import type { Gasto, GastoFijoCatalogo, Perfil } from "@/lib/types";
 import { mesAnioArgentina } from "@/lib/fechas";
+import { formatearMonto } from "@/lib/finanzas";
+import Link from "next/link";
 
 type Params = { id: string };
 type SearchParams = { mes?: string; anio?: string };
@@ -43,7 +45,7 @@ export default async function GastosSucursalPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: perfil }, { data: sucursal }, { data: catalogo }, { data: gastosDelMes }] =
+  const [{ data: perfil }, { data: sucursal }, { data: catalogo }, { data: gastosDelMes }, { data: recibos }] =
     await Promise.all([
       supabase
         .from("perfiles")
@@ -68,6 +70,22 @@ export default async function GastosSucursalPage({
         .eq("anio", anio)
         .order("fecha", { ascending: false })
         .returns<Gasto[]>(),
+      // Recibos de sueldo del período (solo para ver: se cargan desde Empleados).
+      supabase
+        .from("recibos_sueldo")
+        .select("id, empleado_id, fecha_pago, total_haberes, neto, empleados!inner(nombre_completo, sucursal_id)")
+        .eq("empleados.sucursal_id", id)
+        .eq("periodo", `${anio}-${String(mes).padStart(2, "0")}`)
+        .returns<
+          {
+            id: string;
+            empleado_id: string;
+            fecha_pago: string | null;
+            total_haberes: number;
+            neto: number;
+            empleados: { nombre_completo: string };
+          }[]
+        >(),
     ]);
 
   if (!sucursal || !perfil) {
@@ -75,6 +93,9 @@ export default async function GastosSucursalPage({
   }
 
   const fijos = (gastosDelMes ?? []).filter((g) => g.tipo === "fijo");
+  const listaRecibos = (recibos ?? []).sort((a, b) =>
+    a.empleados.nombre_completo.localeCompare(b.empleados.nombre_completo, "es"),
+  );
   const variables = (gastosDelMes ?? []).filter((g) => g.tipo === "variable");
 
   const opcionesAnio = [anio - 1, anio, anio + 1];
@@ -141,6 +162,58 @@ export default async function GastosSucursalPage({
         />
 
         <GastosVariables sucursalId={id} gastos={variables} />
+
+        <section className="space-y-3 rounded-2xl border border-edge bg-card p-6">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 className="font-display text-lg font-semibold text-ink">Sueldos del mes</h2>
+              <p className="text-xs text-ink-soft">
+                Recibos de sueldo emitidos para {NOMBRES_MES[mes - 1].toLowerCase()} {anio}. Se cargan desde Empleados.
+              </p>
+            </div>
+            <p className="text-sm text-ink-soft">
+              Total:{" "}
+              <span className="font-display text-lg font-semibold text-ink">
+                {formatearMonto(listaRecibos.reduce((acc, r) => acc + Number(r.total_haberes), 0))}
+              </span>
+            </p>
+          </div>
+          {listaRecibos.length === 0 ? (
+            <p className="text-sm text-ink-soft">Todavía no hay recibos de sueldo de este mes.</p>
+          ) : (
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr className="border-b border-edge text-[0.65rem] font-semibold uppercase tracking-wide text-ink-soft">
+                  <th className="py-2 pr-3">Empleado/a</th>
+                  <th className="py-2 pr-3">Fecha de pago</th>
+                  <th className="py-2 pr-3 text-right">Sueldo (haberes)</th>
+                  <th className="py-2 pr-3 text-right">Neto cobrado</th>
+                  <th className="py-2" />
+                </tr>
+              </thead>
+              <tbody>
+                {listaRecibos.map((r) => (
+                  <tr key={r.id} className="border-b border-edge/60">
+                    <td className="py-2 pr-3 text-ink">{r.empleados.nombre_completo}</td>
+                    <td className="py-2 pr-3 text-ink-soft">
+                      {r.fecha_pago ? r.fecha_pago.split("-").reverse().join("/") : "—"}
+                    </td>
+                    <td className="py-2 pr-3 text-right font-medium text-ink">{formatearMonto(Number(r.total_haberes))}</td>
+                    <td className="py-2 pr-3 text-right text-ink-soft">{formatearMonto(Number(r.neto))}</td>
+                    <td className="py-2 text-right">
+                      <Link
+                        href={`/empleados/${r.empleado_id}/recibo?periodo=${anio}-${String(mes).padStart(2, "0")}`}
+                        className="text-xs text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                      >
+                        Ver recibo
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </section>
       </main>
     </div>
   );

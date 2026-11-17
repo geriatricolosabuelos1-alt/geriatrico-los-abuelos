@@ -58,7 +58,7 @@ export function GraficoSueldos({ sueldosPorMes }: { sueldosPorMes: MesFinanciero
     <section className="rounded-2xl border border-edge bg-card p-6">
       <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
         <h2 className="font-display text-lg font-semibold text-ink">Evolución de sueldos</h2>
-        <span className="text-xs text-ink-soft">Total sueldos activos hoy: {formatearMonto(actual)}</span>
+        <span className="text-xs text-ink-soft">Este mes: {formatearMonto(actual)}</span>
       </div>
 
       <div className="grid grid-cols-9 items-end gap-3" style={{ height: 160 }}>
@@ -75,8 +75,8 @@ export function GraficoSueldos({ sueldosPorMes }: { sueldosPorMes: MesFinanciero
         })}
       </div>
       <p className="mt-4 text-xs text-ink-soft">
-        No hay un historial de cambios de sueldo cargado todavía: se muestra el total actual repetido
-        como referencia, no una evolución real mes a mes.
+        Suma de los recibos de sueldo emitidos para cada mes. El mes en curso solo incluye los recibos
+        que ya se hicieron.
       </p>
     </section>
   );

@@ -80,23 +80,30 @@ async function calcularGastosPorMes(
   return meses.map((m) => ({ ...m, monto: totalesPorClave.get(`${m.anio}-${m.mes}`) ?? 0 }));
 }
 
+// Sueldos de cada mes = recibos de sueldo emitidos para ese período (total de haberes:
+// lo que cuesta el sueldo del mes, aunque parte se haya adelantado y figure como descuento).
 async function calcularSueldosPorMes(
   supabase: SupabaseClient,
   sucursalId: string,
   meses: { mes: number; anio: number; label: string }[],
 ): Promise<MesFinanciero[]> {
-  // No hay historial de sueldos por mes: se toma el total de sueldos activos
-  // hoy como referencia y se repite en toda la ventana (no es un historico real).
+  const desde = `${meses[0].anio}-${String(meses[0].mes).padStart(2, "0")}`;
   const { data } = await supabase
-    .from("empleados")
-    .select("sueldo")
-    .eq("sucursal_id", sucursalId)
-    .eq("activo", true)
-    .returns<{ sueldo: number | null }[]>();
+    .from("recibos_sueldo")
+    .select("periodo, total_haberes, empleados!inner(sucursal_id)")
+    .eq("empleados.sucursal_id", sucursalId)
+    .gte("periodo", desde)
+    .returns<{ periodo: string; total_haberes: number | null }[]>();
 
-  const totalActual = (data ?? []).reduce((acc, e) => acc + (e.sueldo ?? 0), 0);
+  const totalesPorPeriodo = new Map<string, number>();
+  (data ?? []).forEach((r) => {
+    totalesPorPeriodo.set(r.periodo, (totalesPorPeriodo.get(r.periodo) ?? 0) + Number(r.total_haberes ?? 0));
+  });
 
-  return meses.map((m) => ({ ...m, monto: totalActual }));
+  return meses.map((m) => ({
+    ...m,
+    monto: totalesPorPeriodo.get(`${m.anio}-${String(m.mes).padStart(2, "0")}`) ?? 0,
+  }));
 }
 
 export async function obtenerResumenFinanciero(
