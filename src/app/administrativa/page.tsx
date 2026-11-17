@@ -13,6 +13,7 @@ import {
   formatearMonto,
   obtenerResumenFinanciero,
 } from "@/lib/finanzas";
+import { TarjetaDisponible } from "@/components/TarjetaDisponible";
 import { GraficoIngresosGastos, GraficoSueldos } from "@/components/GraficoFinanciero";
 import { AvisosSede } from "@/components/AvisosSede";
 import { DetalleAlertasSede } from "@/components/DetalleAlertasSede";
@@ -252,32 +253,7 @@ export default async function DashboardPage() {
         </section>
 
         <section className="mb-7 space-y-6">
-          <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-            <div className="rounded-2xl border border-edge bg-card p-5">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                Disponible (ingresos − gastos) {esAdmin ? "· ambas sedes" : ""}
-              </p>
-              <p
-                className={`font-display text-3xl font-semibold tabular-nums lining-nums ${
-                  finanzas.disponibleSinSueldos < 0 ? "text-red-700" : "text-ink"
-                }`}
-              >
-                {formatearMonto(finanzas.disponibleSinSueldos)}
-              </p>
-            </div>
-            <div className="rounded-2xl border border-edge bg-card p-5">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
-                Disponible (ingresos − gastos − sueldos) {esAdmin ? "· ambas sedes" : ""}
-              </p>
-              <p
-                className={`font-display text-3xl font-semibold tabular-nums lining-nums ${
-                  finanzas.disponibleConSueldos < 0 ? "text-red-700" : "text-ink"
-                }`}
-              >
-                {formatearMonto(finanzas.disponibleConSueldos)}
-              </p>
-            </div>
-          </div>
+          <TarjetaDisponible finanzas={finanzas} sufijo={esAdmin ? "ambas sedes" : undefined} />
 
           <GraficoIngresosGastos
             ingresosPorMes={finanzas.ingresosPorMes}
