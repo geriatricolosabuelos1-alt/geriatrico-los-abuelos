@@ -3,13 +3,18 @@
 import { useMemo, useRef, useState, useTransition } from "react";
 import { guardarEvaluacionIndicacionMedica } from "@/app/residentes/[id]/accion-medica/evaluacion-actions";
 import { hoyArgentina } from "@/lib/fechas";
-import type { IndicacionMedica, ItemIndicacionMedica } from "@/lib/types";
+import type { EvaluacionMedica, IndicacionMedica, ItemIndicacionMedica } from "@/lib/types";
 
 type Props = {
   residenteId: string;
   pinConfigurado: boolean;
   ultimaIndicacion: IndicacionMedica | null;
   onGuardado: () => void;
+  // La médica firma con PIN; administración guarda para que ella firme después.
+  esMedico: boolean;
+  // Documento pendiente de firma que se está revisando/corrigiendo (se precarga).
+  borrador?: { evaluacion: EvaluacionMedica; indicacion: IndicacionMedica | null } | null;
+  onCancelarBorrador?: () => void;
 };
 
 const ETIQUETA_MIN = "mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft";
@@ -52,16 +57,28 @@ function mesIndice(fechaISO: string): { mes: number; anio: number } {
   return { mes: mes - 1, anio };
 }
 
-export function EvaluacionIndicacionesForm({ residenteId, pinConfigurado, ultimaIndicacion, onGuardado }: Props) {
+export function EvaluacionIndicacionesForm({
+  residenteId,
+  pinConfigurado,
+  ultimaIndicacion,
+  onGuardado,
+  esMedico,
+  borrador,
+  onCancelarBorrador,
+}: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const ev = borrador?.evaluacion ?? null;
+  const ind = borrador?.indicacion ?? null;
 
   const hoy = useMemo(() => mesIndice(hoyArgentina()), []);
-  const [mesDesdeIdx, setMesDesdeIdx] = useState(hoy.mes);
-  const [mesHastaIdx, setMesHastaIdx] = useState(hoy.mes);
-  const [anio, setAnio] = useState(hoy.anio);
-  const [filas, setFilas] = useState<ItemIndicacionMedica[]>([filaVacia()]);
+  const [mesDesdeIdx, setMesDesdeIdx] = useState(ind ? mesIndice(ind.periodo_desde).mes : hoy.mes);
+  const [mesHastaIdx, setMesHastaIdx] = useState(ind ? mesIndice(ind.periodo_hasta).mes : hoy.mes);
+  const [anio, setAnio] = useState(ind ? mesIndice(ind.periodo_desde).anio : hoy.anio);
+  const [filas, setFilas] = useState<ItemIndicacionMedica[]>(
+    ind && ind.items.length > 0 ? ind.items.map((f) => ({ ...f })) : [filaVacia()],
+  );
 
   function repetirUltimoPeriodo() {
     if (!ultimaIndicacion) return;
@@ -96,6 +113,8 @@ export function EvaluacionIndicacionesForm({ residenteId, pinConfigurado, ultima
       fd.set("periodo_hasta", periodo_hasta);
     }
     fd.set("items", JSON.stringify(filasConMedicacion));
+    if (ev) fd.set("evaluacion_id", ev.id);
+    if (ind) fd.set("indicacion_id", ind.id);
     setError(null);
 
     startTransition(async () => {
@@ -114,23 +133,41 @@ export function EvaluacionIndicacionesForm({ residenteId, pinConfigurado, ultima
   }
 
   return (
-    <form ref={formRef} onSubmit={(e) => e.preventDefault()} className="space-y-5 rounded-2xl border border-edge bg-card p-5">
+    <form
+      ref={formRef}
+      onSubmit={(e) => e.preventDefault()}
+      className={`space-y-5 rounded-2xl border bg-card p-5 ${ev ? "border-amber-400 ring-2 ring-amber-200" : "border-edge"}`}
+    >
+      {ev && (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <span>
+            {esMedico
+              ? "Revisá el documento pendiente, corregí lo que haga falta y firmalo con tu PIN."
+              : "Estás corrigiendo un documento pendiente de firma médica."}
+          </span>
+          {onCancelarBorrador && (
+            <button type="button" onClick={onCancelarBorrador} className="text-xs underline underline-offset-2">
+              Cancelar
+            </button>
+          )}
+        </div>
+      )}
       <h3 className="font-display text-base font-semibold text-ink">Evaluación médica</h3>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div>
           <label className={ETIQUETA_MIN}>Fecha de evaluación</label>
-          <input type="date" name="fecha" required defaultValue={hoyArgentina()} className={CAMPO} />
+          <input type="date" name="fecha" required defaultValue={ev?.fecha ?? hoyArgentina()} className={CAMPO} />
         </div>
         <div className="sm:col-span-2">
           <label className={ETIQUETA_MIN}>Antecedentes</label>
-          <input name="antecedentes" placeholder="Ej: HTA, HPB, ansiedad" className={CAMPO} />
+          <input name="antecedentes" defaultValue={ev?.antecedentes ?? ""} placeholder="Ej: HTA, HPB, ansiedad" className={CAMPO} />
         </div>
       </div>
 
       <fieldset className="rounded-lg border border-edge p-3">
         <legend className="px-1 text-xs font-bold uppercase tracking-wide text-ink-soft">Estado de conciencia</legend>
-        <GrupoRadio nombre="estado_conciencia" opciones={CONCIENCIA} defaultValue="Vigil" />
+        <GrupoRadio nombre="estado_conciencia" opciones={CONCIENCIA} defaultValue={ev ? (ev.estado_conciencia ?? undefined) : "Vigil"} />
       </fieldset>
 
       <fieldset className="rounded-lg border border-edge p-3">
@@ -138,39 +175,45 @@ export function EvaluacionIndicacionesForm({ residenteId, pinConfigurado, ultima
         <div className="flex flex-wrap gap-x-5 gap-y-1.5">
           {ORIENTACION.map((op) => (
             <label key={op} className="flex items-center gap-1.5 text-sm text-ink">
-              <input type="checkbox" name="orientacion" value={op} className="h-4 w-4 accent-[var(--color-brass)]" />
+              <input
+                type="checkbox"
+                name="orientacion"
+                value={op}
+                defaultChecked={ev?.orientacion.includes(op) ?? false}
+                className="h-4 w-4 accent-[var(--color-brass)]"
+              />
               {op}
             </label>
           ))}
         </div>
-        <input name="obs_orientacion" placeholder="Observaciones (opcional)" className={`${CAMPO} mt-2 text-xs`} />
+        <input name="obs_orientacion" defaultValue={ev?.obs_orientacion ?? ""} placeholder="Observaciones (opcional)" className={`${CAMPO} mt-2 text-xs`} />
       </fieldset>
 
       <fieldset className="rounded-lg border border-edge p-3">
         <legend className="px-1 text-xs font-bold uppercase tracking-wide text-ink-soft">Alimentación</legend>
-        <GrupoRadio nombre="alimentacion" opciones={ALIMENTACION} defaultValue="Vía oral" />
+        <GrupoRadio nombre="alimentacion" opciones={ALIMENTACION} defaultValue={ev ? (ev.alimentacion ?? undefined) : "Vía oral"} />
         <p className="mb-1 mt-3 text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">Consistencia</p>
-        <GrupoRadio nombre="consistencia" opciones={CONSISTENCIA} defaultValue="Normal" />
-        <input name="obs_alimentacion" placeholder="Observaciones (opcional)" className={`${CAMPO} mt-2 text-xs`} />
+        <GrupoRadio nombre="consistencia" opciones={CONSISTENCIA} defaultValue={ev ? (ev.consistencia ?? undefined) : "Normal"} />
+        <input name="obs_alimentacion" defaultValue={ev?.obs_alimentacion ?? ""} placeholder="Observaciones (opcional)" className={`${CAMPO} mt-2 text-xs`} />
       </fieldset>
 
       <fieldset className="rounded-lg border border-edge p-3">
         <legend className="px-1 text-xs font-bold uppercase tracking-wide text-ink-soft">Marcha / Movilidad</legend>
-        <GrupoRadio nombre="marcha_movilidad" opciones={MARCHA} />
+        <GrupoRadio nombre="marcha_movilidad" opciones={MARCHA} defaultValue={ev?.marcha_movilidad ?? undefined} />
       </fieldset>
 
       <fieldset className="rounded-lg border border-edge p-3">
         <legend className="px-1 text-xs font-bold uppercase tracking-wide text-ink-soft">Control de esfínteres</legend>
-        <GrupoRadio nombre="control_urinario" opciones={URINARIO} defaultValue="Continente urinario" />
+        <GrupoRadio nombre="control_urinario" opciones={URINARIO} defaultValue={ev ? (ev.control_urinario ?? undefined) : "Continente urinario"} />
         <div className="mt-2">
-          <GrupoRadio nombre="control_fecal" opciones={FECAL} defaultValue="Continente fecal" />
+          <GrupoRadio nombre="control_fecal" opciones={FECAL} defaultValue={ev ? (ev.control_fecal ?? undefined) : "Continente fecal"} />
         </div>
-        <input name="obs_esfinteres" placeholder="Observaciones (opcional)" className={`${CAMPO} mt-2 text-xs`} />
+        <input name="obs_esfinteres" defaultValue={ev?.obs_esfinteres ?? ""} placeholder="Observaciones (opcional)" className={`${CAMPO} mt-2 text-xs`} />
       </fieldset>
 
       <div>
         <label className={ETIQUETA_MIN}>Conducta</label>
-        <textarea name="conducta" rows={2} defaultValue="Continúa con mismo plan." className={CAMPO} />
+        <textarea name="conducta" rows={2} defaultValue={ev ? (ev.conducta ?? "") : "Continúa con mismo plan."} className={CAMPO} />
       </div>
 
       <div className="border-t border-edge pt-5">
@@ -280,7 +323,7 @@ export function EvaluacionIndicacionesForm({ residenteId, pinConfigurado, ultima
 
         <div className="mt-3">
           <label className={ETIQUETA_MIN}>Observaciones de indicaciones</label>
-          <textarea name="observaciones" rows={2} className={CAMPO} placeholder="Opcional" />
+          <textarea name="observaciones" rows={2} defaultValue={ind?.observaciones ?? ""} className={CAMPO} placeholder="Opcional" />
         </div>
       </div>
 
@@ -289,31 +332,39 @@ export function EvaluacionIndicacionesForm({ residenteId, pinConfigurado, ultima
           <label className={ETIQUETA_MIN}>Matrícula</label>
           <input
             name="matricula"
+            defaultValue={ev?.matricula ?? ""}
             className="w-32 rounded-lg border border-edge bg-panel-deep px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
           />
         </div>
-        <div>
-          <label className={ETIQUETA_MIN} title={pinConfigurado ? "Ingresá tu PIN para firmar" : "Primera vez: elegí un PIN de 4 a 6 dígitos"}>
-            {pinConfigurado ? "PIN de seguridad" : "Configurá tu PIN (primera vez)"}
-          </label>
-          <input
-            type="password"
-            inputMode="numeric"
-            name="pin"
-            required
-            minLength={4}
-            maxLength={6}
-            className="w-28 rounded-lg border border-edge bg-panel-deep px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
-          />
-        </div>
+        {esMedico && (
+          <div>
+            <label className={ETIQUETA_MIN} title={pinConfigurado ? "Ingresá tu PIN para firmar" : "Primera vez: elegí un PIN de 4 a 6 dígitos"}>
+              {pinConfigurado ? "PIN de seguridad" : "Configurá tu PIN (primera vez)"}
+            </label>
+            <input
+              type="password"
+              inputMode="numeric"
+              name="pin"
+              required
+              minLength={4}
+              maxLength={6}
+              className="w-28 rounded-lg border border-edge bg-panel-deep px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
+            />
+          </div>
+        )}
         <button
           type="button"
           onClick={enviar}
           disabled={pending}
           className="rounded-lg bg-brass px-4 py-2 text-sm font-semibold text-btn-ink hover:bg-brass/90 disabled:opacity-50"
         >
-          {pending ? "Guardando..." : "Firmar y guardar documento"}
+          {pending ? "Guardando..." : esMedico ? "Firmar y guardar documento" : "Guardar para firma de la médica"}
         </button>
+        {!esMedico && (
+          <p className="w-full text-xs text-ink-soft">
+            Queda pendiente de firma: la médica lo revisa, lo puede corregir y lo firma con su PIN.
+          </p>
+        )}
       </div>
 
       {error && <p className="text-sm text-red-700">{error}</p>}

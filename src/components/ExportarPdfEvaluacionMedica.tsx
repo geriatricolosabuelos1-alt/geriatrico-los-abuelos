@@ -93,11 +93,16 @@ export function ExportarPdfEvaluacionMedica({
       }
     }
 
-    const firmante = evaluacion?.matricula ?? indicacion?.matricula ?? null;
+    // Solo la firma de la médica; si todavía no lo firmó, queda indicado (sin nombre de quien lo cargó).
+    const firmado = evaluacion?.firmado_por ? evaluacion : indicacion?.firmado_por ? indicacion : null;
     secciones.push({
       titulo: "Firma",
-      columnas: ["Matrícula", "Fecha"],
-      filas: [[firmante ?? "—", fecha(new Date().toISOString())]],
+      columnas: ["Médica", "Matrícula", "Fecha de firma"],
+      filas: [
+        firmado
+          ? [firmado.firmante ?? "—", firmado.matricula ?? "—", fecha(firmado.firmado_at)]
+          : ["Pendiente de firma médica", evaluacion?.matricula ?? indicacion?.matricula ?? "—", "—"],
+      ],
     });
 
     descargarPdf(
