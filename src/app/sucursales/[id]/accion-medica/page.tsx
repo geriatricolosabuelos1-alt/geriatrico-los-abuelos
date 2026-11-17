@@ -4,6 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { listarInterconsultasPendientesSede } from "@/app/residentes/[id]/accion-medica/interconsultas-actions";
 import { ETIQUETA_TIPO_INTERCONSULTA } from "@/lib/interconsultas";
+import { listarPendientesFirma } from "@/app/residentes/[id]/accion-medica/evaluacion-actions";
+import { tienePinConfigurado } from "@/app/residentes/[id]/accion-medica/actions";
+import { PendientesFirmaMedica } from "@/components/PendientesFirmaMedica";
 import type { Perfil } from "@/lib/types";
 
 type Params = { id: string };
@@ -17,26 +20,29 @@ export default async function AccionMedicaListaPage({ params }: { params: Promis
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: perfil }, { data: sucursal }, { data: residentes }, interconsultas] = await Promise.all([
-    supabase
-      .from("perfiles")
-      .select("id, nombre_completo, rol, sucursal_id, activo")
-      .eq("id", user!.id)
-      .single<Perfil>(),
-    supabase
-      .from("sucursales")
-      .select("id, nombre")
-      .eq("id", id)
-      .single<{ id: string; nombre: string }>(),
-    supabase
-      .from("residentes")
-      .select("id, nombre, apellido, habitacion")
-      .eq("sucursal_id", id)
-      .eq("activo", true)
-      .order("habitacion")
-      .returns<ResidenteBasico[]>(),
-    listarInterconsultasPendientesSede(id),
-  ]);
+  const [{ data: perfil }, { data: sucursal }, { data: residentes }, interconsultas, pendientesFirma, pinConfigurado] =
+    await Promise.all([
+      supabase
+        .from("perfiles")
+        .select("id, nombre_completo, rol, sucursal_id, activo")
+        .eq("id", user!.id)
+        .single<Perfil>(),
+      supabase
+        .from("sucursales")
+        .select("id, nombre")
+        .eq("id", id)
+        .single<{ id: string; nombre: string }>(),
+      supabase
+        .from("residentes")
+        .select("id, nombre, apellido, habitacion")
+        .eq("sucursal_id", id)
+        .eq("activo", true)
+        .order("habitacion")
+        .returns<ResidenteBasico[]>(),
+      listarInterconsultasPendientesSede(id),
+      listarPendientesFirma(id),
+      tienePinConfigurado(),
+    ]);
 
   if (!sucursal || !perfil) notFound();
 
@@ -63,6 +69,13 @@ export default async function AccionMedicaListaPage({ params }: { params: Promis
             Evaluación médica (plantilla)
           </Link>
         </div>
+
+        <PendientesFirmaMedica
+          sedeId={id}
+          pendientes={pendientesFirma}
+          esMedico={perfil!.rol === "medico"}
+          pinConfigurado={pinConfigurado}
+        />
 
         {interconsultas.length > 0 && (
           <section className="rounded-2xl border border-amber-300 bg-amber-50 p-5">
