@@ -31,7 +31,15 @@ export function HistorialIndicacionesMedicas({ indicaciones }: Props) {
             <div key={ind.id} className="rounded-xl border border-edge bg-panel-deep p-3 text-xs">
               <div className="mb-2 flex items-center justify-between">
                 <span className="font-semibold capitalize text-ink">{formatearFecha(ind.periodo_desde)}</span>
-                <span className="text-ink-soft">Matrícula {ind.matricula ?? "—"}</span>
+                <span className="text-ink-soft">{ind.firmado_por ? (
+                  <span>
+                    Firmado por {ind.firmante ?? "la médica"} · Matrícula {ind.matricula ?? "—"}
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">
+                    Pendiente de firma médica
+                  </span>
+                )}</span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left" style={{ minWidth: 420 }}>

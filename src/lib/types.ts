@@ -161,7 +161,10 @@ export interface EvaluacionMedica {
   conducta: string | null;
   firmado_por: string | null;
   matricula: string | null;
-  firmado_at: string;
+  // null = pendiente de firma médica (lo cargó otra persona).
+  firmado_at: string | null;
+  // Nombre de la médica que firmó (solo se muestra la firma, nunca quién lo cargó).
+  firmante?: string | null;
   created_at: string;
 }
 
@@ -183,7 +186,10 @@ export interface IndicacionMedica {
   observaciones: string | null;
   firmado_por: string | null;
   matricula: string | null;
-  firmado_at: string;
+  // null = pendiente de firma médica (lo cargó otra persona).
+  firmado_at: string | null;
+  // Nombre de la médica que firmó (solo se muestra la firma, nunca quién lo cargó).
+  firmante?: string | null;
   created_at: string;
 }
 

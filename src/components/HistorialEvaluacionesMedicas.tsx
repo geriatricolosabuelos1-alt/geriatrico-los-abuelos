@@ -34,13 +34,21 @@ export function HistorialEvaluacionesMedicas({ evaluaciones }: Props) {
       {abierto && (
         <div className="mt-3 space-y-3">
           {evaluaciones.length === 0 && (
-            <p className="text-sm text-ink-soft">Todavía no hay evaluaciones médicas firmadas para este residente.</p>
+            <p className="text-sm text-ink-soft">Todavía no hay evaluaciones médicas para este residente.</p>
           )}
           {evaluaciones.map((e) => (
             <div key={e.id} className="rounded-xl border border-edge bg-panel-deep p-3 text-xs text-ink-soft">
               <div className="mb-1.5 flex items-center justify-between">
                 <span className="font-semibold text-ink">{formatearFecha(e.fecha)}</span>
-                <span>Matrícula {e.matricula ?? "—"}</span>
+                {e.firmado_por ? (
+                  <span>
+                    Firmado por {e.firmante ?? "la médica"} · Matrícula {e.matricula ?? "—"}
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 font-semibold text-amber-800">
+                    Pendiente de firma médica
+                  </span>
+                )}
               </div>
               <Dato etiqueta="Antecedentes" valor={e.antecedentes} />
               <Dato etiqueta="Estado de conciencia" valor={e.estado_conciencia} />

@@ -16,12 +16,15 @@ type Props = {
   residentes: ResidenteListado[];
   pinConfigurado: boolean;
   residenteIdInicial: string | null;
+  esMedico: boolean;
 };
 
-export function SelectorResidenteEvaluacion({ residentes, pinConfigurado, residenteIdInicial }: Props) {
+export function SelectorResidenteEvaluacion({ residentes, pinConfigurado, residenteIdInicial, esMedico }: Props) {
   const [residenteId, setResidenteId] = useState(residenteIdInicial ?? "");
   const [datos, setDatos] = useState<DatosResidenteEvaluacion | null>(null);
   const [cargando, startTransition] = useTransition();
+  // Revisando el documento pendiente de firma (se precarga en el formulario).
+  const [revisando, setRevisando] = useState(false);
 
   useEffect(() => {
     if (!residenteId) return;
@@ -36,15 +39,20 @@ export function SelectorResidenteEvaluacion({ residentes, pinConfigurado, reside
     startTransition(async () => {
       const res = await obtenerDatosResidenteEvaluacion(residenteId);
       setDatos(res);
+      setRevisando(false);
     });
   }
 
   function cambiarResidente(nuevoId: string) {
     setResidenteId(nuevoId);
     setDatos(null);
+    setRevisando(false);
   }
 
   const edad = datos ? calcularEdad(datos.fechaNacimiento) : null;
+  const evaluacionPendiente = datos?.evaluaciones.find((e) => !e.firmado_por) ?? null;
+  const indicacionPendiente = datos?.indicaciones.find((i) => !i.firmado_por) ?? null;
+  const ultimaFirmada = datos?.indicaciones.find((i) => i.firmado_por) ?? null;
 
   return (
     <div className="space-y-5">
@@ -95,11 +103,36 @@ export function SelectorResidenteEvaluacion({ residentes, pinConfigurado, reside
               />
             </div>
 
+            {evaluacionPendiente && !revisando && (
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
+                <p className="text-sm text-amber-900">
+                  <span className="font-semibold">Pendiente de firma médica:</span> evaluación del{" "}
+                  {evaluacionPendiente.fecha.split("-").reverse().join("/")}
+                  {indicacionPendiente ? " con sus indicaciones" : ""}.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setRevisando(true)}
+                  className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-500"
+                >
+                  {esMedico ? "Revisar y firmar" : "Corregir"}
+                </button>
+              </div>
+            )}
+
             <EvaluacionIndicacionesForm
+              key={revisando && evaluacionPendiente ? `borrador-${evaluacionPendiente.id}` : "nuevo"}
               residenteId={residenteId}
               pinConfigurado={pinConfigurado}
-              ultimaIndicacion={datos.indicaciones[0] ?? null}
+              ultimaIndicacion={ultimaFirmada ?? datos.indicaciones[0] ?? null}
               onGuardado={recargar}
+              esMedico={esMedico}
+              borrador={
+                revisando && evaluacionPendiente
+                  ? { evaluacion: evaluacionPendiente, indicacion: indicacionPendiente }
+                  : null
+              }
+              onCancelarBorrador={() => setRevisando(false)}
             />
           </div>
 
