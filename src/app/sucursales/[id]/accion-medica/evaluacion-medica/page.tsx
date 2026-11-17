@@ -61,17 +61,17 @@ export default async function EvaluacionMedicaPlantillaPage({
         {pendientes.length > 0 && (
           <div className="mb-5 rounded-2xl border border-amber-300 bg-amber-50 p-4">
             <p className="mb-2 text-sm font-semibold text-amber-900">
-              {pendientes.length} evaluaci{pendientes.length === 1 ? "ón" : "ones"} pendiente
-              {pendientes.length === 1 ? "" : "s"} de firma médica
+              {pendientes.length} residente{pendientes.length === 1 ? "" : "s"} con documentos pendientes de
+              firma médica
             </p>
             <ul className="flex flex-wrap gap-2">
               {pendientes.map((p) => (
-                <li key={`${p.residenteId}-${p.fecha}`}>
+                <li key={p.residenteId}>
                   <Link
                     href={`/sucursales/${id}/accion-medica/evaluacion-medica?residente=${p.residenteId}`}
                     className="inline-block rounded-full border border-amber-400 bg-white px-3 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100"
                   >
-                    {p.nombre} · {p.fecha.split("-").reverse().join("/")}
+                    {p.nombre}
                   </Link>
                 </li>
               ))}

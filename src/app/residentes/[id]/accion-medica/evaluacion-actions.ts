@@ -225,21 +225,97 @@ export async function guardarEvaluacionIndicacionMedica(
   return { error: null };
 }
 
-export type PendienteFirma = { residenteId: string; nombre: string; fecha: string };
+export type PendienteFirma = {
+  residenteId: string;
+  nombre: string;
+  habitacion: string | null;
+  evaluaciones: { id: string; fecha: string }[];
+  indicaciones: { id: string; periodoDesde: string; periodoHasta: string }[];
+};
 
-// Evaluaciones cargadas por administración que la médica todavía no firmó (de una sede).
+type FilaPendiente = { id: string; residente_id: string; residentes: { nombre: string; apellido: string; habitacion: string | null } };
+
+// Evaluaciones e indicaciones cargadas por administración que la médica todavía no firmó, por residente.
 export async function listarPendientesFirma(sedeId: string): Promise<PendienteFirma[]> {
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("evaluaciones_medicas")
-    .select("residente_id, fecha, residentes!inner(nombre, apellido, sucursal_id)")
-    .is("firmado_por", null)
-    .eq("residentes.sucursal_id", sedeId)
-    .order("fecha")
-    .returns<{ residente_id: string; fecha: string; residentes: { nombre: string; apellido: string } }[]>();
-  return (data ?? []).map((e) => ({
-    residenteId: e.residente_id,
-    nombre: `${e.residentes.apellido}, ${e.residentes.nombre}`,
-    fecha: e.fecha,
-  }));
+  const [{ data: evaluaciones }, { data: indicaciones }] = await Promise.all([
+    supabase
+      .from("evaluaciones_medicas")
+      .select("id, residente_id, fecha, residentes!inner(nombre, apellido, habitacion, sucursal_id)")
+      .is("firmado_por", null)
+      .eq("residentes.sucursal_id", sedeId)
+      .order("fecha")
+      .returns<(FilaPendiente & { fecha: string })[]>(),
+    supabase
+      .from("indicaciones_medicas")
+      .select("id, residente_id, periodo_desde, periodo_hasta, residentes!inner(nombre, apellido, habitacion, sucursal_id)")
+      .is("firmado_por", null)
+      .eq("residentes.sucursal_id", sedeId)
+      .order("periodo_desde")
+      .returns<(FilaPendiente & { periodo_desde: string; periodo_hasta: string })[]>(),
+  ]);
+
+  const porResidente = new Map<string, PendienteFirma>();
+  const grupo = (f: FilaPendiente) => {
+    const g = porResidente.get(f.residente_id) ?? {
+      residenteId: f.residente_id,
+      nombre: `${f.residentes.apellido}, ${f.residentes.nombre}`,
+      habitacion: f.residentes.habitacion,
+      evaluaciones: [],
+      indicaciones: [],
+    };
+    porResidente.set(f.residente_id, g);
+    return g;
+  };
+  (evaluaciones ?? []).forEach((e) => grupo(e).evaluaciones.push({ id: e.id, fecha: e.fecha }));
+  (indicaciones ?? []).forEach((i) =>
+    grupo(i).indicaciones.push({ id: i.id, periodoDesde: i.periodo_desde, periodoHasta: i.periodo_hasta }),
+  );
+  return [...porResidente.values()].sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+}
+
+// La médica firma de una vez todo lo pendiente de los residentes elegidos (de su sede).
+export async function firmarPendientes(
+  sedeId: string,
+  residenteIds: string[],
+  pin: string,
+  matricula: string,
+): Promise<{ error: string | null; firmados: number }> {
+  const { error: errorRol, userId, esMedico } = await usuarioYRol();
+  if (errorRol || !userId) return { error: errorRol ?? "No autenticado.", firmados: 0 };
+  if (!esMedico) return { error: "Solo la médica puede firmar.", firmados: 0 };
+  if (residenteIds.length === 0) return { error: "Elegí al menos un residente.", firmados: 0 };
+
+  const validacionPin = await validarOConfigurarPin(pin);
+  if (validacionPin.error) return { error: validacionPin.error, firmados: 0 };
+
+  const supabase = await createClient();
+  // Solo residentes de esta sede.
+  const { data: deLaSede } = await supabase
+    .from("residentes")
+    .select("id")
+    .eq("sucursal_id", sedeId)
+    .in("id", residenteIds)
+    .returns<{ id: string }[]>();
+  const ids = (deLaSede ?? []).map((r) => r.id);
+  if (ids.length === 0) return { error: "No se encontraron esos residentes.", firmados: 0 };
+
+  const firma: Record<string, string> = { firmado_por: userId, firmado_at: new Date().toISOString() };
+  if (matricula.trim()) firma.matricula = matricula.trim();
+
+  let firmados = 0;
+  for (const tabla of ["evaluaciones_medicas", "indicaciones_medicas"] as const) {
+    const { data, error } = await supabase
+      .from(tabla)
+      .update(firma)
+      .in("residente_id", ids)
+      .is("firmado_por", null)
+      .select("id");
+    if (error) return { error: error.message, firmados };
+    firmados += data?.length ?? 0;
+  }
+
+  revalidatePath(`/sucursales/${sedeId}/accion-medica`);
+  revalidatePath(`/sucursales/${sedeId}/accion-medica/evaluacion-medica`);
+  return { error: null, firmados };
 }
