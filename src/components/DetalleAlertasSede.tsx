@@ -18,6 +18,23 @@ function etiquetaAlerta(a: AlertaMedicacionResumen): string {
   return `Quedan ${a.diasRestantes} día${a.diasRestantes === 1 ? "" : "s"}`;
 }
 
+function urgencia(a: AlertaMedicacionResumen): number {
+  return a.diasRestantes ?? a.stockActual ?? 99;
+}
+
+// Alertas agrupadas por residente (lo más urgente primero), para pedir todas sus recetas juntas.
+function agruparPorResidente(alertas: AlertaMedicacionResumen[]) {
+  const grupos = new Map<string, { residenteId: string; residenteNombre: string; alertas: AlertaMedicacionResumen[] }>();
+  for (const a of alertas) {
+    const g = grupos.get(a.residenteId) ?? { residenteId: a.residenteId, residenteNombre: a.residenteNombre, alertas: [] };
+    g.alertas.push(a);
+    grupos.set(a.residenteId, g);
+  }
+  return [...grupos.values()]
+    .map((g) => ({ ...g, alertas: g.alertas.sort((x, y) => urgencia(x) - urgencia(y)) }))
+    .sort((x, y) => urgencia(x.alertas[0]) - urgencia(y.alertas[0]));
+}
+
 // Listas de stock de medicación bajo e insumos con stock bajo de una sede.
 // Se usa en el dashboard de la sede y en el dashboard general (con el nombre de la sede).
 export function DetalleAlertasSede({
@@ -54,39 +71,39 @@ export function DetalleAlertasSede({
         {resumen.alertasMedicacion.length === 0 ? (
           <p className="text-xs text-ink-soft">Sin alertas activas.</p>
         ) : (
-          <ul className="space-y-2">
-            {resumen.alertasMedicacion
-              .slice()
-              .sort(
-                (a, b) =>
-                  (a.diasRestantes ?? a.stockActual ?? 99) - (b.diasRestantes ?? b.stockActual ?? 99),
-              )
-              .map((a) => (
-                <li key={a.id} className="flex items-center justify-between gap-2 text-sm">
-                  <div>
-                    <p className="font-medium text-ink">{a.medicamentoNombre}</p>
-                    <p className="text-xs text-ink-soft">
-                      {a.residenteNombre} ·{" "}
-                      <Link
-                        href={hrefPedirReceta(sucursalId, a.residenteId, a.medicamentoNombre)}
-                        className="font-semibold text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
-                      >
-                        Pedir receta →
-                      </Link>
-                    </p>
-                  </div>
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold ${ESTILO_NIVEL[a.nivel]} ${
-                      a.nivel === "sin_stock" ? "alerta-pulso" : ""
-                    }`}
-                  >
-                    {a.nivel === "sin_stock" && (
-                      <span className="alerta-punto h-1.5 w-1.5 flex-shrink-0 rounded-full bg-red-700" />
+          <ul className="space-y-3">
+            {agruparPorResidente(resumen.alertasMedicacion).map((grupo) => (
+              <li key={grupo.residenteId} className="space-y-1.5 rounded-xl border border-edge p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-semibold text-ink">{grupo.residenteNombre}</p>
+                  <Link
+                    href={hrefPedirReceta(
+                      sucursalId,
+                      grupo.residenteId,
+                      grupo.alertas.map((a) => a.medicamentoNombre),
                     )}
-                    {etiquetaAlerta(a)}
-                  </span>
-                </li>
-              ))}
+                    className="rounded-full bg-brass px-3 py-1 text-[0.7rem] font-semibold text-btn-ink hover:bg-brass/90"
+                  >
+                    Pedir receta{grupo.alertas.length > 1 ? "s" : ""} →
+                  </Link>
+                </div>
+                {grupo.alertas.map((a) => (
+                  <div key={a.id} className="flex items-center justify-between gap-2 text-sm">
+                    <p className="text-ink">{a.medicamentoNombre}</p>
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.65rem] font-semibold ${ESTILO_NIVEL[a.nivel]} ${
+                        a.nivel === "sin_stock" ? "alerta-pulso" : ""
+                      }`}
+                    >
+                      {a.nivel === "sin_stock" && (
+                        <span className="alerta-punto h-1.5 w-1.5 flex-shrink-0 rounded-full bg-red-700" />
+                      )}
+                      {etiquetaAlerta(a)}
+                    </span>
+                  </div>
+                ))}
+              </li>
+            ))}
           </ul>
         )}
       </section>

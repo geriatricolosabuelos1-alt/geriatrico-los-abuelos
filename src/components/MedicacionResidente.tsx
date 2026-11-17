@@ -644,16 +644,8 @@ function FilaMedicamento({
         <td className="px-3 py-2">
           <EditorStock residenteId={residenteId} medicamento={medicamento} />
           {alerta && (
-            <div className="mt-1 flex flex-wrap items-center gap-2">
+            <div className="mt-1">
               <BadgeAlerta alerta={alerta} />
-              {sucursalId && (
-                <a
-                  href={hrefPedirReceta(sucursalId, residenteId, medicamento.nombre)}
-                  className="text-[0.7rem] font-semibold text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
-                >
-                  Pedir receta →
-                </a>
-              )}
             </div>
           )}
         </td>
@@ -815,6 +807,19 @@ export function MedicacionResidente({
               {alertas.length} alerta{alertas.length > 1 ? "s" : ""} de stock activa
               {alertas.length > 1 ? "s" : ""}
             </span>
+          )}
+          {alertas.length > 0 && sucursalId && (
+            // Un solo pedido con todos los medicamentos del residente que están en alerta.
+            <a
+              href={hrefPedirReceta(
+                sucursalId,
+                residenteId,
+                medicamentosActivos.filter((m) => alertaPorMedicamento.has(m.id)).map((m) => m.nombre),
+              )}
+              className="rounded-full bg-brass px-3 py-1 text-xs font-semibold text-btn-ink hover:bg-brass/90"
+            >
+              Pedir receta{alertas.length > 1 ? "s" : ""} →
+            </a>
           )}
         </div>
       </div>

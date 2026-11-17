@@ -9,7 +9,7 @@ import { calcularAlertasRecetas, DIAS_AVISO_PEDIDA, DIAS_AVISO_VENCIMIENTO } fro
 import type { MedicamentoResidente, Perfil } from "@/lib/types";
 
 type Params = { id: string };
-type SearchParams = { residente?: string; medicamento?: string };
+type SearchParams = { residente?: string; medicamento?: string | string[] };
 
 type ResidenteConMeds = {
   id: string;
@@ -62,10 +62,13 @@ export default async function RecetarioPage({
   }
 
   const alertas = calcularAlertasRecetas(recetas);
-  // Desde una alerta de stock: residente y medicamento precargados en el formulario.
+  // Desde una alerta de stock: residente y sus medicamentos en alerta precargados en el formulario.
   const pedidoDesdeAlerta =
     residenteAlerta && (residentes ?? []).some((r) => r.id === residenteAlerta)
-      ? { residenteId: residenteAlerta, medicamento: medicamentoAlerta ?? "" }
+      ? {
+          residenteId: residenteAlerta,
+          medicamentos: (Array.isArray(medicamentoAlerta) ? medicamentoAlerta : [medicamentoAlerta ?? ""]).filter(Boolean),
+        }
       : null;
 
   return (

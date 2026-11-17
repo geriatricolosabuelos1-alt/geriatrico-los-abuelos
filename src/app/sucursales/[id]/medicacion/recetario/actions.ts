@@ -78,8 +78,12 @@ export async function crearReceta(
   const supabase = await createClient();
 
   const residente_id = String(formData.get("residente_id") ?? "");
-  const medicamentoEscrito = String(formData.get("medicamento") ?? "").trim();
-  const cantidad = String(formData.get("cantidad") ?? "").trim() || null;
+  // Uno o varios medicamentos (cada uno con su cantidad): se crea una receta por cada uno.
+  const cantidades = formData.getAll("cantidad").map((c) => String(c).trim() || null);
+  const items = formData
+    .getAll("medicamento")
+    .map((m, i) => ({ medicamento: String(m).trim(), cantidad: cantidades[i] ?? null }))
+    .filter((it) => it.medicamento || it.cantidad);
   const obra_social = String(formData.get("obra_social") ?? "").trim() || null;
   const fecha_vencimiento = String(formData.get("fecha_vencimiento") ?? "").trim() || null;
   const notas = String(formData.get("notas") ?? "").trim() || null;
@@ -89,36 +93,35 @@ export async function crearReceta(
   }
 
   // Si lo escrito coincide con un medicamento del residente, se vincula; si no, queda como texto.
-  let medicamento_id: string | null = null;
-  let medicamento_texto: string | null = null;
-  if (medicamentoEscrito) {
-    const { data: meds } = await supabase
-      .from("medicamentos_residente")
-      .select("id, nombre")
-      .eq("residente_id", residente_id)
-      .eq("activo", true)
-      .returns<{ id: string; nombre: string }[]>();
-    const coincidencia = (meds ?? []).find(
-      (m) => m.nombre.trim().toLowerCase() === medicamentoEscrito.toLowerCase(),
-    );
-    if (coincidencia) medicamento_id = coincidencia.id;
-    else medicamento_texto = medicamentoEscrito;
-  }
+  const { data: meds } = await supabase
+    .from("medicamentos_residente")
+    .select("id, nombre")
+    .eq("residente_id", residente_id)
+    .eq("activo", true)
+    .returns<{ id: string; nombre: string }[]>();
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { error } = await supabase.from("recetas_medicamento").insert({
-    residente_id,
-    medicamento_id,
-    medicamento_texto,
-    cantidad,
-    obra_social,
-    fecha_vencimiento,
-    notas,
-    creado_por: user?.id ?? null,
+  // Sin medicamento escrito queda una receta "general", como antes.
+  const filas = (items.length > 0 ? items : [{ medicamento: "", cantidad: null }]).map((it) => {
+    const coincidencia = it.medicamento
+      ? (meds ?? []).find((m) => m.nombre.trim().toLowerCase() === it.medicamento.toLowerCase())
+      : undefined;
+    return {
+      residente_id,
+      medicamento_id: coincidencia?.id ?? null,
+      medicamento_texto: coincidencia ? null : it.medicamento || null,
+      cantidad: it.cantidad,
+      obra_social,
+      fecha_vencimiento,
+      notas,
+      creado_por: user?.id ?? null,
+    };
   });
+
+  const { error } = await supabase.from("recetas_medicamento").insert(filas);
 
   if (error) return { error: error.message };
 
