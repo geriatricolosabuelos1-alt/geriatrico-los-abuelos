@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { validarOConfigurarPin } from "@/app/residentes/[id]/accion-medica/actions";
+import { listarKardexResidente, validarOConfigurarPin } from "@/app/residentes/[id]/accion-medica/actions";
+import { itemsDesdeKardex } from "@/lib/indicaciones";
 import type { EvaluacionMedica, IndicacionMedica, ItemIndicacionMedica } from "@/lib/types";
 
 type Estado = { error: string | null };
@@ -82,6 +83,8 @@ export type DatosResidenteEvaluacion = {
   afiliado: string | null;
   evaluaciones: EvaluacionMedica[];
   indicaciones: IndicacionMedica[];
+  // Medicación activa (kardex) ya armada como cuadro de indicaciones.
+  itemsKardex: ItemIndicacionMedica[];
 };
 
 type ResidenteCompletoRow = {
@@ -107,9 +110,10 @@ export async function obtenerDatosResidenteEvaluacion(residenteId: string): Prom
 
   if (!residente) return null;
 
-  const [evaluaciones, indicaciones] = await Promise.all([
+  const [evaluaciones, indicaciones, kardex] = await Promise.all([
     listarEvaluacionesMedicas(residenteId),
     listarIndicacionesMedicas(residenteId),
+    listarKardexResidente(residenteId),
   ]);
 
   return {
@@ -124,6 +128,7 @@ export async function obtenerDatosResidenteEvaluacion(residenteId: string): Prom
     afiliado: residente.ficha_administrativa?.numero_afiliado ?? null,
     evaluaciones,
     indicaciones,
+    itemsKardex: itemsDesdeKardex(kardex),
   };
 }
 

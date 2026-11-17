@@ -133,6 +133,7 @@ export function SelectorResidenteEvaluacion({ residentes, pinConfigurado, reside
                   : null
               }
               onCancelarBorrador={() => setRevisando(false)}
+              itemsKardex={datos.itemsKardex}
             />
           </div>
 

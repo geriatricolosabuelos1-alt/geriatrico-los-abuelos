@@ -15,6 +15,8 @@ type Props = {
   // Documento pendiente de firma que se está revisando/corrigiendo (se precarga).
   borrador?: { evaluacion: EvaluacionMedica; indicacion: IndicacionMedica | null } | null;
   onCancelarBorrador?: () => void;
+  // Medicación activa del kardex: precarga el cuadro de indicaciones.
+  itemsKardex?: ItemIndicacionMedica[];
 };
 
 const ETIQUETA_MIN = "mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft";
@@ -65,6 +67,7 @@ export function EvaluacionIndicacionesForm({
   esMedico,
   borrador,
   onCancelarBorrador,
+  itemsKardex = [],
 }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const [pending, startTransition] = useTransition();
@@ -77,7 +80,11 @@ export function EvaluacionIndicacionesForm({
   const [mesHastaIdx, setMesHastaIdx] = useState(ind ? mesIndice(ind.periodo_hasta).mes : hoy.mes);
   const [anio, setAnio] = useState(ind ? mesIndice(ind.periodo_desde).anio : hoy.anio);
   const [filas, setFilas] = useState<ItemIndicacionMedica[]>(
-    ind && ind.items.length > 0 ? ind.items.map((f) => ({ ...f })) : [filaVacia()],
+    ind && ind.items.length > 0
+      ? ind.items.map((f) => ({ ...f }))
+      : itemsKardex.length > 0
+        ? itemsKardex.map((f) => ({ ...f }))
+        : [filaVacia()],
   );
 
   function repetirUltimoPeriodo() {
@@ -219,6 +226,16 @@ export function EvaluacionIndicacionesForm({
       <div className="border-t border-edge pt-5">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <h3 className="font-display text-base font-semibold text-ink">Indicaciones médicas</h3>
+          <div className="flex flex-wrap gap-2">
+          {itemsKardex.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setFilas(itemsKardex.map((f) => ({ ...f })))}
+              className="rounded-lg border border-edge px-3 py-1.5 text-xs font-medium text-ink-soft hover:border-brass hover:text-ink"
+            >
+              ↻ Traer medicación del kardex
+            </button>
+          )}
           {ultimaIndicacion && (
             <button
               type="button"
@@ -228,6 +245,7 @@ export function EvaluacionIndicacionesForm({
               ↻ Repetir último período, igual indicación
             </button>
           )}
+          </div>
         </div>
 
         <div className="mb-3 flex flex-wrap items-end gap-3">
