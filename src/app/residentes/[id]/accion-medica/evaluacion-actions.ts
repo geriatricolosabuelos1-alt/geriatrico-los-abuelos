@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { listarKardexResidente, validarOConfigurarPin } from "@/app/residentes/[id]/accion-medica/actions";
 import { itemsDesdeKardex } from "@/lib/indicaciones";
+import { hoyArgentina } from "@/lib/fechas";
 import type { EvaluacionMedica, IndicacionMedica, ItemIndicacionMedica } from "@/lib/types";
 
 type Estado = { error: string | null };
@@ -350,4 +351,96 @@ export async function firmarPendientes(
   revalidatePath(`/sucursales/${sedeId}/accion-medica`);
   revalidatePath(`/sucursales/${sedeId}/accion-medica/evaluacion-medica`);
   return { error: null, firmados };
+}
+
+const COLUMNAS_EVALUACION =
+  "residente_id, fecha, antecedentes, estado_conciencia, orientacion, obs_orientacion, alimentacion, consistencia, obs_alimentacion, marcha_movilidad, control_urinario, control_fecal, obs_esfinteres, conducta, matricula, firmado_por, created_at";
+
+type EvaluacionCopia = Omit<EvaluacionMedica, "id" | "firmado_at" | "firmante">;
+
+// Residentes de la sede cuya última evaluación firmada es de un mes anterior y que no tienen
+// nada pendiente: son los que se renuevan al empezar el mes.
+async function evaluacionesParaRenovar(sedeId: string): Promise<EvaluacionCopia[]> {
+  const supabase = await createClient();
+  const mesActual = hoyArgentina().slice(0, 7);
+  const { data } = await supabase
+    .from("evaluaciones_medicas")
+    .select(`${COLUMNAS_EVALUACION}, residentes!inner(sucursal_id, activo)`)
+    .eq("residentes.sucursal_id", sedeId)
+    .eq("residentes.activo", true)
+    .order("fecha", { ascending: false })
+    .order("created_at", { ascending: false })
+    .returns<(EvaluacionCopia & { residentes: unknown })[]>();
+
+  const porResidente = new Map<string, (EvaluacionCopia & { residentes: unknown })[]>();
+  (data ?? []).forEach((e) => porResidente.set(e.residente_id, [...(porResidente.get(e.residente_id) ?? []), e]));
+
+  const resultado: EvaluacionCopia[] = [];
+  for (const lista of porResidente.values()) {
+    if (lista.some((e) => !e.firmado_por)) continue; // ya tiene una pendiente
+    const ultima = lista[0];
+    if (!ultima || ultima.fecha.slice(0, 7) >= mesActual) continue; // ya está la de este mes
+    const { residentes: _r, ...copia } = ultima;
+    void _r;
+    resultado.push(copia);
+  }
+  return resultado;
+}
+
+export async function contarParaRenovar(sedeId: string): Promise<number> {
+  return (await evaluacionesParaRenovar(sedeId)).length;
+}
+
+// Al empezar el mes: copia la última evaluación firmada de cada residente con fecha de hoy y las
+// indicaciones del mes (medicación actual del kardex, o las últimas firmadas), todo pendiente de firma.
+// La médica después edita las que cambiaron y firma todas de una.
+export async function renovarEvaluacionesMes(sedeId: string): Promise<{ error: string | null; renovadas: number }> {
+  const { error: errorRol, userId } = await usuarioYRol();
+  if (errorRol || !userId) return { error: errorRol ?? "No autenticado.", renovadas: 0 };
+
+  const supabase = await createClient();
+  const hoy = hoyArgentina();
+  const [anio, mes] = hoy.split("-").map(Number);
+  const periodoDesde = `${hoy.slice(0, 7)}-01`;
+  const periodoHasta = `${hoy.slice(0, 7)}-${String(new Date(anio, mes, 0).getDate()).padStart(2, "0")}`;
+
+  const copias = await evaluacionesParaRenovar(sedeId);
+  let renovadas = 0;
+  for (const e of copias) {
+    const { firmado_por: _f, created_at: _c, ...campos } = e;
+    void _f;
+    void _c;
+    const { error } = await supabase.from("evaluaciones_medicas").insert({
+      ...campos,
+      fecha: hoy,
+      firmado_por: null,
+      firmado_at: null,
+      cargado_por: userId,
+    });
+    if (error) return { error: error.message, renovadas };
+
+    const [kardex, indicaciones] = await Promise.all([
+      listarKardexResidente(e.residente_id),
+      listarIndicacionesMedicas(e.residente_id),
+    ]);
+    const ultimaIndicacion = indicaciones.find((i) => i.firmado_por) ?? null;
+    const items = kardex.length > 0 ? itemsDesdeKardex(kardex) : (ultimaIndicacion?.items ?? []);
+    if (items.length > 0) {
+      await supabase.from("indicaciones_medicas").insert({
+        residente_id: e.residente_id,
+        periodo_desde: periodoDesde,
+        periodo_hasta: periodoHasta,
+        items,
+        observaciones: ultimaIndicacion?.observaciones ?? null,
+        matricula: e.matricula,
+        firmado_por: null,
+        firmado_at: null,
+        cargado_por: userId,
+      });
+    }
+    renovadas++;
+  }
+
+  revalidatePath(`/sucursales/${sedeId}/accion-medica`);
+  return { error: null, renovadas };
 }

@@ -150,6 +150,7 @@ export function SelectorResidenteEvaluacion({ residentes, pinConfigurado, reside
                   : null
               }
               itemsKardex={datos.itemsKardex}
+              plantilla={datos.evaluaciones.find((e) => e.firmado_por) ?? null}
             />
           </div>
 

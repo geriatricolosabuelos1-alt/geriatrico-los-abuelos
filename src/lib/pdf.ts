@@ -43,7 +43,7 @@ export function crearPdfTablas(encabezado: EncabezadoPdf, secciones: SeccionPdf[
   }
   doc.setTextColor(0);
 
-  for (const seccion of secciones) {
+  for (const [indice, seccion] of secciones.entries()) {
     if (seccion.titulo) {
       y += 12;
       doc.setFontSize(12);
@@ -63,7 +63,8 @@ export function crearPdfTablas(encabezado: EncabezadoPdf, secciones: SeccionPdf[
     const conAutoTable = doc as unknown as { lastAutoTable: { finalY: number } };
     y = conAutoTable.lastAutoTable.finalY + 16;
 
-    if (y > 760) {
+    // Hoja nueva solo si queda otra sección por imprimir (si no, salía una hoja en blanco al final).
+    if (y > 760 && indice < secciones.length - 1) {
       doc.addPage();
       y = 44;
     }
