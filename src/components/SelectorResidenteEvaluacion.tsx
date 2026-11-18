@@ -23,8 +23,11 @@ export function SelectorResidenteEvaluacion({ residentes, pinConfigurado, reside
   const [residenteId, setResidenteId] = useState(residenteIdInicial ?? "");
   const [datos, setDatos] = useState<DatosResidenteEvaluacion | null>(null);
   const [cargando, startTransition] = useTransition();
-  // Revisando el documento pendiente de firma (se precarga en el formulario).
-  const [revisando, setRevisando] = useState(false);
+  // Si el residente ya tiene un documento pendiente de firma, se abre directamente para seguir
+  // editándolo (no en blanco). "nuevo" es cuando se pide expresamente uno nuevo.
+  const [nuevo, setNuevo] = useState(false);
+  const [version, setVersion] = useState(0);
+  const [aviso, setAviso] = useState<string | null>(null);
 
   useEffect(() => {
     if (!residenteId) return;
@@ -39,19 +42,27 @@ export function SelectorResidenteEvaluacion({ residentes, pinConfigurado, reside
     startTransition(async () => {
       const res = await obtenerDatosResidenteEvaluacion(residenteId);
       setDatos(res);
-      setRevisando(false);
+      setNuevo(false);
+      setVersion((v) => v + 1);
+      setAviso(
+        esMedico
+          ? "Guardado y firmado ✓"
+          : "Guardado ✓ Quedó pendiente de firma de la médica. Podés seguir corrigiéndolo acá.",
+      );
     });
   }
 
   function cambiarResidente(nuevoId: string) {
     setResidenteId(nuevoId);
     setDatos(null);
-    setRevisando(false);
+    setNuevo(false);
+    setAviso(null);
   }
 
   const edad = datos ? calcularEdad(datos.fechaNacimiento) : null;
   const evaluacionPendiente = datos?.evaluaciones.find((e) => !e.firmado_por) ?? null;
   const indicacionPendiente = datos?.indicaciones.find((i) => !i.firmado_por) ?? null;
+  const revisando = !!evaluacionPendiente && !nuevo;
   const ultimaFirmada = datos?.indicaciones.find((i) => i.firmado_por) ?? null;
 
   return (
@@ -103,6 +114,12 @@ export function SelectorResidenteEvaluacion({ residentes, pinConfigurado, reside
               />
             </div>
 
+            {aviso && (
+              <p className="mb-4 rounded-xl border border-emerald-300 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-800">
+                {aviso}
+              </p>
+            )}
+
             {evaluacionPendiente && !revisando && (
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3">
                 <p className="text-sm text-amber-900">
@@ -112,7 +129,7 @@ export function SelectorResidenteEvaluacion({ residentes, pinConfigurado, reside
                 </p>
                 <button
                   type="button"
-                  onClick={() => setRevisando(true)}
+                  onClick={() => setNuevo(false)}
                   className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-500"
                 >
                   {esMedico ? "Revisar y firmar" : "Corregir"}
@@ -121,7 +138,7 @@ export function SelectorResidenteEvaluacion({ residentes, pinConfigurado, reside
             )}
 
             <EvaluacionIndicacionesForm
-              key={revisando && evaluacionPendiente ? `borrador-${evaluacionPendiente.id}` : "nuevo"}
+              key={`${revisando && evaluacionPendiente ? `borrador-${evaluacionPendiente.id}` : "nuevo"}-${version}`}
               residenteId={residenteId}
               pinConfigurado={pinConfigurado}
               ultimaIndicacion={ultimaFirmada ?? datos.indicaciones[0] ?? null}
@@ -132,7 +149,6 @@ export function SelectorResidenteEvaluacion({ residentes, pinConfigurado, reside
                   ? { evaluacion: evaluacionPendiente, indicacion: indicacionPendiente }
                   : null
               }
-              onCancelarBorrador={() => setRevisando(false)}
               itemsKardex={datos.itemsKardex}
             />
           </div>
