@@ -50,7 +50,7 @@ export function HojaEvaluacionMedica({ d, sede }: { d: DatosHojaEvaluacion; sede
     : [];
 
   return (
-    <article className="hoja-evaluacion break-after-page text-[0.8rem] leading-snug text-black">
+    <article className="hoja-evaluacion text-[0.8rem] leading-snug text-black">
       <header className="mb-3 border-b-2 border-black pb-2">
         <p className="text-[0.65rem] uppercase tracking-widest text-neutral-600">{sede}</p>
         <h2 className="text-lg font-bold">Evaluación médica — {d.nombre}</h2>

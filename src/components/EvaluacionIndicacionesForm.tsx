@@ -15,6 +15,8 @@ type Props = {
   // Documento pendiente de firma que se está revisando/corrigiendo (se precarga).
   borrador?: { evaluacion: EvaluacionMedica; indicacion: IndicacionMedica | null } | null;
   onCancelarBorrador?: () => void;
+  // Última evaluación firmada: una evaluación nueva viene completa con sus datos (se edita lo que cambió).
+  plantilla?: EvaluacionMedica | null;
   // Medicación activa del kardex: precarga el cuadro de indicaciones.
   itemsKardex?: ItemIndicacionMedica[];
 };
@@ -68,12 +70,15 @@ export function EvaluacionIndicacionesForm({
   borrador,
   onCancelarBorrador,
   itemsKardex = [],
+  plantilla = null,
 }: Props) {
   const formRef = useRef<HTMLFormElement>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const ev = borrador?.evaluacion ?? null;
   const ind = borrador?.indicacion ?? null;
+  // Valores de partida: el borrador pendiente o, si es nueva, la última evaluación firmada.
+  const base = ev ?? plantilla;
 
   const hoy = useMemo(() => mesIndice(hoyArgentina()), []);
   const [mesDesdeIdx, setMesDesdeIdx] = useState(ind ? mesIndice(ind.periodo_desde).mes : hoy.mes);
@@ -168,13 +173,13 @@ export function EvaluacionIndicacionesForm({
         </div>
         <div className="sm:col-span-2">
           <label className={ETIQUETA_MIN}>Antecedentes</label>
-          <input name="antecedentes" defaultValue={ev?.antecedentes ?? ""} placeholder="Ej: HTA, HPB, ansiedad" className={CAMPO} />
+          <input name="antecedentes" defaultValue={base?.antecedentes ?? ""} placeholder="Ej: HTA, HPB, ansiedad" className={CAMPO} />
         </div>
       </div>
 
       <fieldset className="rounded-lg border border-edge p-3">
         <legend className="px-1 text-xs font-bold uppercase tracking-wide text-ink-soft">Estado de conciencia</legend>
-        <GrupoRadio nombre="estado_conciencia" opciones={CONCIENCIA} defaultValue={ev ? (ev.estado_conciencia ?? undefined) : "Vigil"} />
+        <GrupoRadio nombre="estado_conciencia" opciones={CONCIENCIA} defaultValue={base ? (base.estado_conciencia ?? undefined) : "Vigil"} />
       </fieldset>
 
       <fieldset className="rounded-lg border border-edge p-3">
@@ -186,41 +191,41 @@ export function EvaluacionIndicacionesForm({
                 type="checkbox"
                 name="orientacion"
                 value={op}
-                defaultChecked={ev?.orientacion.includes(op) ?? false}
+                defaultChecked={base?.orientacion.includes(op) ?? false}
                 className="h-4 w-4 accent-[var(--color-brass)]"
               />
               {op}
             </label>
           ))}
         </div>
-        <input name="obs_orientacion" defaultValue={ev?.obs_orientacion ?? ""} placeholder="Observaciones (opcional)" className={`${CAMPO} mt-2 text-xs`} />
+        <input name="obs_orientacion" defaultValue={base?.obs_orientacion ?? ""} placeholder="Observaciones (opcional)" className={`${CAMPO} mt-2 text-xs`} />
       </fieldset>
 
       <fieldset className="rounded-lg border border-edge p-3">
         <legend className="px-1 text-xs font-bold uppercase tracking-wide text-ink-soft">Alimentación</legend>
-        <GrupoRadio nombre="alimentacion" opciones={ALIMENTACION} defaultValue={ev ? (ev.alimentacion ?? undefined) : "Vía oral"} />
+        <GrupoRadio nombre="alimentacion" opciones={ALIMENTACION} defaultValue={base ? (base.alimentacion ?? undefined) : "Vía oral"} />
         <p className="mb-1 mt-3 text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">Consistencia</p>
-        <GrupoRadio nombre="consistencia" opciones={CONSISTENCIA} defaultValue={ev ? (ev.consistencia ?? undefined) : "Normal"} />
-        <input name="obs_alimentacion" defaultValue={ev?.obs_alimentacion ?? ""} placeholder="Observaciones (opcional)" className={`${CAMPO} mt-2 text-xs`} />
+        <GrupoRadio nombre="consistencia" opciones={CONSISTENCIA} defaultValue={base ? (base.consistencia ?? undefined) : "Normal"} />
+        <input name="obs_alimentacion" defaultValue={base?.obs_alimentacion ?? ""} placeholder="Observaciones (opcional)" className={`${CAMPO} mt-2 text-xs`} />
       </fieldset>
 
       <fieldset className="rounded-lg border border-edge p-3">
         <legend className="px-1 text-xs font-bold uppercase tracking-wide text-ink-soft">Marcha / Movilidad</legend>
-        <GrupoRadio nombre="marcha_movilidad" opciones={MARCHA} defaultValue={ev?.marcha_movilidad ?? undefined} />
+        <GrupoRadio nombre="marcha_movilidad" opciones={MARCHA} defaultValue={base?.marcha_movilidad ?? undefined} />
       </fieldset>
 
       <fieldset className="rounded-lg border border-edge p-3">
         <legend className="px-1 text-xs font-bold uppercase tracking-wide text-ink-soft">Control de esfínteres</legend>
-        <GrupoRadio nombre="control_urinario" opciones={URINARIO} defaultValue={ev ? (ev.control_urinario ?? undefined) : "Continente urinario"} />
+        <GrupoRadio nombre="control_urinario" opciones={URINARIO} defaultValue={base ? (base.control_urinario ?? undefined) : "Continente urinario"} />
         <div className="mt-2">
-          <GrupoRadio nombre="control_fecal" opciones={FECAL} defaultValue={ev ? (ev.control_fecal ?? undefined) : "Continente fecal"} />
+          <GrupoRadio nombre="control_fecal" opciones={FECAL} defaultValue={base ? (base.control_fecal ?? undefined) : "Continente fecal"} />
         </div>
-        <input name="obs_esfinteres" defaultValue={ev?.obs_esfinteres ?? ""} placeholder="Observaciones (opcional)" className={`${CAMPO} mt-2 text-xs`} />
+        <input name="obs_esfinteres" defaultValue={base?.obs_esfinteres ?? ""} placeholder="Observaciones (opcional)" className={`${CAMPO} mt-2 text-xs`} />
       </fieldset>
 
       <div>
         <label className={ETIQUETA_MIN}>Conducta</label>
-        <textarea name="conducta" rows={2} defaultValue={ev ? (ev.conducta ?? "") : "Continúa con mismo plan."} className={CAMPO} />
+        <textarea name="conducta" rows={2} defaultValue={base ? (base.conducta ?? "") : "Continúa con mismo plan."} className={CAMPO} />
       </div>
 
       <div className="border-t border-edge pt-5">
@@ -350,7 +355,7 @@ export function EvaluacionIndicacionesForm({
           <label className={ETIQUETA_MIN}>Matrícula</label>
           <input
             name="matricula"
-            defaultValue={ev?.matricula ?? ""}
+            defaultValue={base?.matricula ?? ""}
             className="w-32 rounded-lg border border-edge bg-panel-deep px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
           />
         </div>

@@ -4,7 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
 import { listarInterconsultasPendientesSede } from "@/app/residentes/[id]/accion-medica/interconsultas-actions";
 import { ETIQUETA_TIPO_INTERCONSULTA } from "@/lib/interconsultas";
-import { listarPendientesFirma } from "@/app/residentes/[id]/accion-medica/evaluacion-actions";
+import { contarParaRenovar, listarPendientesFirma } from "@/app/residentes/[id]/accion-medica/evaluacion-actions";
+import { BotonRenovarEvaluaciones } from "@/components/BotonRenovarEvaluaciones";
+import { hoyArgentina } from "@/lib/fechas";
 import { tienePinConfigurado } from "@/app/residentes/[id]/accion-medica/actions";
 import { PendientesFirmaMedica } from "@/components/PendientesFirmaMedica";
 import type { Perfil } from "@/lib/types";
@@ -20,7 +22,7 @@ export default async function AccionMedicaListaPage({ params }: { params: Promis
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [{ data: perfil }, { data: sucursal }, { data: residentes }, interconsultas, pendientesFirma, pinConfigurado] =
+  const [{ data: perfil }, { data: sucursal }, { data: residentes }, interconsultas, pendientesFirma, pinConfigurado, paraRenovar] =
     await Promise.all([
       supabase
         .from("perfiles")
@@ -42,6 +44,7 @@ export default async function AccionMedicaListaPage({ params }: { params: Promis
       listarInterconsultasPendientesSede(id),
       listarPendientesFirma(id),
       tienePinConfigurado(),
+      contarParaRenovar(id),
     ]);
 
   if (!sucursal || !perfil) notFound();
@@ -77,6 +80,12 @@ export default async function AccionMedicaListaPage({ params }: { params: Promis
             </Link>
           </div>
         </div>
+
+        <BotonRenovarEvaluaciones
+          sedeId={id}
+          cantidad={paraRenovar}
+          mes={new Date(hoyArgentina() + "T12:00:00").toLocaleDateString("es-AR", { month: "long" })}
+        />
 
         <PendientesFirmaMedica
           sedeId={id}
