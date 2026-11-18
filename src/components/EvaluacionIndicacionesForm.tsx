@@ -150,11 +150,11 @@ export function EvaluacionIndicacionesForm({
           <span>
             {esMedico
               ? "Revisá el documento pendiente, corregí lo que haga falta y firmalo con tu PIN."
-              : "Estás corrigiendo un documento pendiente de firma médica."}
+              : "Este residente ya tiene una evaluación cargada, pendiente de firma de la médica. Corregí lo que haga falta y guardá."}
           </span>
           {onCancelarBorrador && (
             <button type="button" onClick={onCancelarBorrador} className="text-xs underline underline-offset-2">
-              Cancelar
+              Empezar uno nuevo en blanco
             </button>
           )}
         </div>

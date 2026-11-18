@@ -40,6 +40,7 @@ export async function listarEvaluacionesMedicas(residenteId: string): Promise<Ev
     )
     .eq("residente_id", residenteId)
     .order("fecha", { ascending: false })
+    .order("created_at", { ascending: false })
     .returns<(EvaluacionMedica & { perfiles: { nombre_completo: string } | null })[]>();
   return (data ?? []).map(({ perfiles, ...e }) => ({ ...e, firmante: perfiles?.nombre_completo ?? null }));
 }
@@ -53,6 +54,7 @@ export async function listarIndicacionesMedicas(residenteId: string): Promise<In
     )
     .eq("residente_id", residenteId)
     .order("periodo_desde", { ascending: false })
+    .order("created_at", { ascending: false })
     .returns<(IndicacionMedica & { perfiles: { nombre_completo: string } | null })[]>();
   return (data ?? []).map(({ perfiles, ...i }) => ({ ...i, firmante: perfiles?.nombre_completo ?? null }));
 }
@@ -154,8 +156,33 @@ export async function guardarEvaluacionIndicacionMedica(
 
   const supabase = await createClient();
   const matricula = String(formData.get("matricula") ?? "").trim() || null;
-  const evaluacionId = String(formData.get("evaluacion_id") ?? "") || null;
-  const indicacionId = String(formData.get("indicacion_id") ?? "") || null;
+  let evaluacionId = String(formData.get("evaluacion_id") ?? "") || null;
+  let indicacionId = String(formData.get("indicacion_id") ?? "") || null;
+
+  // Un solo documento pendiente por residente: si ya hay uno sin firmar, se actualiza ese
+  // (así no quedan copias vacías si se toca "Guardar" de nuevo).
+  if (!evaluacionId) {
+    const { data: pendiente } = await supabase
+      .from("evaluaciones_medicas")
+      .select("id")
+      .eq("residente_id", residenteId)
+      .is("firmado_por", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle<{ id: string }>();
+    evaluacionId = pendiente?.id ?? null;
+  }
+  if (!indicacionId) {
+    const { data: pendiente } = await supabase
+      .from("indicaciones_medicas")
+      .select("id")
+      .eq("residente_id", residenteId)
+      .is("firmado_por", null)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle<{ id: string }>();
+    indicacionId = pendiente?.id ?? null;
+  }
 
   // Firma: solo la médica. Lo que carga otra persona queda sin firmar.
   const firma = esMedico
