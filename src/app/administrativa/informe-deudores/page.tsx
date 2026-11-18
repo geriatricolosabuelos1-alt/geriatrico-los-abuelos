@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { PieImpresion } from "@/components/PieImpresion";
 import { calcularResumenCuenta, type PagoResumen } from "@/lib/aranceles";
 import { BotonExportarPdf } from "@/components/BotonExportarPdf";
 
@@ -81,9 +82,6 @@ export default async function InformeDeudoresGeneralPage() {
             <p className="text-xs uppercase tracking-widest text-ink-soft print:text-neutral-600">
               Informe de deudores · Ambas sedes
             </p>
-            <p className="mt-1 text-xs text-ink-soft print:text-neutral-600">
-              Generado el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}
-            </p>
           </div>
           <div className="print:hidden">
             <BotonExportarPdf />
@@ -146,6 +144,7 @@ export default async function InformeDeudoresGeneralPage() {
             </tfoot>
           )}
         </table>
+        <PieImpresion />
       </div>
     </div>
   );

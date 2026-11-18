@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { PieImpresion } from "@/components/PieImpresion";
 import { COLUMNAS_FICHA_NUTRICION, nombrePeriodo, type FichaNutricion } from "@/lib/nutricion";
 import { generarLibroFoliado } from "@/app/sucursales/[id]/legales/sanitario-actions";
 import { calcularEdad } from "@/lib/residentes";
@@ -253,7 +254,6 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
               .join(" · ")}
           </p>
         </div>
-        <p className="text-right text-[0.62rem] text-neutral-600">Emitido el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}</p>
       </header>
 
       <Seccion titulo="1. Datos personales">
@@ -516,6 +516,7 @@ export async function LegajoCompleto({ residenteId, sede }: { residenteId: strin
           ])}
         />
       </Seccion>
+      <PieImpresion />
     </article>
   );
 }

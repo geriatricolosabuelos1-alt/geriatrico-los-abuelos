@@ -97,7 +97,7 @@ export function MarcacionEmpleado({ empleadoId, empleadoNombre }: Props) {
       {
         titulo: `Marcación — ${empleadoNombre}`,
         subtitulo: rango.etiqueta,
-        fecha: `Generado el ${new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}`,
+        pie: `Impreso el ${new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}`,
       },
       [
         {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PieImpresion } from "@/components/PieImpresion";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Sidebar } from "@/components/Sidebar";
@@ -130,9 +131,6 @@ export default async function CuentaCorrientePage({
           <p className="font-display text-lg font-semibold text-black">Los Abuelos</p>
           <p className="text-xs uppercase tracking-widest text-neutral-600">
             Informe de cuenta corriente
-          </p>
-          <p className="mt-1 text-xs text-neutral-600">
-            Generado el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}
           </p>
         </div>
 
@@ -283,6 +281,7 @@ export default async function CuentaCorrientePage({
             </tbody>
           </table>
         </div>
+        <PieImpresion soloImpresion />
       </main>
     </div>
   );

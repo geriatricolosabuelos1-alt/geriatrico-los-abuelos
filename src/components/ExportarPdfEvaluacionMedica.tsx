@@ -110,7 +110,8 @@ export function ExportarPdfEvaluacionMedica({
       {
         titulo: `Evaluación médica — ${residenteNombre}`,
         subtitulo: sede,
-        fecha: `Generado el ${new Date().toLocaleDateString("es-AR")}`,
+        // La fecha de impresión va abajo y chica: la fecha que vale es la de la evaluación.
+        pie: `Impreso el ${new Date().toLocaleDateString("es-AR")}`,
       },
       secciones,
     );

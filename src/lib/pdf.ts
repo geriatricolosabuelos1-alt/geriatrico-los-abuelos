@@ -14,6 +14,8 @@ export type EncabezadoPdf = {
   // Renglón extra debajo del subtítulo (ej. domicilio de la sede).
   detalle?: string;
   fecha?: string;
+  // Texto chico en el pie de cada hoja (ej. "Impreso el ..."), para no confundirlo con fechas del documento.
+  pie?: string;
 };
 
 // Arma el documento (encabezado + tablas) sin guardarlo.
@@ -91,6 +93,10 @@ export function descargarPdf(
     doc.setFontSize(8);
     doc.setTextColor(110);
     doc.text(encabezado.titulo, 40, 820);
+    if (encabezado.pie) {
+      doc.setFontSize(7);
+      doc.text(encabezado.pie, 297, 820, { align: "center" });
+    }
     doc.setTextColor(0);
     doc.setFontSize(9);
     doc.text(`Folio ${pagina} de ${totalPaginas}`, 555, 820, { align: "right" });

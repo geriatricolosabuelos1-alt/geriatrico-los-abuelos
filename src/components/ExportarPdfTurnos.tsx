@@ -114,7 +114,7 @@ export function ExportarPdfTurnos({ turnos, cambios, empleadosPorId, sucursalNom
       {
         titulo: "Turnos y francos",
         subtitulo: `${sucursalNombre}${empleado ? ` · ${empleadosPorId.get(empleado) ?? ""}` : ""} — ${etiquetaPeriodo}`,
-        fecha: `Generado el ${new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}`,
+        pie: `Impreso el ${new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}`,
       },
       secciones.length > 0 ? secciones : [{ columnas: ["Fecha", "Día", "Horario", "Observación"], filas: [] }],
     );

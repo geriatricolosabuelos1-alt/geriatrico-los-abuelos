@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { PieImpresion } from "@/components/PieImpresion";
 import { createClient } from "@/lib/supabase/server";
 import { BotonExportarPdf } from "@/components/BotonExportarPdf";
 import type { MedicamentoResidente } from "@/lib/types";
@@ -69,9 +70,6 @@ export default async function InformeMedicacionPage({
             <p className="text-xs uppercase tracking-widest text-ink-soft print:text-neutral-600">
               Informe de stock de medicación · {sucursal!.nombre}
             </p>
-            <p className="mt-1 text-xs text-ink-soft print:text-neutral-600">
-              Generado el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}
-            </p>
           </div>
           <div className="print:hidden">
             <BotonExportarPdf />
@@ -115,6 +113,7 @@ export default async function InformeMedicacionPage({
             )}
           </tbody>
         </table>
+        <PieImpresion />
       </div>
     </div>
   );
