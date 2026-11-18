@@ -62,12 +62,20 @@ export default async function AccionMedicaListaPage({ params }: { params: Promis
               Elegí un residente para cargar la evolución del pase y revisar su kardex.
             </p>
           </div>
-          <Link
-            href={`/sucursales/${id}/accion-medica/evaluacion-medica`}
-            className="rounded-lg border border-brass px-4 py-2 text-sm font-semibold text-brass hover:bg-brass/10"
-          >
-            Evaluación médica (plantilla)
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={`/sucursales/${id}/accion-medica/imprimir`}
+              className="rounded-lg border border-brass px-4 py-2 text-sm font-semibold text-brass hover:bg-brass/10"
+            >
+              Imprimir evaluaciones firmadas
+            </Link>
+            <Link
+              href={`/sucursales/${id}/accion-medica/evaluacion-medica`}
+              className="rounded-lg border border-brass px-4 py-2 text-sm font-semibold text-brass hover:bg-brass/10"
+            >
+              Evaluación médica (plantilla)
+            </Link>
+          </div>
         </div>
 
         <PendientesFirmaMedica
