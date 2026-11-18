@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { PieImpresion } from "@/components/PieImpresion";
 import { createClient } from "@/lib/supabase/server";
 import { BotonExportarPdf } from "@/components/BotonExportarPdf";
 import { obtenerResumenSucursal } from "@/lib/dashboard";
@@ -40,9 +41,6 @@ export default async function InformeStockInsumosPage({
             </p>
             <p className="text-xs uppercase tracking-widest text-ink-soft print:text-neutral-600">
               Informe de stock bajo · {sucursal!.nombre}
-            </p>
-            <p className="mt-1 text-xs text-ink-soft print:text-neutral-600">
-              Generado el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}
             </p>
           </div>
           <div className="print:hidden">
@@ -87,6 +85,7 @@ export default async function InformeStockInsumosPage({
             )}
           </tbody>
         </table>
+        <PieImpresion />
       </div>
     </div>
   );

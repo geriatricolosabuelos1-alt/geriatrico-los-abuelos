@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PieImpresion } from "@/components/PieImpresion";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BotonExportarPdf } from "@/components/BotonExportarPdf";
@@ -226,9 +227,8 @@ export default async function RegistroMedicacionPage({
             {tipo === "administrada"
               ? `Período ${formatearFecha(desde)} al ${formatearFecha(hasta)} · ${dosis.length} registro${
                   dosis.length === 1 ? "" : "s"
-                } (${totalAdministradas} administrada${totalAdministradas === 1 ? "" : "s"}) · `
+                } (${totalAdministradas} administrada${totalAdministradas === 1 ? "" : "s"})`
               : ""}
-            Generado el {new Date().toLocaleDateString("es-AR", { timeZone: ZONA })}
           </p>
         </div>
 
@@ -342,6 +342,7 @@ export default async function RegistroMedicacionPage({
             </tbody>
           </table>
         )}
+        <PieImpresion />
       </div>
     </div>
   );

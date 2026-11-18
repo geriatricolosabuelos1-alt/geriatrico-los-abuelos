@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { PieImpresion } from "@/components/PieImpresion";
 import { obtenerResumenSucursal } from "@/lib/dashboard";
 import { BotonExportarPdf } from "@/components/BotonExportarPdf";
 
@@ -43,9 +44,6 @@ export default async function InformeMedicacionGeneralPage() {
             <p className="text-xs uppercase tracking-widest text-ink-soft print:text-neutral-600">
               Informe de stock de medicación · Ambas sedes
             </p>
-            <p className="mt-1 text-xs text-ink-soft print:text-neutral-600">
-              Generado el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })}
-            </p>
           </div>
           <div className="print:hidden">
             <BotonExportarPdf />
@@ -89,6 +87,7 @@ export default async function InformeMedicacionGeneralPage() {
             )}
           </tbody>
         </table>
+        <PieImpresion />
       </div>
     </div>
   );

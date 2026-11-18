@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { PieImpresion } from "@/components/PieImpresion";
 import { BotonExportarPdf } from "@/components/BotonExportarPdf";
 
 type FilaResidente = {
@@ -45,9 +46,7 @@ export default async function InformeResidentesGeneralPage() {
             <p className="text-xs uppercase tracking-widest text-ink-soft print:text-neutral-600">
               Residentes activos · Ambas sedes
             </p>
-            <p className="mt-1 text-xs text-ink-soft print:text-neutral-600">
-              Generado el {new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" })} · {filas.length} residentes
-            </p>
+            <p className="mt-1 text-xs text-ink-soft print:text-neutral-600">{filas.length} residentes</p>
           </div>
           <div className="print:hidden">
             <BotonExportarPdf />
@@ -91,6 +90,7 @@ export default async function InformeResidentesGeneralPage() {
             )}
           </tbody>
         </table>
+        <PieImpresion />
       </div>
     </div>
   );
