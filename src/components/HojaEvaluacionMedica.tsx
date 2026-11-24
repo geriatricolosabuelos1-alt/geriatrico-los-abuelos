@@ -113,6 +113,7 @@ export function HojaEvaluacionMedica({ d, sede }: { d: DatosHojaEvaluacion; sede
 
       <div className="mt-10 flex justify-end">
         <div className="w-64 text-center">
+          <div className="h-16" aria-hidden />
           <div className="mb-1 border-t border-black" />
           {firmado ? (
             <>

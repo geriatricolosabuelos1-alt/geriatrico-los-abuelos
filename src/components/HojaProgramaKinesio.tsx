@@ -89,7 +89,7 @@ export function HojaProgramaKinesio({
 
       <footer className="flex flex-wrap items-end justify-between gap-3 pt-2">
         <div className="print:hidden">{acciones}</div>
-        <div className="ml-auto min-w-[14rem] border-t border-ink-soft/60 pt-1 text-center text-xs text-ink print:border-neutral-500 print:text-black">
+        <div className="ml-auto mt-16 min-w-[14rem] border-t border-ink-soft/60 pt-1 text-center text-xs text-ink print:border-neutral-500 print:text-black">
           <p className="font-semibold">{profesional ?? "Licenciado/a en Kinesiología"}</p>
           <p>Licenciado/a en Kinesiología{programa.matricula ? ` · Matrícula N° ${programa.matricula}` : ""}</p>
         </div>
