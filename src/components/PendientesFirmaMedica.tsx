@@ -132,6 +132,7 @@ export function PendientesFirmaMedica({
           <label className="text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
             Matrícula
             <input
+              autoComplete="off" data-lpignore="true" data-1p-ignore
               value={matricula}
               onChange={(e) => setMatricula(e.target.value)}
               placeholder="(opcional)"
@@ -143,6 +144,7 @@ export function PendientesFirmaMedica({
             <input
               type="password"
               inputMode="numeric"
+              autoComplete="new-password"
               value={pin}
               onChange={(e) => setPin(e.target.value)}
               minLength={4}

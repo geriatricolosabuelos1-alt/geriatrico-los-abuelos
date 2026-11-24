@@ -355,6 +355,7 @@ export function EvaluacionIndicacionesForm({
           <label className={ETIQUETA_MIN}>Matrícula</label>
           <input
             name="matricula"
+            autoComplete="off" data-lpignore="true" data-1p-ignore
             defaultValue={base?.matricula ?? ""}
             className="w-32 rounded-lg border border-edge bg-panel-deep px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none"
           />
@@ -367,6 +368,7 @@ export function EvaluacionIndicacionesForm({
             <input
               type="password"
               inputMode="numeric"
+              autoComplete="new-password"
               name="pin"
               required
               minLength={4}

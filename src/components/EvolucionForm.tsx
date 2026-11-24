@@ -188,7 +188,7 @@ export function EvolucionForm({ residenteId, siguienteResidenteId, interconsulta
         <div className="flex flex-wrap items-end gap-3">
           <div>
             <label className={ETIQUETA_MIN}>Matrícula</label>
-            <input name="matricula" className="w-32 rounded-lg border border-edge bg-panel-deep px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none" />
+            <input name="matricula" autoComplete="off" data-lpignore="true" data-1p-ignore className="w-32 rounded-lg border border-edge bg-panel-deep px-2 py-1.5 text-sm text-ink focus:border-brass focus:outline-none" />
           </div>
           <div>
             <label className={ETIQUETA_MIN} title={pinConfigurado ? "Ingresá tu PIN para firmar" : "Primera vez: elegí un PIN de 4 a 6 dígitos"}>
@@ -197,6 +197,7 @@ export function EvolucionForm({ residenteId, siguienteResidenteId, interconsulta
             <input
               type="password"
               inputMode="numeric"
+              autoComplete="new-password"
               name="pin"
               required
               minLength={4}

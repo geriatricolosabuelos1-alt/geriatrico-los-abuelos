@@ -291,7 +291,7 @@ export function FormularioProgramaKinesio({ residenteId }: { residenteId: string
       </div>
       <div>
         <label className={ETIQUETA_MIN}>Matrícula</label>
-        <input name="matricula" className={CAMPO} />
+        <input name="matricula" autoComplete="off" data-lpignore="true" data-1p-ignore className={CAMPO} />
       </div>
       <div className="flex items-end gap-3 sm:col-span-2">
         <button
