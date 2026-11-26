@@ -23,7 +23,7 @@ function Renglones({ texto, minimo = RENGLONES_MINIMOS }: { texto: string | null
       {Array.from({ length: total }, (_, i) => (
         <li
           key={i}
-          className="min-h-[1.6rem] border-b border-dotted border-ink-soft/60 pt-1 text-sm text-ink print:border-neutral-500 print:text-black"
+          className="min-h-[1.6rem] border-b border-dotted border-ink-soft/60 pt-1 text-sm text-ink print:min-h-[1.15rem] print:pt-0 print:text-[0.72rem] print:leading-tight print:border-neutral-500 print:text-black"
         >
           {lineas[i] ?? ""}
         </li>
@@ -57,7 +57,7 @@ export function HojaProgramaKinesio({
   // Al imprimir, cada programa va en su hoja; sin salto después, así lo que sigue no deja hojas vacías.
   return (
     <article
-      className={`break-inside-avoid space-y-4 rounded-2xl border border-edge bg-card p-6 print:rounded-none print:border-0 print:p-0 ${
+      className={`break-inside-avoid space-y-4 rounded-2xl border border-edge bg-card p-6 print:space-y-2 print:rounded-none print:border-0 print:bg-white print:p-0 print:shadow-none ${
         saltoAntes ? "print:break-before-page" : ""
       }`}
     >
@@ -88,18 +88,21 @@ export function HojaProgramaKinesio({
         </section>
       ))}
 
-      <section className="break-inside-avoid">
+      {/* Observaciones y firma juntas: la firma nunca queda sola en otra hoja. */}
+      <div className="break-inside-avoid space-y-2">
+      <section>
         <h4 className="text-xs font-bold uppercase text-ink print:text-black">Observaciones:</h4>
         <Renglones texto={programa.observaciones} minimo={2} />
       </section>
 
       <footer className="flex flex-wrap items-end justify-between gap-3 pt-2">
         <div className="print:hidden">{acciones}</div>
-        <div className="ml-auto mt-16 min-w-[14rem] border-t border-ink-soft/60 pt-1 text-center text-xs text-ink print:border-neutral-500 print:text-black">
+        <div className="ml-auto mt-16 min-w-[14rem] border-t print:mt-8 border-ink-soft/60 pt-1 text-center text-xs text-ink print:border-neutral-500 print:text-black">
           <p className="font-semibold">{profesional ?? "Licenciado/a en Kinesiología"}</p>
           <p>Licenciado/a en Kinesiología{programa.matricula ? ` · Matrícula N° ${programa.matricula}` : ""}</p>
         </div>
       </footer>
+      </div>
     </article>
   );
 }
