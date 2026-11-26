@@ -132,6 +132,12 @@ export default async function KinesiologiaResidentePage({
 
   const edad = calcularEdad(residente.fecha_nacimiento);
   const CELDA = "px-3 py-2 align-top";
+  // Impresión sin hojas de más: si hay programas mensuales, no se imprimen las secciones vacías
+  // (ni el encabezado, que ya está en cada programa) y el primer programa arranca en la primera hoja.
+  const hayProgramas = (programas ?? []).length > 0;
+  const hayEvaluaciones = (evaluaciones ?? []).length > 0;
+  const haySesiones = (sesiones ?? []).length > 0;
+  const ocultarEncabezado = hayProgramas && !hayEvaluaciones;
 
   return (
     <div className="flex min-h-screen w-full print:block">
@@ -143,7 +149,7 @@ export default async function KinesiologiaResidentePage({
       </div>
 
       <main className="flex-1 space-y-6 px-9 py-8 print:px-0 print:py-0">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className={`flex flex-wrap items-start justify-between gap-3 ${ocultarEncabezado ? "print:hidden" : ""}`}>
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-brass">Kinesiología</p>
             <h1 className="font-display text-[32px] font-semibold text-ink print:text-2xl print:text-black">
@@ -170,7 +176,10 @@ export default async function KinesiologiaResidentePage({
           </div>
         </div>
 
-        <section id="evaluaciones" className="scroll-mt-6 space-y-3">
+        <section
+          id="evaluaciones"
+          className={`scroll-mt-6 space-y-3 ${hayProgramas && !hayEvaluaciones ? "print:hidden" : ""}`}
+        >
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg font-semibold text-ink print:text-black">Evaluaciones</h2>
           </div>
@@ -227,14 +236,15 @@ export default async function KinesiologiaResidentePage({
           )}
         </section>
 
-<section id="programas" className="scroll-mt-6 space-y-3">
-          <h2 className="font-display text-lg font-semibold text-ink print:text-black">
+        <section id="programas" className="scroll-mt-6 space-y-3">
+          <h2 className={`font-display text-lg font-semibold text-ink print:text-black ${hayProgramas ? "print:hidden" : ""}`}>
             Programas mensuales ({(programas ?? []).length})
           </h2>
           <FormularioProgramaKinesio residenteId={id} />
-          {(programas ?? []).map((p) => (
+          {(programas ?? []).map((p, i) => (
             <HojaProgramaKinesio
               key={p.id}
+              saltoAntes={i > 0 || hayEvaluaciones}
               programa={p}
               paciente={`${residente.apellido}, ${residente.nombre}`}
               edad={edad}
@@ -250,7 +260,10 @@ export default async function KinesiologiaResidentePage({
           )}
         </section>
 
-        <section id="sesiones" className="scroll-mt-6 space-y-3">
+        <section
+          id="sesiones"
+          className={`scroll-mt-6 space-y-3 ${hayProgramas && !haySesiones ? "print:hidden" : ""}`}
+        >
           <h2 className="font-display text-lg font-semibold text-ink print:text-black">
             Sesiones ({(sesiones ?? []).length})
           </h2>

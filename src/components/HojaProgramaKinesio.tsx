@@ -52,9 +52,15 @@ export function HojaProgramaKinesio({
   sede,
   profesional,
   acciones,
-}: Props) {
+  saltoAntes = true,
+}: Props & { saltoAntes?: boolean }) {
+  // Al imprimir, cada programa va en su hoja; sin salto después, así lo que sigue no deja hojas vacías.
   return (
-    <article className="break-inside-avoid space-y-4 rounded-2xl border border-edge bg-card p-6 print:break-after-page print:rounded-none print:border-0 print:p-0">
+    <article
+      className={`break-inside-avoid space-y-4 rounded-2xl border border-edge bg-card p-6 print:rounded-none print:border-0 print:p-0 ${
+        saltoAntes ? "print:break-before-page" : ""
+      }`}
+    >
       <header className="text-center">
         <p className="text-sm font-semibold uppercase text-ink print:text-black">Residencia de adultos mayores</p>
         <p className="font-display text-lg font-bold text-ink print:text-black">{sede}</p>
