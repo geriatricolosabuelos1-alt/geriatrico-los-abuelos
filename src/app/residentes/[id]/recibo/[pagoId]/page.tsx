@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BotonImprimir } from "@/components/BotonImprimir";
+import { BotonEnviarMail } from "@/components/BotonEnviarMail";
+import { enviarReciboPorMail } from "@/app/residentes/[id]/recibo/[pagoId]/actions";
 import { hoyArgentina } from "@/lib/fechas";
 
 type Params = { id: string; pagoId: string };
@@ -176,8 +178,9 @@ export default async function ReciboPage({
           </div>
         </div>
 
-        <div className="border-t border-edge px-8 py-4 print:hidden">
+        <div className="flex flex-wrap items-start justify-between gap-3 border-t border-edge px-8 py-4 print:hidden">
           <BotonImprimir />
+          <BotonEnviarMail accion={enviarReciboPorMail.bind(null, id, pagoId)} />
         </div>
       </div>
     </div>

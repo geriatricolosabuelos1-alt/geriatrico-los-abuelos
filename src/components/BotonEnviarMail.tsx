@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { enviarFacturaPorMail } from "@/app/sucursales/[id]/facturacion/mail-actions";
-import type { TipoFactura } from "@/lib/facturaDatos";
 import { MAIL_FACTURAS } from "@/lib/facturacion";
 
-// Envía la factura en PDF por mail: viene con el mail de facturación, pero se puede cambiar.
-export function BotonMailFactura({ tipo, facturaId }: { tipo: TipoFactura; facturaId: string }) {
+// Envía un comprobante (factura o recibo) en PDF por mail: viene con el mail de facturación,
+// pero se puede cambiar. `accion` es la acción del servidor que arma el PDF y lo manda.
+export function BotonEnviarMail({ accion }: { accion: (destinatario: string) => Promise<{ error: string | null }> }) {
   const [abierto, setAbierto] = useState(false);
   const [destinatario, setDestinatario] = useState(MAIL_FACTURAS);
   const [estado, setEstado] = useState<"listo" | "enviando" | "enviado">("listo");
@@ -16,7 +15,7 @@ export function BotonMailFactura({ tipo, facturaId }: { tipo: TipoFactura; factu
   async function enviar() {
     setEstado("enviando");
     setError(null);
-    const r = await enviarFacturaPorMail(tipo, facturaId, destinatario);
+    const r = await accion(destinatario);
     if (r.error) {
       setError(r.error);
       setEstado("listo");
