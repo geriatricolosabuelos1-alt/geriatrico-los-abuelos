@@ -14,9 +14,10 @@ export type DatosHojaEvaluacion = {
 
 function fecha(valor: string | null | undefined): string {
   if (!valor) return "—";
-  return new Date(valor.length === 10 ? valor + "T00:00:00" : valor).toLocaleDateString("es-AR", {
-    timeZone: "America/Argentina/Mendoza",
-  });
+  // Fechas "AAAA-MM-DD" (evaluación, nacimiento): se muestran tal cual, sin pasar por zona horaria
+  // (si no, en el servidor salía un día antes).
+  if (valor.length === 10) return valor.split("-").reverse().join("/");
+  return new Date(valor).toLocaleDateString("es-AR", { timeZone: "America/Argentina/Mendoza" });
 }
 
 function mesAnio(valor: string): string {
