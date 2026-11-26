@@ -1,6 +1,7 @@
 import { BotonImprimir } from "@/components/BotonImprimir";
 import { BotonWhatsappFactura } from "@/components/BotonWhatsappFactura";
-import { BotonMailFactura } from "@/components/BotonMailFactura";
+import { BotonEnviarMail } from "@/components/BotonEnviarMail";
+import { enviarFacturaPorMail } from "@/app/sucursales/[id]/facturacion/mail-actions";
 import type { TipoFactura } from "@/lib/facturaDatos";
 
 export type DatosHojaFacturaC = {
@@ -147,7 +148,7 @@ export function HojaFacturaC({
         <div className="flex items-center justify-between gap-3 border-t border-edge px-8 py-4 print:hidden">
           {volver}
           <div className="flex items-start gap-3">
-            {envio && <BotonMailFactura tipo={envio.tipo} facturaId={envio.facturaId} />}
+            {envio && <BotonEnviarMail accion={enviarFacturaPorMail.bind(null, envio.tipo, envio.facturaId)} />}
             <BotonWhatsappFactura f={f} />
             <BotonImprimir />
           </div>
