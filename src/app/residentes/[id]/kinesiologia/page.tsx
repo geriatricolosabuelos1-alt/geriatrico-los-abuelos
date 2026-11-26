@@ -141,6 +141,7 @@ export default async function KinesiologiaResidentePage({
 
   return (
     <div className="flex min-h-screen w-full print:block">
+      <style>{`@page { size: A4; margin: 12mm; }`}</style>
       <div className="print:hidden">
         <Sidebar
           perfil={perfil!}
