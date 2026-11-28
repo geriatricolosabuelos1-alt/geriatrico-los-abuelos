@@ -58,3 +58,6 @@ create policy arca_tokens_padron_admin_only on public.arca_tokens_padron for all
 alter table public.facturas_arca alter column pago_id drop not null;
 alter table public.facturas_arca drop constraint facturas_arca_pago_id_fkey,
   add constraint facturas_arca_pago_id_fkey foreign key (pago_id) references public.pagos(id) on delete set null;
+
+-- Factura de residente a nombre de un familiar (contratante u otro): nombre de quien recibe la factura.
+alter table public.facturas_arca add column if not exists receptor_nombre text;

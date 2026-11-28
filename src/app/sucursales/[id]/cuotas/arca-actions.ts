@@ -10,7 +10,7 @@ import { enviarFacturaPorMail } from "@/app/sucursales/[id]/facturacion/mail-act
 // aviso: la factura se emitió pero hubo un problema secundario (ej. no salió el mail).
 export type EmitirFacturaEstado = { error: string | null; ok: boolean; aviso?: string | null };
 
-export type TipoDocReceptor = "dni" | "cuit" | "consumidor_final";
+export type TipoDocReceptor = "dni" | "cuit" | "cuil" | "consumidor_final";
 
 export type CondicionIva = "responsable_inscripto" | "monotributo" | "exento" | "consumidor_final";
 
@@ -28,6 +28,8 @@ export type DatosFactura = {
   condicionIva: CondicionIva;
   condicionVenta: CondicionVenta;
   medioPago: MedioPagoFactura | null;
+  // A nombre de quién sale la factura (ej. el familiar); si no se indica, del residente.
+  receptorNombre?: string | null;
 };
 
 const FECHA_ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -35,6 +37,7 @@ const FECHA_ISO = /^\d{4}-\d{2}-\d{2}$/;
 const DOC_TIPO_AFIP: Record<TipoDocReceptor, number> = {
   dni: 96,
   cuit: 80,
+  cuil: 86,
   consumidor_final: 99,
 };
 
@@ -81,8 +84,8 @@ export async function emitirFactura(
     if (datos.tipoDoc === "dni" && (limpio.length < 7 || limpio.length > 8)) {
       return { error: "El DNI ingresado no es válido.", ok: false };
     }
-    if (datos.tipoDoc === "cuit" && limpio.length !== 11) {
-      return { error: "El CUIT ingresado debe tener 11 dígitos.", ok: false };
+    if ((datos.tipoDoc === "cuit" || datos.tipoDoc === "cuil") && limpio.length !== 11) {
+      return { error: `El ${datos.tipoDoc.toUpperCase()} ingresado debe tener 11 dígitos.`, ok: false };
     }
   }
 
@@ -182,6 +185,7 @@ export async function emitirFactura(
       detalle,
       periodo_desde: datos.periodoDesde,
       periodo_hasta: datos.periodoHasta,
+      receptor_nombre: datos.receptorNombre?.trim() || null,
     })
       .select("id")
       .single<{ id: string }>();

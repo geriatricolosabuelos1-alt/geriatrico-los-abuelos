@@ -10,6 +10,8 @@ import {
   type MedioPagoFactura,
   type TipoDocReceptor,
 } from "@/app/sucursales/[id]/cuotas/arca-actions";
+import { buscarContribuyente } from "@/app/sucursales/[id]/facturacion/actions";
+import { cuitValido } from "@/lib/facturacion";
 
 type Props = {
   residenteId: string;
@@ -22,6 +24,10 @@ type Props = {
   // Sugerencias tomadas del cobro registrado
   cobradoCompleto: boolean;
   medioSugerido: MedioPagoFactura | null;
+  residenteNombre: string;
+  sucursalId: string;
+  // Familiar que firma el contrato (ficha administrativa): se le puede facturar con un toque.
+  contratante: { nombre: string | null; dni: string | null };
 };
 
 type LineaForm = { descripcion: string; importe: string };
@@ -63,6 +69,9 @@ export function BotonFacturar({
   yaFacturado,
   cobradoCompleto,
   medioSugerido,
+  residenteNombre,
+  sucursalId,
+  contratante,
 }: Props) {
   const router = useRouter();
   const [abierto, setAbierto] = useState(false);
@@ -86,6 +95,31 @@ export function BotonFacturar({
     cobradoCompleto ? "contado" : "cuenta_corriente",
   );
   const [medioPago, setMedioPago] = useState<MedioPagoFactura | "">(medioSugerido ?? "");
+  const [receptorNombre, setReceptorNombre] = useState(residenteNombre);
+  const [buscando, setBuscando] = useState(false);
+  const [avisoPadron, setAvisoPadron] = useState<string | null>(null);
+
+  // Con un CUIT/CUIL completo, trae de ARCA el nombre o la razón social.
+  async function buscarEnArca(valor: string, tipo: TipoDocReceptor) {
+    const limpio = valor.replace(/\D/g, "");
+    if ((tipo !== "cuit" && tipo !== "cuil") || !cuitValido(limpio)) return;
+    setBuscando(true);
+    setAvisoPadron(null);
+    const r = await buscarContribuyente(sucursalId, limpio);
+    setBuscando(false);
+    if (r.nombre) setReceptorNombre(r.nombre);
+    else setAvisoPadron(r.error);
+  }
+
+  function usarContratante() {
+    if (!contratante.nombre) return;
+    setReceptorNombre(contratante.nombre);
+    if (contratante.dni) {
+      setTipoDoc("dni");
+      setDocNro(contratante.dni);
+      setCondicionIva("consumidor_final");
+    }
+  }
 
   if (yaFacturado) {
     return (
@@ -140,6 +174,7 @@ export function BotonFacturar({
       condicionIva,
       condicionVenta,
       medioPago: medioPago || null,
+      receptorNombre: receptorNombre.trim() || residenteNombre,
     });
     setEnviando(false);
     if (resultado.error) {
@@ -247,11 +282,16 @@ export function BotonFacturar({
               const valor = e.target.value as TipoDocReceptor;
               setTipoDoc(valor);
               setCondicionIva(valor === "cuit" ? "responsable_inscripto" : "consumidor_final");
+              if (valor === "dni" && dniResidente) {
+                setDocNro(dniResidente);
+                setReceptorNombre(residenteNombre);
+              }
             }}
             className={CAMPO}
           >
             <option value="dni">DNI del residente / familiar</option>
-            <option value="cuit">CUIT (empresa, obra social, otro)</option>
+            <option value="cuit">CUIT (empresa, obra social, familiar)</option>
+            <option value="cuil">CUIL (familiar)</option>
             <option value="consumidor_final">Consumidor Final (sin identificar)</option>
           </select>
         </div>
@@ -259,18 +299,54 @@ export function BotonFacturar({
         {tipoDoc !== "consumidor_final" && (
           <div>
             <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
-              {tipoDoc === "dni" ? "DNI" : "CUIT"}
+              {tipoDoc === "dni" ? "DNI" : tipoDoc.toUpperCase()}
             </label>
             <input
               value={docNro}
-              onChange={(e) => setDocNro(e.target.value)}
+              onChange={(e) => {
+                setDocNro(e.target.value);
+                if (e.target.value.replace(/\D/g, "").length === 11) buscarEnArca(e.target.value, tipoDoc);
+              }}
               placeholder={tipoDoc === "dni" ? "12345678" : "20123456789"}
               className={CAMPO}
             />
           </div>
         )}
 
-        {tipoDoc === "cuit" && (
+        {tipoDoc !== "consumidor_final" && (
+          <div>
+            <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
+              A nombre de
+            </label>
+            <input
+              value={receptorNombre}
+              onChange={(e) => setReceptorNombre(e.target.value)}
+              placeholder="Apellido y nombre / Razón social"
+              className={CAMPO}
+            />
+            {buscando && <p className="mt-1 text-[0.65rem] text-ink-soft">Buscando en ARCA...</p>}
+            {!buscando && avisoPadron && <p className="mt-1 text-[0.65rem] text-amber-700">{avisoPadron}</p>}
+            {contratante.nombre && receptorNombre !== contratante.nombre && (
+              <button
+                type="button"
+                onClick={usarContratante}
+                className="mt-1 text-[0.7rem] text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+              >
+                Facturar al contratante: {contratante.nombre}
+                {contratante.dni ? ` (DNI ${contratante.dni})` : ""}
+              </button>
+            )}
+            {receptorNombre !== residenteNombre && (
+              <p className="mt-1 text-[0.65rem] text-ink-soft">En la factura figura el residente: {residenteNombre}.</p>
+            )}
+          </div>
+        )}
+
+        {(tipoDoc === "dni" || tipoDoc === "consumidor_final") && (
+          <p className="text-[0.7rem] text-ink-soft">Condición frente al IVA: Consumidor Final.</p>
+        )}
+
+        {(tipoDoc === "cuit" || tipoDoc === "cuil") && (
           <div>
             <label className="mb-1 block text-[0.65rem] font-bold uppercase tracking-wide text-ink-soft">
               Condición frente al IVA

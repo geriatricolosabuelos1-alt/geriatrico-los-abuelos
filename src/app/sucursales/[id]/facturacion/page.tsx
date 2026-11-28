@@ -34,6 +34,7 @@ type FacturaResidente = {
   periodo_hasta: string | null;
   detalle: { descripcion: string; importe: number }[] | null;
   residentes: { nombre: string; apellido: string } | null;
+  receptor_nombre: string | null;
 };
 
 // Una fila del registro: factura de arancel de un residente o de un servicio externo.
@@ -149,7 +150,7 @@ export default async function FacturacionPage({
       : enRango(supabase
       .from("facturas_arca")
       .select(
-        "id, pto_vta, cbte_nro, importe, fecha_emision, doc_tipo, doc_nro, periodo_desde, periodo_hasta, detalle, residentes(nombre, apellido)",
+        "id, pto_vta, cbte_nro, importe, fecha_emision, doc_tipo, doc_nro, periodo_desde, periodo_hasta, detalle, receptor_nombre, residentes(nombre, apellido)",
       )
       .eq("sucursal_id", id))
       .returns<FacturaResidente[]>(),
@@ -180,13 +181,20 @@ export default async function FacturacionPage({
         fecha: f.fecha_emision,
         ptoVta: f.pto_vta,
         cbteNro: f.cbte_nro,
-        nombre: f.residentes ? `${f.residentes.apellido}, ${f.residentes.nombre}` : "Residente",
+        // A nombre del familiar si se facturó a él (el residente queda en el detalle).
+        nombre:
+          f.receptor_nombre ?? (f.residentes ? `${f.residentes.apellido}, ${f.residentes.nombre}` : "Residente"),
         documento: documentoReceptor(f.doc_tipo, f.doc_nro),
         periodo:
           f.periodo_desde && f.periodo_hasta
             ? `${formatearFecha(f.periodo_desde)} al ${formatearFecha(f.periodo_hasta)}`
             : "—",
-        detalle: (f.detalle ?? []).map((l) => l.descripcion).join(" · ") || "Servicios de residencia geriátrica",
+        detalle: [
+          f.receptor_nombre && f.residentes ? `Residente: ${f.residentes.apellido}, ${f.residentes.nombre}` : null,
+          (f.detalle ?? []).map((l) => l.descripcion).join(" · ") || "Servicios de residencia geriátrica",
+        ]
+          .filter(Boolean)
+          .join(" · "),
         importe: Number(f.importe),
         href: `/sucursales/${id}/facturacion/residente/${f.id}`,
       }),

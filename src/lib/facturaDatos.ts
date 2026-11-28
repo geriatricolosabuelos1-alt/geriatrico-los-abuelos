@@ -30,7 +30,7 @@ type FilaFactura = {
   detalle: { descripcion: string; importe: number }[] | null;
   periodo_desde: string | null;
   periodo_hasta: string | null;
-  receptor_nombre?: string;
+  receptor_nombre?: string | null;
   residentes?: { nombre: string; apellido: string } | null;
 };
 
@@ -46,7 +46,7 @@ export async function datosFactura(
   const supabase = await createClient();
   const { data: factura } = await supabase
     .from(tipo === "externa" ? "facturas_externas" : "facturas_arca")
-    .select(tipo === "externa" ? `${COLUMNAS}, receptor_nombre` : `${COLUMNAS}, residentes(nombre, apellido)`)
+    .select(tipo === "externa" ? `${COLUMNAS}, receptor_nombre` : `${COLUMNAS}, receptor_nombre, residentes(nombre, apellido)`)
     .eq("id", facturaId)
     .maybeSingle<FilaFactura>();
   if (!factura) return null;
@@ -80,12 +80,12 @@ export async function datosFactura(
     cae: factura.cae,
   });
 
-  const clienteNombre =
-    tipo === "externa"
-      ? (factura.receptor_nombre ?? "")
-      : factura.residentes
-        ? `${factura.residentes.apellido}, ${factura.residentes.nombre}`
-        : "Residente";
+  const nombreResidente = factura.residentes
+    ? `${factura.residentes.apellido}, ${factura.residentes.nombre}`
+    : "Residente";
+  // Factura de residente a nombre de un familiar: el cliente es el familiar y el residente va en el concepto.
+  const clienteNombre = tipo === "externa" ? (factura.receptor_nombre ?? "") : (factura.receptor_nombre ?? nombreResidente);
+  const aNombreDeOtro = tipo === "residente" && !!factura.receptor_nombre && factura.receptor_nombre !== nombreResidente;
 
   return {
     sucursalId: factura.sucursal_id,
@@ -99,7 +99,10 @@ export async function datosFactura(
       clienteNombre,
       clienteDocumento: documentoReceptor(factura.doc_tipo, factura.doc_nro),
       clienteCondicionIva: CONDICION_IVA_RECEPTOR[factura.condicion_iva_receptor_id ?? 5] ?? "Consumidor Final",
-      concepto: tipo === "externa" ? "Servicios" : "Servicios de residencia geriátrica",
+      concepto:
+        tipo === "externa"
+          ? "Servicios"
+          : `Servicios de residencia geriátrica${aNombreDeOtro ? ` — Residente: ${nombreResidente}` : ""}`,
       textoPeriodo:
         factura.periodo_desde && factura.periodo_hasta
           ? `Período del ${formatearFechaFactura(factura.periodo_desde)} al ${formatearFechaFactura(factura.periodo_hasta)}`
