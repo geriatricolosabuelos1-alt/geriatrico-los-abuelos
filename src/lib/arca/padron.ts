@@ -1,4 +1,4 @@
-import { soapRequest, extractTag, extractAllTags, decodeXmlEntities } from "./soap";
+import { soapRequest, extractTag, decodeXmlEntities } from "./soap";
 
 const HOST = "aws.afip.gov.ar";
 const PATH = "/sr-padron/webservices/personaServiceA13";
@@ -29,7 +29,8 @@ export async function consultarPadron(
   const fault = extractTag(response, "faultstring");
   if (fault) throw new Error(decodeXmlEntities(fault));
 
-  const persona = extractTag(response, "persona");
+  // Bloque <persona> exacto (no "personaReturn", que lo contiene).
+  const persona = response.match(/<persona>([\s\S]*?)<\/persona>/)?.[1] ?? null;
   if (!persona) throw new Error("ARCA no devolvió datos para ese número.");
 
   const razonSocial = extractTag(persona, "razonSocial");
@@ -65,5 +66,7 @@ export async function idsPorDocumento(
   const response = await soapRequest(HOST, PATH, "", soapBody);
   const fault = extractTag(response, "faultstring");
   if (fault) throw new Error(decodeXmlEntities(fault));
-  return extractAllTags(response, "idPersona").map((id) => id.trim()).filter(Boolean);
+  // Solo las etiquetas <idPersona> exactas con un número: "idPersonaListReturn" (el bloque que las
+  // contiene) empieza igual y, si se toma por error, se le manda a ARCA un pedido mal armado.
+  return Array.from(response.matchAll(/<idPersona>\s*(\d+)\s*<\/idPersona>/g), (m) => m[1]);
 }
