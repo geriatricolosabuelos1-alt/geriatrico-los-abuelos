@@ -83,7 +83,7 @@ export default async function CuentaCorrientePage({
   const { data: fichaAdministrativa } = await supabase
     .from("ficha_administrativa")
     .select(
-      "cuota_mensual, monto_cobertura_obra_social, porcentaje_recargo_mora, fecha_vencimiento_cuota",
+      "cuota_mensual, monto_cobertura_obra_social, porcentaje_recargo_mora, fecha_vencimiento_cuota, contratante_nombre, contratante_dni",
     )
     .eq("residente_id", id)
     .maybeSingle<{
@@ -91,6 +91,8 @@ export default async function CuentaCorrientePage({
       monto_cobertura_obra_social: number | null;
       porcentaje_recargo_mora: number | null;
       fecha_vencimiento_cuota: string | null;
+      contratante_nombre: string | null;
+      contratante_dni: string | null;
     }>();
 
   const [{ data: pagos }, cargosExtra] = await Promise.all([
@@ -246,6 +248,12 @@ export default async function CuentaCorrientePage({
                             mes={p.mes}
                             anio={p.anio}
                             dniResidente={residente.dni}
+                            residenteNombre={`${residente.apellido}, ${residente.nombre}`}
+                            sucursalId={residente.sucursal_id}
+                            contratante={{
+                              nombre: fichaAdministrativa?.contratante_nombre ?? null,
+                              dni: fichaAdministrativa?.contratante_dni ?? null,
+                            }}
                             yaFacturado={
                               Array.isArray(p.facturas_arca) ? p.facturas_arca.length > 0 : !!p.facturas_arca
                             }
