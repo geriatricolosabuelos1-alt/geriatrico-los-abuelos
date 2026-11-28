@@ -1,4 +1,4 @@
-import { soapRequest, extractTag, decodeXmlEntities } from "./soap";
+import { soapRequest, extractTag, extractAllTags, decodeXmlEntities } from "./soap";
 
 const HOST = "aws.afip.gov.ar";
 const PATH = "/sr-padron/webservices/personaServiceA13";
@@ -42,4 +42,28 @@ export async function consultarPadron(
     nombre: decodeXmlEntities(completo).trim(),
     tipoPersona: extractTag(persona, "tipoPersona"),
   };
+}
+
+// Padrón A13: CUIT/CUIL que corresponden a un DNI (para buscar el nombre de quien tiene solo DNI).
+export async function idsPorDocumento(
+  auth: { token: string; sign: string; cuit: string },
+  documento: string,
+): Promise<string[]> {
+  const soapBody = `<?xml version="1.0" encoding="UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:a13="${NS}">
+  <soapenv:Header/>
+  <soapenv:Body>
+    <a13:getIdPersonaListByDocumento>
+      <token>${auth.token}</token>
+      <sign>${auth.sign}</sign>
+      <cuitRepresentada>${auth.cuit}</cuitRepresentada>
+      <documento>${documento}</documento>
+    </a13:getIdPersonaListByDocumento>
+  </soapenv:Body>
+</soapenv:Envelope>`;
+
+  const response = await soapRequest(HOST, PATH, "", soapBody);
+  const fault = extractTag(response, "faultstring");
+  if (fault) throw new Error(decodeXmlEntities(fault));
+  return extractAllTags(response, "idPersona").map((id) => id.trim()).filter(Boolean);
 }

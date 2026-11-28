@@ -99,10 +99,18 @@ export function BotonFacturar({
   const [buscando, setBuscando] = useState(false);
   const [avisoPadron, setAvisoPadron] = useState<string | null>(null);
 
-  // Con un CUIT/CUIL completo, trae de ARCA el nombre o la razón social.
+  // Con un DNI, CUIT o CUIL completo, trae de ARCA el nombre (si es el DNI del residente, su nombre).
   async function buscarEnArca(valor: string, tipo: TipoDocReceptor) {
     const limpio = valor.replace(/\D/g, "");
-    if ((tipo !== "cuit" && tipo !== "cuil") || !cuitValido(limpio)) return;
+    if (tipo === "dni") {
+      if (limpio.length < 7 || limpio.length > 8) return;
+      if (dniResidente && limpio === dniResidente.replace(/\D/g, "")) {
+        setReceptorNombre(residenteNombre);
+        return;
+      }
+    } else if ((tipo !== "cuit" && tipo !== "cuil") || !cuitValido(limpio)) {
+      return;
+    }
     setBuscando(true);
     setAvisoPadron(null);
     const r = await buscarContribuyente(sucursalId, limpio);
@@ -307,6 +315,7 @@ export function BotonFacturar({
                 setDocNro(e.target.value);
                 if (e.target.value.replace(/\D/g, "").length === 11) buscarEnArca(e.target.value, tipoDoc);
               }}
+              onBlur={(e) => buscarEnArca(e.target.value, tipoDoc)}
               placeholder={tipoDoc === "dni" ? "12345678" : "20123456789"}
               className={CAMPO}
             />

@@ -66,7 +66,8 @@ export function FormularioFacturaExterna({
   // Con el CUIT/CUIL completo, trae de ARCA el nombre o la razón social.
   async function buscarEnArca(valor: string, tipo: TipoDocExterno) {
     const limpio = valor.replace(/\D/g, "");
-    if (tipo === "dni" || !cuitValido(limpio) || limpio === ultimoBuscado) return;
+    const valido = tipo === "dni" ? limpio.length >= 7 && limpio.length <= 8 : cuitValido(limpio);
+    if (!valido || limpio === ultimoBuscado) return;
     setUltimoBuscado(limpio);
     setBuscando(true);
     setAvisoPadron(null);
@@ -206,7 +207,7 @@ export function FormularioFacturaExterna({
             value={receptorNombre}
             onChange={(e) => setReceptorNombre(e.target.value)}
             placeholder={
-              tipoDoc === "dni" ? "Apellido y nombre" : "Se completa solo al poner el CUIT/CUIL, o escribilo"
+              "Se completa solo al poner el DNI, CUIT o CUIL, o escribilo"
             }
             className={CAMPO}
           />
