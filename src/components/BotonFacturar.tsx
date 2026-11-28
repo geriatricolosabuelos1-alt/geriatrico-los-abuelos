@@ -86,16 +86,15 @@ export function BotonFacturar({
   ]);
   const [periodoDesde, setPeriodoDesde] = useState(primerDiaDelMes(mes, anio));
   const [periodoHasta, setPeriodoHasta] = useState(ultimoDiaDelMes(mes, anio));
-  const [tipoDoc, setTipoDoc] = useState<TipoDocReceptor>(
-    dniResidente ? "dni" : "consumidor_final",
-  );
-  const [docNro, setDocNro] = useState(dniResidente ?? "");
+  // Arranca vacío: se completa con el documento de quien recibe la factura, o con el botón del residente.
+  const [tipoDoc, setTipoDoc] = useState<TipoDocReceptor>("dni");
+  const [docNro, setDocNro] = useState("");
   const [condicionIva, setCondicionIva] = useState<CondicionIva>("consumidor_final");
   const [condicionVenta, setCondicionVenta] = useState<CondicionVenta>(
     cobradoCompleto ? "contado" : "cuenta_corriente",
   );
   const [medioPago, setMedioPago] = useState<MedioPagoFactura | "">(medioSugerido ?? "");
-  const [receptorNombre, setReceptorNombre] = useState(residenteNombre);
+  const [receptorNombre, setReceptorNombre] = useState("");
   const [buscando, setBuscando] = useState(false);
   const [avisoPadron, setAvisoPadron] = useState<string | null>(null);
 
@@ -117,6 +116,14 @@ export function BotonFacturar({
     setBuscando(false);
     if (r.nombre) setReceptorNombre(r.nombre);
     else setAvisoPadron(r.error);
+  }
+
+  function usarResidente() {
+    setTipoDoc("dni");
+    setDocNro(dniResidente ?? "");
+    setReceptorNombre(residenteNombre);
+    setCondicionIva("consumidor_final");
+    setAvisoPadron(null);
   }
 
   function usarContratante() {
@@ -168,6 +175,10 @@ export function BotonFacturar({
   }
 
   async function confirmar() {
+    if (tipoDoc !== "consumidor_final" && (!docNro.trim() || !receptorNombre.trim())) {
+      setError("Completá el documento y a nombre de quién sale la factura.");
+      return;
+    }
     setEnviando(true);
     setError(null);
     const resultado = await emitirFactura(pagoId, {
@@ -290,10 +301,6 @@ export function BotonFacturar({
               const valor = e.target.value as TipoDocReceptor;
               setTipoDoc(valor);
               setCondicionIva(valor === "cuit" ? "responsable_inscripto" : "consumidor_final");
-              if (valor === "dni" && dniResidente) {
-                setDocNro(dniResidente);
-                setReceptorNombre(residenteNombre);
-              }
             }}
             className={CAMPO}
           >
@@ -335,17 +342,29 @@ export function BotonFacturar({
             />
             {buscando && <p className="mt-1 text-[0.65rem] text-ink-soft">Buscando en ARCA...</p>}
             {!buscando && avisoPadron && <p className="mt-1 text-[0.65rem] text-amber-700">{avisoPadron}</p>}
+            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1">
+              {receptorNombre !== residenteNombre && (
+                <button
+                  type="button"
+                  onClick={usarResidente}
+                  className="text-[0.7rem] text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                >
+                  Usar datos del residente: {residenteNombre}
+                  {dniResidente ? ` (DNI ${dniResidente})` : ""}
+                </button>
+              )}
             {contratante.nombre && receptorNombre !== contratante.nombre && (
               <button
                 type="button"
                 onClick={usarContratante}
-                className="mt-1 text-[0.7rem] text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
+                className="text-[0.7rem] text-brass underline decoration-brass/40 underline-offset-2 hover:text-ink"
               >
                 Facturar al contratante: {contratante.nombre}
                 {contratante.dni ? ` (DNI ${contratante.dni})` : ""}
               </button>
             )}
-            {receptorNombre !== residenteNombre && (
+            </div>
+            {receptorNombre.trim() && receptorNombre !== residenteNombre && (
               <p className="mt-1 text-[0.65rem] text-ink-soft">En la factura figura el residente: {residenteNombre}.</p>
             )}
           </div>
