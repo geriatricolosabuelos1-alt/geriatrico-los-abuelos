@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { clienteArca } from "@/lib/arca/cliente";
 import { obtenerCredencialesArca } from "@/lib/arca/wsaa";
 import { solicitarCAE } from "@/lib/arca/wsfe";
-import { consultarPadron } from "@/lib/arca/padron";
+import { consultarPadron, idsPorDocumento } from "@/lib/arca/padron";
 import { enviarFacturaPorMail } from "@/app/sucursales/[id]/facturacion/mail-actions";
 import { hoyArgentina } from "@/lib/fechas";
 import { DOC_TIPO_ARCA, cuitValido, type TipoDocExterno } from "@/lib/facturacion";
@@ -85,7 +85,7 @@ async function configArca(sucursalId: string) {
 
 export type BuscarContribuyenteEstado = { nombre: string | null; error: string | null };
 
-// Trae de ARCA el nombre o la razón social de un CUIT/CUIL para no tener que escribirlo.
+// Trae de ARCA el nombre o la razón social de un DNI, CUIT o CUIL para no tener que escribirlo.
 export async function buscarContribuyente(
   sucursalId: string,
   numero: string,
@@ -95,14 +95,19 @@ export async function buscarContribuyente(
   if (typeof permiso !== "string") return { nombre: null, error: permiso.error };
 
   const id = numero.replace(/\D/g, "");
-  if (!cuitValido(id)) return { nombre: null, error: "El número no es un CUIT/CUIL válido." };
+  const esDni = id.length >= 7 && id.length <= 8;
+  if (!esDni && !cuitValido(id)) return { nombre: null, error: "El número no es un DNI, CUIT o CUIL válido." };
 
   const config = await configArca(sucursalId);
   if (!config) return { nombre: null, error: "Esta sede no tiene ARCA configurado." };
 
   try {
     const { token, sign } = await obtenerCredencialesArca(sucursalId, config.cert, config.private_key, "ws_sr_padron_a13");
-    const persona = await consultarPadron({ token, sign, cuit: config.cuit }, id);
+    const auth = { token, sign, cuit: config.cuit };
+    // Con DNI: primero se busca su CUIT/CUIL en el padrón y después el nombre.
+    const idPersona = esDni ? (await idsPorDocumento(auth, id))[0] : id;
+    if (!idPersona) return { nombre: null, error: "ARCA no encontró a nadie con ese DNI. Escribí el nombre a mano." };
+    const persona = await consultarPadron(auth, idPersona);
     return { nombre: persona.nombre, error: null };
   } catch (err) {
     const mensaje = err instanceof Error ? err.message : "";
